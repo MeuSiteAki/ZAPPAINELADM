@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin | ZapLanche</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root { --primary: #15ff00; --gold: #2cdb00; --dark-bg: #0a0a0b; --card-bg: #161618; --surface: #212124; --text: #ffffff; --green: #22c55e; --blue: #3b82f6; --danger: #ef4444; }
+        * { margin:0; padding:0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--dark-bg); color: var(--text); overflow-x: hidden; padding-bottom: 50px; }
+        
+        nav { background: var(--card-bg); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d2d30; position: sticky; top: 0; z-index: 1000; }
+        .logo { font-size: 1.4rem; font-weight: 800; } .logo span { color: var(--primary); }
+        
+        .tab-container { display: flex; justify-content: center; background: var(--card-bg); border-bottom: 1px solid #333; }
+        .tab-btn { padding: 15px 25px; border: none; background: none; color: #888; cursor: pointer; font-weight: 700; transition: 0.3s; border-bottom: 3px solid transparent; }
+        .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); background: rgba(255,215,0,0.05); }
+        .tab-content { display: none; padding: 20px; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+
+        .grid-mesas { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; max-width: 1400px; margin: 0 auto; }
+        .mesa-card { background: var(--card-bg); border: 1px solid #333; border-radius: 20px; padding: 15px; display: flex; flex-direction: column; transition: 0.3s; }
+        .mesa-card.aberta { border-color: var(--gold); box-shadow: 0 0 15px rgba(255,215,0,0.1); }
+        
+        .mesa-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #222; padding-bottom: 5px; }
+        .mesa-itens-lista { flex-grow: 1; font-size: 0.8rem; color: #aaa; text-align: left; margin: 10px 0; max-height: 150px; overflow-y: auto; }
+        .mesa-item-doc { border-bottom: 1px solid #222; padding: 4px 0; }
+        .garcom-tag { font-size: 0.7rem; background: #333; padding: 2px 6px; border-radius: 4px; color: var(--gold); }
+
+        #menu-lateral { position: fixed; right: -420px; top: 0; width: 400px; height: 100%; background: #111; z-index: 2000; transition: 0.4s; padding: 20px; box-shadow: -5px 0 20px rgba(0,0,0,0.5); border-left: 1px solid var(--gold); overflow-y: auto; }
+        #menu-lateral.active { right: 0; }
+        
+        .cat-head { width: 100%; padding: 12px; background: #222; border: none; color: white; text-align: left; font-weight: 800; margin-top: 5px; cursor: pointer; display: flex; justify-content: space-between; }
+        .hidden { display: none; }
+        
+        .btn-confirm { width: 100%; border: none; padding: 12px; border-radius: 12px; background: var(--gold); color: #000; font-weight: 800; cursor: pointer; }
+        .btn-nav { background: var(--surface); border: 1px solid #3f3f46; color: white; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+        
+        .item-carrinho { background: #1a1a1a; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid var(--gold); }
+        .obs-item-input { width: 100%; background: #000; border: 1px solid #333; color: #00ff00; padding: 5px; font-size: 0.75rem; border-radius: 4px; margin-top: 5px; }
+        
+        .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+        .order-card { background: var(--card-bg); border-radius: 16px; padding: 20px; border: 1px solid #2d2d30; border-left: 5px solid var(--primary); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <audio id="bell" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3" preload="auto"></audio>
+    
+    <nav>
+        <div class="logo">ZAP<span>LANCHE</span></div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-nav" id="btn-som" onclick="toggleSom()"><i class="fas fa-bell-slash" id="som-icon"></i></button>
+            <button class="btn-nav" id="btn-limpar-tudo" style="color:var(--danger)"><i class="fas fa-trash"></i></button>
+        </div>
+    </nav>
+
+    <div class="tab-container">
+        <button class="tab-btn active" data-target="tab-mesas" onclick="switchTab(this)">MESAS</button>
+        <button class="tab-btn" data-target="tab-delivery" onclick="switchTab(this)">DELIVERY</button>
+        <button class="tab-btn" data-target="tab-balanco" id="tab-caixa-btn">CAIXA</button>
+    </div>
+
+    <div id="tab-mesas" class="tab-content active"><div id="container-mesas" class="grid-mesas"></div></div>
+    <div id="tab-delivery" class="tab-content"><div id="orders-container" class="orders-grid"></div></div>
+    <div id="tab-balanco" class="tab-content">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div style="background:var(--card-bg); padding:20px; border-radius:15px; text-align:center;">PIX<h2 id="b-pix" style="color:var(--gold)">R$ 0,00</h2></div>
+            <div style="background:var(--card-bg); padding:20px; border-radius:15px; text-align:center;">CARTÃO<h2 id="b-cartao" style="color:var(--gold)">R$ 0,00</h2></div>
+            <div style="background:var(--card-bg); padding:20px; border-radius:15px; text-align:center;">DINHEIRO<h2 id="b-dinheiro" style="color:var(--gold)">R$ 0,00</h2></div>
+            <div style="background:var(--card-bg); padding:20px; border-radius:15px; text-align:center; border:2px solid var(--gold);">TOTAL<h2 id="b-total" style="color:var(--gold)">R$ 0,00</h2></div>
+        </div>
+    </div>
+
+    <div id="menu-lateral">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h2 id="titulo-mesa" style="color:var(--gold);">MESA</h2>
+            <button onclick="toggleMenu(false)" style="background:none; border:none; color:white; font-size:1.5rem;">&times;</button>
+        </div>
+        <div id="sanfona-menu"></div>
+        <div style="margin-top:20px; border-top:1px solid #333; padding-top:15px;">
+            <h4>CARRINHO:</h4>
+            <div id="lista-temp" style="margin:10px 0;"></div>
+            <h3 id="total-temp" style="margin:15px 0; color:var(--gold)">R$ 0,00</h3>
+            <button class="btn-confirm" onclick="enviarCozinha()">ENVIAR PARA COZINHA</button>
+        </div>
+    </div>
+
+<audio id="audio-bip" preload="auto">
+    <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+</audio>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { 
+        getFirestore, 
+        initializeFirestore, 
+        memoryLocalCache,
+        collection, 
+        onSnapshot, 
+        query, 
+        orderBy, 
+        doc, 
+        updateDoc, 
+        deleteDoc, 
+        getDocs, 
+        setDoc, 
+        addDoc, 
+        serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { 
+        apiKey: "AIzaSyDRj1Cj0o1z9u7fS9InPlSlqvmcetMmMUU", 
+        authDomain: "hamb1-2733f.firebaseapp.com", 
+        projectId: "hamb1-2733f", 
+        storageBucket: "hamb1-2733f.firebasestorage.app", 
+        messagingSenderId: "244052884947", 
+        appId: "1:244052884947:web:2c6df704023493fe8e4326" 
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = initializeFirestore(app, { localCache: memoryLocalCache() });
+
+    const _0x4f22 = "emFwMjAyNkA="; 
+    const checkPass = (p) => btoa(p) === _0x4f22;
+
+    const cardapio = {
+        "⭐ ARTESANAIS": [
+            {n: "Burguer Mini", p: 21.00},
+            {n: "Burguer Classic", p: 22.00},
+            {n: "Burguer Poleguinho", p: 23.00},
+            {n: "Burguer Pepperoni", p: 25.00},
+            {n: "Burguer Cheese Bacon", p: 26.00},
+            {n: "Burguer Double", p: 32.00}
+        ],
+        "🍔 TRADICIONAIS": [
+            {n: "Zap Quente", p: 6.00},
+            {n: "Zap X-Burguer", p: 12.00},
+            {n: "Zap Egg", p: 14.00},
+            {n: "Zap Bacon", p: 16.00},
+            {n: "Zap Calabresa", p: 14.00},
+            {n: "Zap Salada Especial", p: 15.00},
+            {n: "Zap Tudo", p: 20.00},
+            {n: "Zap Broca", p: 25.00},
+            {n: "Zap Frango", p: 20.00},
+            {n: "Zap Filé", p: 22.00}
+        ],
+        "🍟 PORÇÕES": [
+            {n: "Porção Batata Frita", p: 17.00}
+        ],
+        "🥤 BEBIDAS": [
+            {n: "Suco Acerola/Goiaba", p: 7.00},
+            {n: "Suco Maracujá", p: 8.00},
+            {n: "Refrigerante Lata", p: 6.00},
+            {n: "Refrigerante 1 Litro", p: 10.00},
+            {n: "Refrigerante 2 Litros", p: 14.00}
+        ],
+        "➕ ADICIONAIS": [
+            {n: "Ovo", p: 2.00},
+            {n: "Carne Hambúrguer", p: 6.00},
+            {n: "Blend Bovino 160g", p: 10.00},
+            {n: "Bacon / Calabresa", p: 6.00},
+            {n: "Filé Frango/Gado", p: 10.00}
+        ]
+    };
+
+    const garcons = ["AAA", "BBB", "CCC", "DDD", "EEE", "FFF"];
+    let mesas = [], mesaAtiva = null, carrinhoTemp = [], somAtivo = false, inicializado = false;
+
+    async function initMesas() {
+        const snap = await getDocs(collection(db, "estado_mesas"));
+        if (snap.empty) { 
+            for (let i = 1; i <= 10; i++) { 
+                await setDoc(doc(db, "estado_mesas", `mesa_${i}`), { n: i, aberta: false, itens: [], total: 0, garcom: '' }); 
+            } 
+        }
+    }
+    initMesas();
+
+    window.toggleSom = () => {
+        somAtivo = !somAtivo;
+        document.getElementById('som-icon').className = somAtivo ? "fas fa-bell" : "fas fa-bell-slash";
+    };
+
+    function playSom() {
+        if(!somAtivo) return;
+        const audio = document.getElementById('audio-bip');
+        if(audio) { audio.currentTime = 0; audio.play().catch(() => {}); }
+    }
+
+    window.switchTab = (btn) => {
+        document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(btn.getAttribute('data-target')).classList.add('active');
+        btn.classList.add('active');
+    };
+
+    document.getElementById('tab-caixa-btn').onclick = async function() {
+        const { value: pass } = await Swal.fire({ title: 'Acesso Restrito', input: 'password', inputPlaceholder: 'Senha do Gerente' });
+        if (checkPass(pass)) { switchTab(this); } 
+        else if (pass) { Swal.fire('Erro', 'Senha Incorreta!', 'error'); }
+    };
+
+    window.toggleMenu = (s) => document.getElementById('menu-lateral').classList.toggle('active', s);
+
+    onSnapshot(collection(db, "estado_mesas"), (snap) => {
+        mesas = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => a.n - b.n);
+        const container = document.getElementById('container-mesas');
+        if (!container) return;
+        container.innerHTML = mesas.map(m => `
+            <div class="mesa-card ${m.aberta ? 'aberta' : ''}">
+                <div class="mesa-header">
+                    <span style="font-weight:800">MESA ${m.n}</span>
+                    ${m.aberta ? `<span class="garcom-tag">${m.garcom || 'Geral'}</span>` : ''}
+                </div>
+                <div class="mesa-itens-lista">
+                    ${m.aberta ? (Array.isArray(m.itens) && m.itens.length > 0 ? m.itens.map(i => `
+                        <div class="mesa-item-doc">
+                            <b>${i.q}x</b> ${i.n} 
+                            <br><small style="color:var(--green)">${i.obs || ''}</small>
+                        </div>`).join('') : 'Vazia') : 'Disponível'}
+                </div>
+                <div style="font-weight:bold; margin-bottom:10px;">${m.aberta ? 'R$ '+parseFloat(m.total || 0).toFixed(2) : ''}</div>
+                ${!m.aberta ? 
+                    `<button class="btn-confirm" onclick="abrirMesa(${m.n})">ABRIR</button>` : 
+                    `<div class="row-btns" style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                        <button class="btn-confirm" style="background:blue; color: white; font-size: 20px;" onclick="prepararAdd(${m.n})">+</button>
+                        <button class="btn-confirm" style="background:green; color: white" onclick="fecharMesa(${m.n})">✔</button>
+                    </div>`
+                }
+            </div>`).join('');
+    });
+
+    window.abrirMesa = async (n) => {
+        const { value: garcom } = await Swal.fire({
+            title: 'Garçom', input: 'select',
+            inputOptions: garcons.reduce((acc, curr) => ({ ...acc, [curr]: curr }), {}),
+            showCancelButton: true
+        });
+        if (garcom) await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { aberta: true, garcom: garcom, itens: [], total: 0 });
+    };
+    
+    window.prepararAdd = (n) => { 
+        mesaAtiva = n; carrinhoTemp = []; renderTemp(); 
+        document.getElementById('titulo-mesa').innerText = `MESA ${n}`; 
+        toggleMenu(true); 
+    };
+
+  window.addItemTemp = async (nome, preco, opcoes, btn) => {
+    let nomeFinal = nome;
+    let precoFinal = preco;
+
+    // Se tiver opções (sabores), abre o modal
+    if (opcoes && opcoes.length > 0) {
+        const inputOptions = {};
+        opcoes.forEach(opt => { inputOptions[opt] = opt; });
+
+        const { value: sabor } = await Swal.fire({
+            title: 'Sabor',
+            input: 'radio',
+            inputOptions: inputOptions,
+            confirmButtonColor: 'var(--gold)',
+            background: '#161618',
+            color: '#fff',
+            inputValidator: (value) => { if (!value) return 'Escolha um sabor!' }
+        });
+
+        if (sabor) {
+            nomeFinal = `${nome} (${sabor})`;
+            if (sabor === "Maracujá") precoFinal = 8.00;
+        } else { return; }
+    }
+
+    // Adiciona ao carrinho
+    carrinhoTemp.push({ n: nomeFinal, p: precoFinal, q: 1, obs: '' });
+    renderTemp();
+
+    // ✅ AVISO VISUAL NO BOTÃO (O "PULO DO GATO")
+    if (btn) {
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i>'; // Muda o + para ✅
+        btn.style.background = '#22c55e'; // Muda para verde
+        btn.style.color = 'white';
+
+        setTimeout(() => {
+            btn.innerHTML = originalContent; // Volta o +
+            btn.style.background = 'var(--gold)'; // Volta o amarelo
+            btn.style.color = 'black';
+        }, 600); // O aviso dura 0.6 segundos
+    }
+};
+
+    window.updateObs = (idx, val) => { carrinhoTemp[idx].obs = val; };
+    window.removeItemTemp = (idx) => { carrinhoTemp.splice(idx, 1); renderTemp(); };
+
+    function renderTemp() {
+        const lista = document.getElementById('lista-temp');
+        if (!lista) return;
+        lista.innerHTML = carrinhoTemp.map((i, idx) => `
+            <div class="item-carrinho">
+                <div style="display:flex; justify-content:space-between">
+                    <b>${i.n}</b>
+                    <button onclick="removeItemTemp(${idx})" style="color:var(--danger); background:none; border:none;"><i class="fas fa-times"></i></button>
+                </div>
+                <input type="text" placeholder="Obs..." class="obs-item-input" onchange="updateObs(${idx}, this.value)" value="${i.obs}">
+            </div>`).join('');
+        document.getElementById('total-temp').innerText = `R$ ${carrinhoTemp.reduce((a, b) => a + (b.p * b.q), 0).toFixed(2)}`;
+    }
+
+    // ✅ CORREÇÃO: enviarCozinha agora usa tipo: "COZINHA" para não aparecer no Delivery
+    window.enviarCozinha = async () => {
+        if(carrinhoTemp.length === 0) return;
+        const m = mesas.find(x => x.n === mesaAtiva);
+        const novosItensMesa = Array.isArray(m.itens) ? [...m.itens] : [];
+        carrinhoTemp.forEach(novo => {
+            const existe = novosItensMesa.find(x => x.n === novo.n && x.obs === novo.obs);
+            if(existe) { existe.q += 1; } else { novosItensMesa.push({...novo}); }
+        });
+        await updateDoc(doc(db, "estado_mesas", `mesa_${mesaAtiva}`), { 
+            itens: novosItensMesa, total: novosItensMesa.reduce((a, b) => a + (b.p * b.q), 0) 
+        });
+
+        // Este documento é apenas para a impressora ler, o tipo "COZINHA" será filtrado no Delivery
+        await addDoc(collection(db, "pedidos"), { 
+            nome: `MESA ${mesaAtiva}`, origem: "MESA", tipo: "COZINHA", status: "aberto",
+            itens: carrinhoTemp, garcom: m.garcom, data: serverTimestamp() 
+        });
+        
+        playSom(); toggleMenu(false);
+        Swal.fire({ title: 'Enviado!', icon: 'success', timer: 800, showConfirmButton: false });
+    };
+
+   window.fecharMesa = async (n) => {
+    const m = mesas.find(x => x.n === n);
+    
+    // ✅ SE A MESA ESTIVER VAZIA: Fecha direto sem pedir pagamento
+    if (!m.itens || m.itens.length === 0) {
+        const { isConfirmed } = await Swal.fire({
+            title: 'Mesa vazia',
+            text: "Deseja apenas liberar esta mesa?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sim, liberar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (isConfirmed) {
+            await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { 
+                aberta: false, 
+                itens: [], 
+                total: 0, 
+                garcom: '' 
+            });
+            Swal.fire({ title: 'Mesa Liberada!', icon: 'success', timer: 800, showConfirmButton: false });
+        }
+        return;
+    }
+
+    // SE TIVER ITENS: Segue o fluxo normal de pagamento
+    const { value: pgt } = await Swal.fire({ 
+        title: 'Fechar Mesa '+n, 
+        input: 'select', 
+        inputOptions: { 'PIX':'PIX', 'Cartão':'Cartão', 'Dinheiro':'Dinheiro' },
+        showCancelButton: true
+    });
+
+    if (pgt) {
+        await addDoc(collection(db, "pedidos"), { 
+            nome: `MESA ${n}`, 
+            origem: "MESA", 
+            status: "finalizado", 
+            total: m.total || 0, 
+            pagamento: pgt, 
+            itens: m.itens, 
+            garcom: m.garcom || 'Geral', 
+            data: serverTimestamp() 
+        });
+        await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { aberta: false, itens: [], total: 0, garcom: '' });
+        playSom(); 
+        Swal.fire('Sucesso', 'Mesa finalizada!', 'success');
+    }
+};
+
+    // ✅ CORREÇÃO: O onSnapshot agora filtra e esconde itens com tipo: "COZINHA"
+   // Monitoramento do Caixa (Delivery + Mesas Fechadas)
+onSnapshot(query(collection(db, "pedidos"), orderBy("data", "desc")), (snap) => {
+    const cont = document.getElementById('orders-container');
+    if (!cont) return;
+    let tPix = 0, tCard = 0, tDin = 0;
+    cont.innerHTML = "";
+    
+    snap.forEach(docSnap => {
+        const p = docSnap.data();
+        const id = docSnap.id;
+        
+        // 1. FILTRO: Não mostra lançamentos internos de cozinha
+        if (p.tipo === "COZINHA") return;
+
+        // 2. CÁLCULO DE TOTAIS PARA O FINANCEIRO
+        const val = parseFloat(p.total || 0);
+        if (p.pagamento === "PIX" || p.pagamento === "Pix") tPix += val;
+        else if (p.pagamento === "Cartão") tCard += val;
+        else if (p.pagamento === "Dinheiro") tDin += val;
+
+       const isMesa = p.nome.includes("MESA");
+const statusColor = p.status === 'recebido' ? '#22c55e' : (p.status === 'saiu' ? '#3b82f6' : 'var(--gold)');
+
+cont.innerHTML += `
+    <div class="order-card" style="border-left: 6px solid ${statusColor}; margin-bottom: 15px; padding: 15px; background: #1a1a1a; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+        <div style="display:flex; justify-content:space-between; align-items: flex-start;">
+            <div>
+                <b style="font-size:1.2rem; color:var(--gold)">${p.nome.toUpperCase()}</b><br>
+                <small style="color:#aaa"><i class="far fa-clock"></i> ${p.data ? new Date(p.data.toDate()).toLocaleTimeString() : 'Agora'}</small>
+            </div>
+            <span class="garcom-tag" style="background:${isMesa ? '#444' : '#25D366'}; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">
+                ${isMesa ? `<i class="fas fa-utensils"></i> ${p.garcom || 'Mesa'}` : `<i class="fab fa-whatsapp"></i> DELIVERY`}
+            </span>
+        </div>
+
+        <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; font-size: 0.9rem; border: 1px solid #333;">
+            ${!isMesa ? `
+                <p style="margin:2px 0;"><b><i class="fas fa-phone"></i> Tel:</b> ${p.telefone || 'N/A'}</p>
+                <p style="margin:2px 0;"><b><i class="fas fa-map-marker-alt"></i> End:</b> ${p.endereco || 'Retirada'}</p>
+                <p style="margin:2px 0;"><b><i class="fas fa-home"></i> Bairro:</b> ${p.bairro || '---'}</p>
+            ` : `<p style="margin:2px 0; color: #aaa;"><i class="fas fa-info-circle"></i>CONSUMO NO LOCAL</p>`}
+            
+            <p style="margin:2px 0;"><b><i class="fas fa-wallet"></i> Pagamento:</b> ${p.pagamento || 'Pendente'} ${p.troco ? `<span style="color:var(--green)">(Troco: ${p.troco})</span>` : ''}</p>
+        </div>
+
+        <div class="mesa-itens-lista" style="border-top: 1px dashed #444; padding-top:10px; color:#eee;">
+            ${Array.isArray(p.itens) ? p.itens.map(i => `
+                <div style="margin-bottom:8px; border-bottom: 1px solid #222; padding-bottom: 4px;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span><b>${i.q}x</b> ${i.n}</span>
+                        <span style="color: #888; font-size: 0.8rem;">R$ ${(i.p * i.q).toFixed(2)}</span>
+                    </div>
+                    ${i.adicionais && i.adicionais.length > 0 ? `
+                        <div style="color:var(--gold); font-size:0.8rem; margin-left:15px; font-style: italic;">
+                            + ${i.adicionais.join(', ')}
+                        </div>
+                    ` : ''}
+                    ${i.obs ? `
+                        <div style="color:var(--green); font-size:0.8rem; margin-left:15px;">
+                            <i class="fas fa-comment-dots"></i> ${i.obs}
+                        </div>
+                    ` : ''}
+                </div>`).join('') : `<p>${p.detalhes || 'Erro ao carregar itens'}</p>`}
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; border-top: 1px solid #333; padding-top:10px;">
+            <b style="font-size:1.2rem; color:var(--gold)">TOTAL: R$ ${val.toFixed(2)}</b>
+            <div style="display:flex; gap:8px;">
+                <button onclick="marcarRecebido('${id}', '${p.telefone}', '${p.nome}')" title="Aceitar/Produção" style="background:var(--green); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; transition: 0.2s;"><i class="fas fa-check"></i></button>
+                <button onclick="despacharPedido('${id}', '${p.telefone}', '${p.nome}')" title="Saiu para Entrega" style="background:var(--blue); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; transition: 0.2s;"><i class="fas fa-motorcycle"></i></button>
+            </div>
+        </div>
+    </div>`;
+    });
+
+    document.getElementById('b-pix').innerText = `R$ ${tPix.toFixed(2)}`;
+    document.getElementById('b-cartao').innerText = `R$ ${tCard.toFixed(2)}`;
+    document.getElementById('b-dinheiro').innerText = `R$ ${tDin.toFixed(2)}`;
+    document.getElementById('b-total').innerText = `R$ ${(tPix + tCard + tDin).toFixed(2)}`;
+
+    if (inicializado && snap.docChanges().some(c => c.type === "added") && somAtivo) playSom();
+    inicializado = true;
+});
+
+    window.marcarRecebido = async (id, tel, nome) => {
+        await updateDoc(doc(db, "pedidos", id), { status: 'recebido' });
+        if(tel && tel !== '' && tel !== 'undefined') window.open(`https://wa.me/55${tel.replace(/\D/g, '')}?text=Pedido em produção!`);
+    };
+
+    window.despacharPedido = async (id, tel, nome) => {
+        await updateDoc(doc(db, "pedidos", id), { status: 'saiu' });
+        if(tel && tel !== '' && tel !== 'undefined') window.open(`https://wa.me/55${tel.replace(/\D/g, '')}?text=Pedido saiu para entrega!`);
+    };
+
+    document.getElementById('btn-limpar-tudo').onclick = async () => {
+        const { value: pass } = await Swal.fire({ 
+            title: 'Limpeza Geral', text: "Apagar TODOS os pedidos do banco?",
+            input: 'password', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'SIM, LIMPAR!'
+        });
+        if(checkPass(pass)) {
+            Swal.fire({ title: 'Limpando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const snap = await getDocs(collection(db, "pedidos"));
+            const promessas = snap.docs.map(d => deleteDoc(doc(db, "pedidos", d.id)));
+            await Promise.all(promessas);
+            Swal.fire('Limpo!', 'O histórico foi zerado.', 'success');
+        } else if(pass) { Swal.fire('Erro', 'Senha incorreta!', 'error'); }
+    };
+
+   const menuCont = document.getElementById('sanfona-menu');
+if (menuCont) {
+    menuCont.innerHTML = "";
+    Object.keys(cardapio).forEach(cat => {
+        let html = `<button class="cat-head" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                        ${cat} <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="cat-content hidden" style="background:#1a1a1a; padding:10px;">`;
+
+        cardapio[cat].forEach(i => {
+            // Prepara as opções para o JavaScript não quebrar
+            const opcoesJSON = i.opcoes ? JSON.stringify(i.opcoes).replace(/"/g, '&quot;') : '[]';
+            
+            html += `<div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center; border-bottom:1px solid #333; padding-bottom:5px;">
+                        <span style="color:white">${i.n} <br><small style="color:var(--gold)">R$ ${i.p.toFixed(2)}</small></span> 
+                        
+                        <button onclick="window.addItemTemp('${i.n}', ${i.p}, ${opcoesJSON}, this)" 
+                                style="background:var(--gold); border:none; border-radius:4px; padding:8px 15px; font-weight:bold; cursor:pointer; transition: 0.2s;">
+                            +
+                        </button>
+                     </div>`;
+        });
+        menuCont.innerHTML += html + `</div>`;
+    });
+}
+</script>
+</body>
+</html>
