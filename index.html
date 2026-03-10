@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -314,9 +313,159 @@
     z-index: 10;
     padding: 10px;
 }
+/* Container da Grade */
+.atendentes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 colunas */
+    gap: 15px;
+    padding: 20px 10px;
+}
+
+/* Botão Individual do Atendente */
+.atendente-btn {
+    background: #212124;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 15px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.atendente-btn:hover {
+    border-color: var(--gold);
+    background: #2a2a2d;
+    transform: translateY(-3px);
+}
+
+/* Avatar com a Inicial */
+.atendente-avatar {
+    width: 30px;
+    height: 30px;
+    background: var(--gold);
+    color: black;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 20px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.atendente-btn span {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 400px) {
+    .atendentes-grid {
+        grid-template-columns: 1fr;
+    }
+}
+/* Grid de Pagamento no SweetAlert */
+.pagamento-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.pgt-btn {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 15px 25px;
+    background: #2a2a2a;
+    border: 2px solid #444;
+    border-radius: 12px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pgt-btn:hover {
+    background: #333;
+    border-color: var(--green);
+    transform: scale(1.02);
+}
+
+.pgt-btn i {
+    font-size: 1.5rem;
+    margin-right: 20px;
+    color: var(--green);
+}
+
+.pgt-btn span {
+    font-size: 1.1rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+/* No celular, os botões ficam um pouco menores para caber melhor */
+@media (max-width: 480px) {
+    .pgt-btn { padding: 12px 20px; }
+}
+/* Área de rolagem para não esticar o celular */
+.modal-scroll-area {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Customização da barra de rolagem */
+.modal-scroll-area::-webkit-scrollbar { width: 5px; }
+.modal-scroll-area::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+.linha-add {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #222;
+}
+
+.info-add { display: flex; flex-direction: column; text-align: left; }
+.nome-add { font-weight: bold; color: #fff; font-size: 0.95rem; }
+.preco-add { color: var(--gold); font-size: 0.85rem; }
+
+.controles-add { display: flex; align-items: center; gap: 15px; }
+
+.btn-menor, .btn-maior {
+    width: 32px; height: 32px;
+    border-radius: 50%; border: none;
+    font-size: 1.2rem; font-weight: bold;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+
+.btn-menor { background: #444; color: #fff; }
+.btn-maior { background: var(--green); color: #fff; }
+
+.qtd-numero { font-weight: bold; font-size: 1.1rem; min-width: 20px; text-align: center; }
+
+/* Grid de remoção simplificado */
+.grid-remocao {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+.item-rem {
+    background: #222; padding: 8px; border-radius: 5px; font-size: 0.85rem;
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+}
+.check-rem { transform: scale(1.2); }
+.swal2-container {
+    z-index: 99999 !important;
+}
     </style>
 </head>
-
+✅
 <body>
     <audio id="bell" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3" preload="auto"></audio>
 
@@ -529,41 +678,117 @@
         window.toggleMenu = (s) => document.getElementById('menu-lateral').classList.toggle('active', s);
 
         onSnapshot(collection(db, "estado_mesas"), (snap) => {
-            mesas = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.n - b.n);
-            const container = document.getElementById('container-mesas');
-            if (!container) return;
-            container.innerHTML = mesas.map(m => `
-            <div class="mesa-card ${m.aberta ? 'aberta' : ''}">
-                <div class="mesa-header">
-                    <span style="font-weight:800">MESA ${m.n}</span>
-                    ${m.aberta ? `<span class="garcom-tag">${m.garcom || 'Geral'}</span>` : ''}
-                </div>
-                <div class="mesa-itens-lista">
-                    ${m.aberta ? (Array.isArray(m.itens) && m.itens.length > 0 ? m.itens.map(i => `
-                        <div class="mesa-item-doc">
-                            <b>${i.q}x</b> ${i.n} 
-                            <br><small style="color:var(--green)">${i.obs || ''}</small>
-                        </div>`).join('') : 'Vazia') : 'Disponível'}
-                </div>
-                <div style="font-weight:bold; margin-bottom:10px;">${m.aberta ? 'R$ ' + parseFloat(m.total || 0).toFixed(2) : ''}</div>
-                ${!m.aberta ?
-                    `<button class="btn-confirm" onclick="abrirMesa(${m.n})">ABRIR</button>` :
-                    `<div class="row-btns" style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                        <button class="btn-confirm" style="background:blue; color: white; font-size: 20px;" onclick="prepararAdd(${m.n})">+</button>
-                        <button class="btn-confirm" style="background:green; color: white" onclick="fecharMesa(${m.n})">✔</button>
-                    </div>`
-                }
-            </div>`).join('');
-        });
+    mesas = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.n - b.n);
+    const container = document.getElementById('container-mesas');
+    if (!container) return;
+    
+    container.innerHTML = mesas.map(m => `
+    <div class="mesa-card ${m.aberta ? 'aberta' : ''}" style="position: relative; min-height: 180px; display: flex; flex-direction: column;">
+        
+        ${m.aberta ? `
+            <button onclick="window.cancelarMesa(${m.n})" 
+                style="position:absolute; top:12px; right:12px; background:rgba(239, 68, 68, 0.15); border:none; color:#ef4444; width:30px; height:30px; border-radius:50%; cursor:pointer; z-index:10; display:flex; align-items:center; justify-content:center;">
+                <i class="fas fa-times"></i>
+            </button>
+        ` : ''}
 
-        window.abrirMesa = async (n) => {
-            const { value: garcom } = await Swal.fire({
-                title: 'Garçom', input: 'select',
-                inputOptions: garcons.reduce((acc, curr) => ({ ...acc, [curr]: curr }), {}),
-                showCancelButton: true
-            });
-            if (garcom) await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { aberta: true, garcom: garcom, itens: [], total: 0 });
-        };
+        <div class="mesa-header" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-bottom: 12px;">
+            <span style="font-weight:800; font-size: 1.1rem; color: #fff;">MESA ${m.n}</span>
+            
+            ${m.aberta ? `
+                <span class="garcom-tag" style="font-size: 0.75rem; padding: 2px 8px; background: #333; border-radius: 4px; color: var(--gold); border: 1px solid rgba(255,215,0,0.2);">
+                    <i class="fas fa-user-edit" style="font-size: 0.7rem; margin-right: 4px;"></i>${m.garcom || 'Geral'}
+                </span>
+            ` : '<span style="font-size: 0.75rem; color: #666;">Disponível</span>'}
+        </div>
+
+        <div class="mesa-itens-lista" style="flex-grow: 1;">
+            ${m.aberta ? (Array.isArray(m.itens) && m.itens.length > 0 ? m.itens.map(i => `
+                <div class="mesa-item-doc">
+                    <b>${i.q}x</b> ${i.n} 
+                    <br><small style="color:var(--green)">${i.obs || ''}</small>
+                </div>`).join('') : '<div style="color:#555; font-style:italic; font-size:0.9rem;">Mesa vazia...</div>') : ''}
+        </div>
+        
+        <div style="font-weight:bold; margin: 10px 0; color:var(--gold); font-size: 1.1rem;">
+            ${m.aberta ? 'R$ ' + parseFloat(m.total || 0).toFixed(2) : ''}
+        </div>
+
+        ${!m.aberta ?
+            `<button class="btn-confirm" onclick="abrirMesa(${m.n})">ABRIR MESA</button>` :
+            `<div class="row-btns" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                <button class="btn-confirm" style="background:#2a2a2a; color: white; font-size: 20px; border: 1px solid #444;" onclick="prepararAdd(${m.n})">+</button>
+                <button class="btn-confirm" style="background:green; color: white; font-size: 25px" onclick="fecharMesa(${m.n})">✔︎</button>
+            </div>`
+        }
+    </div>`).join('');
+});
+//cancelar mesas
+window.cancelarMesa = async (n) => {
+    const { isConfirmed } = await Swal.fire({
+        title: `LIMPAR MESA ${n}?`,
+        text: "Isso apagará o consumo atual sem enviar para o caixa.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#333',
+        confirmButtonText: 'Sim, limpar mesa',
+        cancelButtonText: 'Cancelar',
+        background: '#161618',
+        color: '#fff'
+    });
+
+    if (isConfirmed) {
+        // Reseta a mesa
+        await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { 
+            aberta: false, itens: [], total: 0, garcom: '' 
+        });
+        
+        // (Opcional) Remove pedidos de cozinha dessa mesa para não poluir
+        const pedidosRef = collection(db, "pedidos");
+        const q = query(pedidosRef, where("nome", "==", `MESA ${n}`), where("tipo", "==", "COZINHA"));
+        const snap = await getDocs(q);
+        snap.forEach(async (d) => await deleteDoc(doc(db, "pedidos", d.id)));
+
+        Swal.fire({ title: 'Mesa liberada!', icon: 'success', timer: 800, showConfirmButton: false });
+    }
+};
+       window.abrirMesa = async (n) => {
+    // Geramos o HTML dos botões dos atendentes dinamicamente
+    const botoesHtml = garcons.map(g => `
+        <button type="button" class="atendente-btn" onclick="Swal.clickConfirm(); window._tempGarcom='${g}'">
+            <div class="atendente-avatar">${g.charAt(0)}</div>
+            <span>${g}</span>
+        </button>
+    `).join('');
+
+    const { isConfirmed } = await Swal.fire({
+        title: 'Selecione o Atendente',
+        html: `<div class="atendentes-grid">${botoesHtml}</div>`,
+        showConfirmButton: false, // O fechamento ocorre ao clicar no botão
+        showCancelButton: true,
+        cancelButtonText: 'Cancelar',
+        background: '#161618',
+        color: '#fff',
+        customClass: {
+            container: 'modal-moderno-atendente'
+        },
+        preConfirm: () => {
+            return window._tempGarcom;
+        }
+    });
+
+    if (isConfirmed && window._tempGarcom) {
+        const garcomFinal = window._tempGarcom;
+        await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { 
+            aberta: true, 
+            garcom: garcomFinal, 
+            itens: [], 
+            total: 0 
+        });
+        delete window._tempGarcom; // Limpa variável temporária
+    }
+};
 
         window.prepararAdd = (n) => {
             mesaAtiva = n; carrinhoTemp = []; renderTemp();
@@ -572,27 +797,15 @@
         };
 
         // Prepara a mesa e aplica o destaque visual
-        window.prepararAdd = (n) => {
-            mesaAtiva = n;
-            carrinhoTemp = [];
-            renderTemp();
+       window.prepararAdd = (n) => {
+    mesaAtiva = n;
+    carrinhoTemp = [];
+    renderTemp();
 
-            // 1. Aplica destaque visual no card da mesa
-            document.querySelectorAll('.mesa-card').forEach(card => {
-                // Verifica se o texto do card contém o número da mesa ativa
-                if (card.querySelector('.mesa-header').innerText.includes(`MESA ${n}`)) {
-                    card.classList.add('em-destaque');
-                } else {
-                    card.classList.remove('em-destaque');
-                }
-            });
-
-            // 2. Escurece o fundo
-            document.body.classList.add('mesa-em-foco');
-
-            document.getElementById('titulo-mesa').innerText = `MESA ${n}`;
-            toggleMenu(true);
-        };
+    // Apenas atualiza o título e abre o menu
+    document.getElementById('titulo-mesa').innerText = `PEDIDO MESA ${n}`;
+    toggleMenu(true);
+};
 
         // Gerencia o menu lateral e remove os destaques ao fechar
         window.toggleMenu = (s) => {
@@ -608,46 +821,87 @@
         };
 
         // Adiciona itens mantendo o foco na mesa
-        window.addItemTemp = async (nome, preco, opcoes, btn) => {
-            let nomeFinal = nome;
-            let precoFinal = preco;
+     window.addItemTemp = async (nome, preco, opcoes, btn) => {
+    let precoBase = preco;
+    const listaAdicionais = [
+        { n: "Ovo", p: 2.00 },
+        { n: "Carne Hambúrguer", p: 6.00 },
+        { n: "Blend Bovino 160g", p: 10.00 },
+        { n: "Bacon / Calabresa", p: 6.00 },
+        { n: "Filé Frango/Gado", p: 10.00 }
+    ];
 
-            if (opcoes && opcoes.length > 0) {
-                const inputOptions = {};
-                opcoes.forEach(opt => { inputOptions[opt] = opt; });
+    // Função interna para mostrar o aviso (Toast)
+    const mostrarAviso = () => {
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 1000,
+            background: '#1a1a1a',
+            color: '#fff',
+            iconColor: '#22c55e'
+        });
+        Toast.fire({ icon: 'success', title: 'Adicionado' });
+    };
 
-                const { value: sabor } = await Swal.fire({
-                    title: 'Sabor',
-                    input: 'radio',
-                    inputOptions: inputOptions,
-                    confirmButtonColor: 'var(--gold)',
-                    background: '#161618',
-                    color: '#fff',
-                    inputValidator: (value) => { if (!value) return 'Escolha um sabor!' }
-                });
-
-                if (sabor) {
-                    nomeFinal = `${nome} (${sabor})`;
-                    if (sabor === "Maracujá") precoFinal = 8.00;
-                } else { return; }
+    // CASO 1: Hambúrgueres (Abre modal)
+    if (nome.includes("Burguer") || nome.includes("Zap")) {
+        const { value: resultado } = await Swal.fire({
+            title: 'ADICIONAIS',
+            background: '#161618',
+            color: '#fff',
+            html: `
+                <div class="modal-scroll-area">
+                    <div class="lista-adicionais-vertical">
+                        ${listaAdicionais.map((add, index) => `
+                            <div class="linha-add">
+                                <div class="info-add">
+                                    <span class="nome-add">${add.n}</span>
+                                    <span class="preco-add">R$ ${add.p.toFixed(2)}</span>
+                                </div>
+                                <div class="controles-add">
+                                    <button type="button" class="btn-menor" onclick="alterarQtdAdd(${index}, -1)">-</button>
+                                    <span id="qtd-add-${index}" class="qtd-numero">0</span>
+                                    <button type="button" class="btn-maior" onclick="alterarQtdAdd(${index}, 1)">+</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `,
+            didOpen: () => {
+                window._tempSelectedAdds = listaAdicionais.map(a => ({...a, q: 0}));
+                window.alterarQtdAdd = (idx, delta) => {
+                    const item = window._tempSelectedAdds[idx];
+                    item.q = Math.max(0, item.q + delta);
+                    document.getElementById(`qtd-add-${idx}`).innerText = item.q;
+                };
+            },
+            showCancelButton: true,
+            confirmButtonText: 'CONFIRMAR',
+            confirmButtonColor: 'var(--green)',
+            preConfirm: () => {
+                return { adds: window._tempSelectedAdds.filter(a => a.q > 0) };
             }
+        });
 
-            carrinhoTemp.push({ n: nomeFinal, p: precoFinal, q: 1, obs: '' });
+        if (resultado) {
+            let valorExtra = resultado.adds.reduce((total, a) => total + (a.p * a.q), 0);
+            let descAdds = resultado.adds.map(a => `+${a.q} ${a.n}`).join(', ');
+            
+            carrinhoTemp.push({ n: nome, p: precoBase + valorExtra, q: 1, obs: descAdds.trim() });
             renderTemp();
-
-            if (btn) {
-                const originalContent = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-check"></i>';
-                btn.style.background = '#22c55e';
-                btn.style.color = 'white';
-
-                setTimeout(() => {
-                    btn.innerHTML = originalContent;
-                    btn.style.background = 'var(--gold)';
-                    btn.style.color = 'black';
-                }, 600);
-            }
-        };
+            setTimeout(mostrarAviso, 100); // Pequeno atraso para o Toast aparecer após o fechamento do modal
+        }
+    } 
+    // CASO 2: Outros itens (Bebidas/Porções - Direto)
+    else {
+        carrinhoTemp.push({ n: nome, p: preco, q: 1, obs: '' });
+        renderTemp();
+        mostrarAviso();
+    }
+};
 
         window.updateObs = (idx, val) => { carrinhoTemp[idx].obs = val; };
         window.removeItemTemp = (idx) => { carrinhoTemp.splice(idx, 1); renderTemp(); };
@@ -667,78 +921,136 @@
         }
 
         // ✅ CORREÇÃO: enviarCozinha agora usa tipo: "COZINHA" para não aparecer no Delivery
-        window.enviarCozinha = async () => {
-            if (carrinhoTemp.length === 0) return;
-            const m = mesas.find(x => x.n === mesaAtiva);
-            const novosItensMesa = Array.isArray(m.itens) ? [...m.itens] : [];
-            carrinhoTemp.forEach(novo => {
-                const existe = novosItensMesa.find(x => x.n === novo.n && x.obs === novo.obs);
-                if (existe) { existe.q += 1; } else { novosItensMesa.push({ ...novo }); }
-            });
-            await updateDoc(doc(db, "estado_mesas", `mesa_${mesaAtiva}`), {
-                itens: novosItensMesa, total: novosItensMesa.reduce((a, b) => a + (b.p * b.q), 0)
-            });
+       window.enviarCozinha = async () => {
+    if (carrinhoTemp.length === 0) return;
+    
+    // Desabilita o botão ou mostra carregando para evitar cliques duplos
+    Swal.showLoading(); 
 
-            // Este documento é apenas para a impressora ler, o tipo "COZINHA" será filtrado no Delivery
-            await addDoc(collection(db, "pedidos"), {
-                nome: `MESA ${mesaAtiva}`, origem: "MESA", tipo: "COZINHA", status: "aberto",
-                itens: carrinhoTemp, garcom: m.garcom, data: serverTimestamp()
-            });
+    const m = mesas.find(x => x.n === mesaAtiva);
+    const novosItensMesa = Array.isArray(m.itens) ? [...m.itens] : [];
 
-            playSom(); toggleMenu(false);
-            Swal.fire({ title: 'Enviado!', icon: 'success', timer: 800, showConfirmButton: false });
-        };
+    // 1. Atualiza o estado da mesa (Consumo Acumulado)
+    carrinhoTemp.forEach(novo => {
+        const existe = novosItensMesa.find(x => x.n === novo.n && x.obs === novo.obs);
+        if (existe) { 
+            existe.q += novo.q; // Soma a quantidade vinda do carrinho
+        } else { 
+            novosItensMesa.push({ ...novo }); 
+        }
+    });
 
-        window.fecharMesa = async (n) => {
-            const m = mesas.find(x => x.n === n);
+    const novoTotal = novosItensMesa.reduce((a, b) => a + (b.p * b.q), 0);
 
-            // ✅ SE A MESA ESTIVER VAZIA: Fecha direto sem pedir pagamento
-            if (!m.itens || m.itens.length === 0) {
-                const { isConfirmed } = await Swal.fire({
-                    title: 'Mesa vazia',
-                    text: "Deseja apenas liberar esta mesa?",
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'Sim, liberar',
-                    cancelButtonText: 'Cancelar'
-                });
+    // 2. Grava no banco de dados
+    try {
+        await updateDoc(doc(db, "estado_mesas", `mesa_${mesaAtiva}`), {
+            itens: novosItensMesa, 
+            total: novoTotal
+        });
 
-                if (isConfirmed) {
-                    await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), {
-                        aberta: false,
-                        itens: [],
-                        total: 0,
-                        garcom: ''
-                    });
-                    Swal.fire({ title: 'Mesa Liberada!', icon: 'success', timer: 800, showConfirmButton: false });
-                }
-                return;
-            }
+        // Este documento dispara o servidor da impressora (Node.js)
+        await addDoc(collection(db, "pedidos"), {
+            nome: `MESA ${mesaAtiva}`, 
+            origem: "MESA", 
+            tipo: "COZINHA", 
+            status: "aberto",
+            itens: [...carrinhoTemp], // Envia apenas o que foi pedido agora
+            garcom: m.garcom || 'Geral', 
+            data: serverTimestamp()
+        });
 
-            // SE TIVER ITENS: Segue o fluxo normal de pagamento
-            const { value: pgt } = await Swal.fire({
-                title: 'Fechar Mesa ' + n,
-                input: 'select',
-                inputOptions: { 'PIX': 'PIX', 'Cartão': 'Cartão', 'Dinheiro': 'Dinheiro' },
-                showCancelButton: true
-            });
+        // 3. Limpa tudo e fecha
+        carrinhoTemp = []; // Limpa o carrinho temporário após enviar
+        playSom(); 
+        toggleMenu(false);
+        
+        Swal.fire({ title: 'Enviado para Cozinha!', icon: 'success', timer: 1000, showConfirmButton: false });
+    } catch (error) {
+        console.error("Erro ao enviar:", error);
+        Swal.fire('Erro', 'Não foi possível enviar o pedido.', 'error');
+    }
+};
 
-            if (pgt) {
-                await addDoc(collection(db, "pedidos"), {
-                    nome: `MESA ${n}`,
-                    origem: "MESA",
-                    status: "finalizado",
-                    total: m.total || 0,
-                    pagamento: pgt,
-                    itens: m.itens,
-                    garcom: m.garcom || 'Geral',
-                    data: serverTimestamp()
-                });
-                await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { aberta: false, itens: [], total: 0, garcom: '' });
-                playSom();
-                Swal.fire('Sucesso', 'Mesa finalizada!', 'success');
-            }
-        };
+      window.fecharMesa = async (n) => {
+    const m = mesas.find(x => x.n === n);
+
+    // 1. SE A MESA ESTIVER VAZIA: Fecha direto
+    if (!m.itens || m.itens.length === 0) {
+        const { isConfirmed } = await Swal.fire({
+            title: 'Mesa vazia',
+            text: "Deseja apenas liberar esta mesa?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sim, liberar',
+            cancelButtonText: 'Cancelar',
+            background: '#161618', color: '#fff'
+        });
+        if (isConfirmed) {
+            await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { aberta: false, itens: [], total: 0, garcom: '' });
+        }
+        return;
+    }
+
+    // 2. SE TIVER ITENS: Abre o seletor moderno de pagamento
+    const { value: pgt } = await Swal.fire({
+        title: `PAGAMENTO - MESA ${n}`,
+        html: `
+            <p style="color:var(--gold); font-size:1.4rem; font-weight:bold; margin-bottom:20px;">
+                TOTAL: R$ ${parseFloat(m.total).toFixed(2)}
+            </p>
+            <div class="pagamento-grid">
+                <button type="button" class="pgt-btn" onclick="Swal.clickConfirm(); window._tempPgt='PIX'">
+                    <i class="fas fa-qrcode"></i>
+                    <span>PIX</span>
+                </button>
+                <button type="button" class="pgt-btn" onclick="Swal.clickConfirm(); window._tempPgt='Cartão'">
+                    <i class="fas fa-credit-card"></i>
+                    <span>CARTÃO</span>
+                </button>
+                <button type="button" class="pgt-btn" onclick="Swal.clickConfirm(); window._tempPgt='Dinheiro'">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>DINHEIRO</span>
+                </button>
+            </div>
+        `,
+        showConfirmButton: false,
+        showCancelButton: true,
+        cancelButtonText: 'CANCELAR',
+        background: '#161618',
+        color: '#fff',
+        customClass: { container: 'modal-pagamento' },
+        preConfirm: () => { return window._tempPgt; }
+    });
+
+    if (window._tempPgt) {
+        const pgtFinal = window._tempPgt;
+        delete window._tempPgt; // Limpa variável
+
+        await addDoc(collection(db, "pedidos"), {
+            nome: `MESA ${n}`,
+            origem: "MESA",
+            status: "finalizado",
+            total: m.total || 0,
+            pagamento: pgtFinal,
+            itens: m.itens,
+            garcom: m.garcom || 'Geral',
+            data: serverTimestamp()
+        });
+
+        await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { aberta: false, itens: [], total: 0, garcom: '' });
+        playSom();
+        
+        Swal.fire({
+            title: 'Finalizado!',
+            text: `Mesa ${n} paga via ${pgtFinal}`,
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    }
+};
+       
 
         // Monitoramento do Caixa (Delivery + Mesas Fechadas)
         onSnapshot(query(collection(db, "pedidos"), orderBy("data", "desc")), (snap) => {
