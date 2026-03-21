@@ -1258,7 +1258,15 @@ window.cancelarMesa = async (n) => {
 
             doc.save(`balanco_zaplanche_${dataHora.replace(/[/ :]/g, '_')}.pdf`);
         };
-
+// Bloqueios de segurança
+  document.addEventListener('keydown', function (e) {
+    if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) { e.preventDefault(); }
+    if (e.key === 'F12') { e.preventDefault(); }
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.ctrlKey && event.shiftKey && event.key === 'I') { event.preventDefault(); }
+  });
+  document.addEventListener('contextmenu', function (event) { event.preventDefault(); });
     </script>
 </body>
 
