@@ -463,6 +463,24 @@
 .swal2-container {
     z-index: 99999 !important;
 }
+.pagamento-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+}
+.pgt-btn {
+    background: #2a2a2a;
+    border: 1px solid #444;
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.pgt-btn:hover {
+    background: var(--gold);
+    color: black;
+}
     </style>
 </head>
 <body>
@@ -533,8 +551,19 @@
             <h4>💰CARRINHO:</h4>
             <div id="lista-temp" style="margin:10px 0;"></div>
             <h3 id="total-temp" style="margin:15px 0; color:var(--gold)">R$ 0,00</h3>
+            <!-- <div id="areaVozMenu" style="padding: 15px; background: #1a1a1a; border-radius: 10px; margin-bottom: 10px; border: 1px solid #333;">
+    <p style="font-size: 12px; color: #aaa; margin-bottom: 5px;">🎙️ Pedido Rápido por Voz</p>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <button id="btnVozMenu" onclick="iniciarEscutaVoz()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #ff4757; color: white; font-weight: bold; cursor: pointer;">
+            CLIQUE PARA FALAR
+        </button>
+        <div id="statusVoz" style="width: 12px; height: 12px; border-radius: 50%; background: #333;"></div>
+    </div> -->
+    <p id="textoCapturado" style="font-size: 13px; color: #2ed573; margin-top: 8px; font-style: italic;"></p>
+</div>
             <button class="btn-confirm" onclick="enviarCozinha()">ENVIAR PARA COZINHA</button>
         </div>
+        
     </div>
 
     <audio id="audio-bip" preload="auto">
@@ -543,22 +572,23 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import {
-            getFirestore,
-            initializeFirestore,
-            memoryLocalCache,
-            collection,
-            onSnapshot,
-            query,
-            orderBy,
-            doc,
-            updateDoc,
-            deleteDoc,
-            getDocs,
-            setDoc,
-            addDoc,
-            serverTimestamp
-        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import {
+    getFirestore,
+    initializeFirestore,
+    memoryLocalCache,
+    collection,
+    onSnapshot,
+    query,
+    orderBy,
+    doc,
+    getDoc,      // <-- ADICIONE ESTE AQUI (Singular)
+    updateDoc,
+    deleteDoc,
+    getDocs,     // (Este você já tem, é para listas)
+    setDoc,
+    addDoc,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"; // Verifique se a versão é essa mesma que você usa
 
         const firebaseConfig = {
             apiKey: "AIzaSyDRj1Cj0o1z9u7fS9InPlSlqvmcetMmMUU",
@@ -600,7 +630,8 @@
                 { n: "Porção Batata Frita", p: 17.00 }
             ],
             "🥤 BEBIDAS": [
-                { n: "Suco Acerola/Goiaba", p: 7.00 },
+                { n: "Suco Acerola", p: 7.00 },
+                { n: "Suco Goiaba", p: 7.00 },
                 { n: "Suco Maracujá", p: 8.00 },
                 { n: "Refrigerante Lata", p: 6.00 },
                 { n: "Refrigerante 1 Litro", p: 10.00 },
@@ -724,6 +755,116 @@
         }
     </div>`).join('');
 });
+
+let timerVoz; // Variável para controlar o tempo de silêncio
+
+window.iniciarEscutaVoz = function() {
+    const btn = document.getElementById('btnVozMenu');
+    const textoCapturado = document.getElementById('textoCapturado');
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!Recognition) return alert("Navegador sem suporte.");
+
+    const rec = new Recognition();
+    rec.lang = 'pt-BR';
+    rec.continuous = true; // Permite falar várias coisas
+    rec.interimResults = true; // Ouve em tempo real, mas vamos filtrar no final
+
+    rec.onstart = () => {
+        btn.innerText = "🛑 OUVINDO... (FALE E PARE)";
+        btn.style.background = "#2ed573";
+        textoCapturado.innerText = "Pode falar o pedido completo...";
+    };
+
+    rec.onresult = (event) => {
+        // 1. Pega tudo o que foi falado até agora na frase atual
+        let falaCompleta = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            falaCompleta += event.results[i][0].transcript;
+        }
+
+        textoCapturado.innerText = "Processando: " + falaCompleta;
+
+        // 2. REGRAS DE OURO: Limpa o cronômetro toda vez que você fala algo novo
+        clearTimeout(timerVoz);
+
+        // 3. Só processa DE VERDADE após 1.2 segundos de silêncio total
+        timerVoz = setTimeout(() => {
+            processarComandoVozFinal(falaCompleta.toLowerCase());
+            rec.stop(); // Para o microfone após o pedido ser entendido
+        }, 1200);
+    };
+
+    rec.onend = () => {
+        btn.innerText = "CLIQUE PARA FALAR";
+        btn.style.background = "#ff4757";
+    };
+
+    rec.start();
+};
+
+function processarComandoVozFinal(texto) {
+    const fala = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    let itensDetectadosNestaFrase = new Set(); 
+
+    // Mapa de números por extenso para converter em algarismos
+    const numerosExtenso = { "um": 1, "dois": 2, "tres": 3, "quatro": 4, "cinco": 5 };
+
+    Object.keys(cardapio).forEach(categoria => {
+        cardapio[categoria].forEach(produto => {
+            const nomeProdOriginal = produto.n.toLowerCase();
+            const nomeProdLimpo = nomeProdOriginal.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            
+            if ((fala.includes(nomeProdLimpo) || nomeProdLimpo.includes(fala)) && !itensDetectadosNestaFrase.has(produto.n)) {
+                
+                // --- LÓGICA DE QUANTIDADE ---
+                let quantidade = 1; // Padrão é 1
+                
+                // Tenta encontrar um número encostado no nome do produto (ex: "2 zap" ou "dois zap")
+                const palavras = fala.split(" ");
+                const indexProduto = palavras.findIndex(p => nomeProdLimpo.includes(p));
+                
+                if (indexProduto > 0) {
+                    const termoAnterior = palavras[indexProduto - 1];
+                    // Verifica se é número (2) ou extenso (dois)
+                    if (!isNaN(termoAnterior)) {
+                        quantidade = parseInt(termoAnterior);
+                    } else if (numerosExtenso[termoAnterior]) {
+                        quantidade = numerosExtenso[termoAnterior];
+                    }
+                }
+                // ----------------------------
+
+                const preco = parseFloat(produto.p) || 0;
+                const itemNoCarrinho = carrinhoTemp.find(i => i.n === produto.n);
+
+                if (itemNoCarrinho) {
+                    itemNoCarrinho.q += quantidade; // Adiciona a quantidade falada
+                } else {
+                    carrinhoTemp.push({
+                        n: produto.n,
+                        p: preco,
+                        q: quantidade,
+                        obs: ""
+                    });
+                }
+
+                itensDetectadosNestaFrase.add(produto.n);
+                console.log(`✅ Reconhecido: ${quantidade}x ${produto.n}`);
+            }
+        });
+    });
+
+    if (itensDetectadosNestaFrase.size > 0) {
+        document.getElementById('audio-bip').play().catch(() => {});
+        document.getElementById('textoCapturado').innerText = "✅ Itens adicionados!";
+        if (typeof atualizarCarrinho === "function") {
+            atualizarCarrinho(); 
+        }
+    } else {
+        document.getElementById('textoCapturado').innerText = "❓ Não achei: '" + texto + "' no menu.";
+    }
+}
 //cancelar mesas
 window.cancelarMesa = async (n) => {
     const { isConfirmed } = await Swal.fire({
@@ -973,85 +1114,97 @@ window.cancelarMesa = async (n) => {
     }
 };
 
-      window.fecharMesa = async (n) => {
-    const m = mesas.find(x => x.n === n);
-
-    // 1. SE A MESA ESTIVER VAZIA: Fecha direto
-    if (!m.itens || m.itens.length === 0) {
-        const { isConfirmed } = await Swal.fire({
-            title: 'Mesa vazia',
-            text: "Deseja apenas liberar esta mesa?",
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Sim, liberar',
-            cancelButtonText: 'Cancelar',
-            background: '#161618', color: '#fff'
-        });
-        if (isConfirmed) {
-            await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { aberta: false, itens: [], total: 0, garcom: '' });
-        }
-        return;
-    }
-
-    // 2. SE TIVER ITENS: Abre o seletor moderno de pagamento
-    const { value: pgt } = await Swal.fire({
-        title: `PAGAMENTO - MESA ${n}`,
-        html: `
-            <p style="color:var(--gold); font-size:1.4rem; font-weight:bold; margin-bottom:20px;">
-                TOTAL: R$ ${parseFloat(m.total).toFixed(2)}
-            </p>
-            <div class="pagamento-grid">
-                <button type="button" class="pgt-btn" onclick="Swal.clickConfirm(); window._tempPgt='PIX'">
-                    <i class="fas fa-qrcode"></i>
-                    <span>PIX</span>
-                </button>
-                <button type="button" class="pgt-btn" onclick="Swal.clickConfirm(); window._tempPgt='Cartão'">
-                    <i class="fas fa-credit-card"></i>
-                    <span>CARTÃO</span>
-                </button>
-                <button type="button" class="pgt-btn" onclick="Swal.clickConfirm(); window._tempPgt='Dinheiro'">
-                    <i class="fas fa-money-bill-wave"></i>
-                    <span>DINHEIRO</span>
-                </button>
-            </div>
-        `,
-        showConfirmButton: false,
-        showCancelButton: true,
-        cancelButtonText: 'CANCELAR',
-        background: '#161618',
-        color: '#fff',
-        customClass: { container: 'modal-pagamento' },
-        preConfirm: () => { return window._tempPgt; }
-    });
-
-    if (window._tempPgt) {
-        const pgtFinal = window._tempPgt;
-        delete window._tempPgt; // Limpa variável
-
-        await addDoc(collection(db, "pedidos"), {
-            nome: `MESA ${n}`,
-            origem: "MESA",
-            status: "finalizado",
-            total: m.total || 0,
-            pagamento: pgtFinal,
-            itens: m.itens,
-            garcom: m.garcom || 'Geral',
-            data: serverTimestamp()
-        });
-
-        await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { aberta: false, itens: [], total: 0, garcom: '' });
-        playSom();
+  window.fecharMesa = async (n) => {
+    try {
+        const mesaDoc = doc(db, "estado_mesas", `mesa_${n}`);
+        const snapMesa = await getDoc(mesaDoc);
         
-        Swal.fire({
-            title: 'Finalizado!',
-            text: `Mesa ${n} paga via ${pgtFinal}`,
-            icon: 'success',
-            timer: 1500,
-            showConfirmButton: false
+        if (!snapMesa.exists()) {
+            Swal.fire('Erro', 'Mesa não encontrada no sistema.', 'error');
+            return;
+        }
+
+        const m = snapMesa.data();
+        if (!m || !m.aberta) {
+            Swal.fire('Aviso', 'Esta mesa já consta como fechada.', 'info');
+            return;
+        }
+
+        const totalRestante = parseFloat(m.total || 0);
+
+        const { value: pgtInfo } = await Swal.fire({
+            title: `FECHAR MESA ${n}`,
+            html: `
+                <div style="color:var(--gold); font-size:1.5rem; font-weight:bold; margin-bottom:10px;">
+                    TOTAL: R$ ${totalRestante.toFixed(2)}
+                </div>
+                <input type="number" id="valor-pagar" class="swal2-input" style="text-align:center;" value="${totalRestante.toFixed(2)}">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top:15px;">
+                    <button onclick="window._metodo='PIX'; Swal.clickConfirm()" style="padding:15px; background:#2a2a2a; color:white; border:1px solid #444; border-radius:8px; cursor:pointer; font-weight:bold;">PIX</button>
+                    <button onclick="window._metodo='Cartão'; Swal.clickConfirm()" style="padding:15px; background:#2a2a2a; color:white; border:1px solid #444; border-radius:8px; cursor:pointer; font-weight:bold;">CARTÃO</button>
+                    <button onclick="window._metodo='Dinheiro'; Swal.clickConfirm()" style="padding:15px; background:#2a2a2a; color:white; border:1px solid #444; border-radius:8px; cursor:pointer; font-weight:bold;">DINHEIRO</button>
+                    <button onclick="window._metodo='FUNCIONARIO'; Swal.clickConfirm()" style="padding:15px; background:#4b2185; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">FUNCIONÁRIO</button>
+                </div>
+            `,
+            showConfirmButton: false,
+            showCancelButton: true,
+            cancelButtonText: 'CANCELAR',
+            background: '#161618',
+            color: '#fff',
+            preConfirm: () => {
+                const valorDigitado = parseFloat(document.getElementById('valor-pagar').value);
+                if (isNaN(valorDigitado) || valorDigitado <= 0 || valorDigitado > (totalRestante + 0.10)) {
+                    Swal.showValidationMessage('Valor inválido ou acima do total');
+                    return false;
+                }
+                if (!window._metodo) {
+                    Swal.showValidationMessage('Escolha uma forma de pagamento');
+                    return false;
+                }
+                return { valor: valorDigitado, metodo: window._metodo };
+            }
         });
+
+        if (pgtInfo) {
+            const { valor, metodo } = pgtInfo;
+            
+            // --- O SEGREDO ESTÁ AQUI: Enviando origem e status para o servidor imprimir ---
+            await addDoc(collection(db, "pedidos"), {
+                nome: `MESA ${n}${valor < (totalRestante - 0.10) ? ' (PARCIAL)' : ''}`,
+                origem: "MESA",        // Adicionado: Necessário para o Node.js reconhecer
+                status: "finalizado",  // Adicionado: Necessário para o Node.js reconhecer
+                total: valor,
+                pagamento: metodo,
+                itens: m.itens || [],
+                garcom: m.garcom || 'Geral',
+                data: serverTimestamp(),
+                contaImpressa: false   // Adicionado: Para o servidor saber que deve imprimir
+            });
+
+            const novoTotalMesa = Math.max(0, totalRestante - valor);
+
+            // Se o que sobrou for menor que 10 centavos, limpa a mesa
+            if (novoTotalMesa < 0.10) {
+                await updateDoc(mesaDoc, { aberta: false, itens: [], total: 0, garcom: '' });
+                Swal.fire({ icon: 'success', title: 'Mesa Finalizada!', timer: 1000, showConfirmButton: false });
+            } else {
+                await updateDoc(mesaDoc, { total: novoTotalMesa });
+                Swal.fire({ 
+                    icon: 'info', 
+                    title: 'Parcial Recebida', 
+                    text: `Ainda restam R$ ${novoTotalMesa.toFixed(2)}`,
+                    confirmButtonText: 'Próximo Pagamento'
+                }).then(() => {
+                    window._metodo = null; // Reseta o método para a próxima parcial
+                    window.fecharMesa(n);
+                });
+            }
+        }
+    } catch (error) {
+        console.error("Erro completo:", error);
+        Swal.fire('Erro Crítico', error.message, 'error');
     }
 };
-       
 
         // Monitoramento do Caixa (Delivery + Mesas Fechadas)
  onSnapshot(query(collection(db, "pedidos"), orderBy("data", "desc")), (snap) => {
@@ -1059,7 +1212,7 @@ window.cancelarMesa = async (n) => {
     if (!cont) return;
     
     let tPix = 0, tCard = 0, tDin = 0;
-    let vendasProdutos = {}; // <-- NOVO: Para o relatório de lanches
+    let vendasProdutos = {}; 
     
     cont.innerHTML = "";
 
@@ -1067,22 +1220,22 @@ window.cancelarMesa = async (n) => {
         const p = docSnap.data();
         const id = docSnap.id;
 
-        // 1. FILTRO: Não mostra lançamentos internos de cozinha
         if (p.tipo === "COZINHA") return;
 
-        // 2. CÁLCULO DE TOTAIS PARA O FINANCEIRO
         const val = parseFloat(p.total || 0);
-        if (p.pagamento === "PIX" || p.pagamento === "Pix") tPix += val;
-        else if (p.pagamento === "Cartão") tCard += val;
-        else if (p.pagamento === "Dinheiro") tDin += val;
 
-        // 3. NOVO: ACUMULAR QUANTIDADE DE LANCHES VENDIDOS
+        // --- ATUALIZAÇÃO: FILTRO PARA NÃO SOMAR CONSUMO DE FUNCIONÁRIO NO CAIXA ---
+        if (p.pagamento !== "FUNCIONARIO") {
+            if (p.pagamento === "PIX" || p.pagamento === "Pix") tPix += val;
+            else if (p.pagamento === "Cartão") tCard += val;
+            else if (p.pagamento === "Dinheiro") tDin += val;
+        }
+
         if (Array.isArray(p.itens)) {
             p.itens.forEach(item => {
                 const nomeProd = item.n;
                 const qtd = parseInt(item.q || 0);
                 const valorTotalItem = parseFloat(item.p || 0) * qtd;
-
                 if (!vendasProdutos[nomeProd]) {
                     vendasProdutos[nomeProd] = { qtd: 0, total: 0 };
                 }
@@ -1092,25 +1245,26 @@ window.cancelarMesa = async (n) => {
         }
 
         const isMesa = p.nome.includes("MESA");
-        const statusColor = p.status === 'recebido' ? '#22c55e' : (p.status === 'saiu' ? '#3b82f6' : 'var(--gold)');
+        
+        // --- ATUALIZAÇÃO: COR ROXA PARA IDENTIFICAR FUNCIONÁRIO ---
+        const isFunc = p.pagamento === "FUNCIONARIO";
+        const statusColor = isFunc ? '#9333ea' : (p.status === 'recebido' ? '#22c55e' : (p.status === 'saiu' ? '#3b82f6' : 'var(--gold)'));
 
         cont.innerHTML += `
             <div class="order-card" style="position: relative; border-left: 6px solid ${statusColor}; margin-bottom: 15px; padding: 15px; background: #1a1a1a; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
                 
                 <button onclick="deletarPedido('${id}', '${p.nome}')" 
-                    style="position:absolute; top:10px; right:10px; background:rgba(239, 68, 68, 0.15); border:none; color:#ef4444; width:28px; height:28px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10; transition: 0.2s;"
-                    onmouseover="this.style.background='rgba(239, 68, 68, 0.3)'" 
-                    onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'">
+                    style="position:absolute; top:10px; right:10px; background:rgba(239, 68, 68, 0.15); border:none; color:#ef4444; width:28px; height:28px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10; transition: 0.2s;">
                     <i class="fas fa-times"></i>
                 </button>
 
                 <div style="display:flex; justify-content:space-between; align-items: flex-start; padding-right: 30px;">
                     <div>
-                        <b style="font-size:1.2rem; color:var(--gold)">${p.nome.toUpperCase()}</b><br>
+                        <b style="font-size:1.2rem; color:var(--gold)">${p.nome.toUpperCase()} ${isFunc ? '<span style="color:#9333ea; font-size:0.8rem;">[INTERNO]</span>' : ''}</b><br>
                         <small style="color:#aaa"><i class="far fa-clock"></i> ${p.data ? new Date(p.data.toDate()).toLocaleTimeString() : 'Agora'}</small>
                     </div>
-                    <span class="garcom-tag" style="background:${isMesa ? '#444' : '#25D366'}; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">
-                        ${isMesa ? `<i class="fas fa-utensils"></i> ${p.garcom || 'Mesa'}` : `<i class="fab fa-whatsapp"></i> DELIVERY`}
+                    <span class="garcom-tag" style="background:${isFunc ? '#9333ea' : (isMesa ? '#444' : '#25D366')}; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">
+                        ${isFunc ? 'FUNCIONÁRIO' : (isMesa ? `<i class="fas fa-utensils"></i> ${p.garcom || 'Mesa'}` : `<i class="fab fa-whatsapp"></i> DELIVERY`)}
                     </span>
                 </div>
 
@@ -1118,10 +1272,9 @@ window.cancelarMesa = async (n) => {
                     ${!isMesa ? `
                         <p style="margin:2px 0;"><b><i class="fas fa-phone"></i> Tel:</b> ${p.telefone || 'N/A'}</p>
                         <p style="margin:2px 0;"><b><i class="fas fa-map-marker-alt"></i> End:</b> ${p.endereco || 'Retirada'}</p>
-                        <p style="margin:2px 0;"><b><i class="fas fa-home"></i> Bairro:</b> ${p.bairro || '---'}</p>
-                    ` : `<p style="margin:2px 0; color: #aaa;"><i class="fas fa-info-circle"></i> CONSUMO NO LOCAL</p>`}
+                    ` : `<p style="margin:2px 0; color: #aaa;"><i class="fas fa-info-circle"></i> CONSUMO LOCAL</p>`}
                     
-                    <p style="margin:2px 0;"><b><i class="fas fa-wallet"></i> Pagamento:</b> ${p.pagamento || 'Pendente'} ${p.troco ? `<span style="color:var(--green)">(Troco: ${p.troco})</span>` : ''}</p>
+                    <p style="margin:2px 0;"><b><i class="fas fa-wallet"></i> Pagamento:</b> <span style="${isFunc ? 'color:#9333ea; font-weight:bold;' : ''}">${p.pagamento || 'Pendente'}</span></p>
                 </div>
 
                 <div class="mesa-itens-lista" style="border-top: 1px dashed #444; padding-top:10px; color:#eee;">
@@ -1131,28 +1284,26 @@ window.cancelarMesa = async (n) => {
                                 <span><b>${i.q}x</b> ${i.n}</span>
                                 <span style="color: #888; font-size: 0.8rem;">R$ ${(i.p * i.q).toFixed(2)}</span>
                             </div>
-                            ${i.adicionais && i.adicionais.length > 0 ? `<div style="color:var(--gold); font-size:0.8rem; margin-left:15px; font-style: italic;">+ ${i.adicionais.join(', ')}</div>` : ''}
-                            ${i.obs ? `<div style="color:var(--green); font-size:0.8rem; margin-left:15px;"><i class="fas fa-comment-dots"></i> ${i.obs}</div>` : ''}
                         </div>`).join('') : `<p>${p.detalhes || 'Erro ao carregar itens'}</p>`}
                 </div>
 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; border-top: 1px solid #333; padding-top:10px;">
                     <b style="font-size:1.2rem; color:var(--gold)">TOTAL: R$ ${val.toFixed(2)}</b>
                     <div style="display:flex; gap:8px;">
-                        <button onclick="marcarRecebido('${id}', '${p.telefone}', '${p.nome}')" title="Aceitar/Produção" style="background:var(--green); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; transition: 0.2s;"><i class="fas fa-check"></i></button>
-                        <button onclick="despacharPedido('${id}', '${p.telefone}', '${p.nome}')" title="Saiu para Entrega" style="background:var(--blue); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; transition: 0.2s;"><i class="fas fa-motorcycle"></i></button>
+                        <button onclick="marcarRecebido('${id}', '${p.telefone}', '${p.nome}')" style="background:var(--green); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;"><i class="fas fa-check"></i></button>
+                        <button onclick="despacharPedido('${id}', '${p.telefone}', '${p.nome}')" style="background:var(--blue); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;"><i class="fas fa-motorcycle"></i></button>
                     </div>
                 </div>
             </div>`;
     });
 
-    // Atualiza os Totais Financeiros
+    // Atualiza os painéis de totais (Balanço)
     document.getElementById('b-pix').innerText = `R$ ${tPix.toFixed(2)}`;
     document.getElementById('b-cartao').innerText = `R$ ${tCard.toFixed(2)}`;
     document.getElementById('b-dinheiro').innerText = `R$ ${tDin.toFixed(2)}`;
     document.getElementById('b-total').innerText = `R$ ${(tPix + tCard + tDin).toFixed(2)}`;
 
-    // NOVO: Renderiza o Ranking de Itens Vendidos no painel
+    // Atualiza o ranking de produtos
     const rankingCont = document.getElementById('ranking-produtos');
     if (rankingCont) {
         const listaOrdenada = Object.entries(vendasProdutos).sort((a, b) => b[1].qtd - a[1].qtd);
@@ -1164,10 +1315,10 @@ window.cancelarMesa = async (n) => {
         `).join('') || '<p style="color:#666">Aguardando vendas...</p>';
     }
 
-            if (inicializado && snap.docChanges().some(c => c.type === "added") && somAtivo) playSom();
-            inicializado = true;
-        });
-
+    if (inicializado && snap.docChanges().some(c => c.type === "added") && somAtivo) playSom();
+    inicializado = true;
+});
+        // marcar recebido
         window.marcarRecebido = async (id, tel, nome) => {
             await updateDoc(doc(db, "pedidos", id), { status: 'recebido' });
             if (tel && tel !== '' && tel !== 'undefined') window.open(`https://wa.me/55${tel.replace(/\D/g, '')}?text=Boa noite, seu pedido já esta da fila de produção, por favor aguarde...`);
@@ -1356,14 +1507,14 @@ window.deletarPedido = async (id, nome) => {
     doc.save(`balanco_zaplanche_${dataHora.replace(/[/ :]/g, '_')}.pdf`);
 };
 // Bloqueios de segurança
-  document.addEventListener('keydown', function (e) {
-    if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) { e.preventDefault(); }
-    if (e.key === 'F12') { e.preventDefault(); }
-  });
-  document.addEventListener('keydown', function (event) {
-    if (event.ctrlKey && event.shiftKey && event.key === 'I') { event.preventDefault(); }
-  });
-  document.addEventListener('contextmenu', function (event) { event.preventDefault(); });
+//   document.addEventListener('keydown', function (e) {
+//     if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) { e.preventDefault(); }
+//     if (e.key === 'F12') { e.preventDefault(); }
+//   });
+//   document.addEventListener('keydown', function (event) {
+//     if (event.ctrlKey && event.shiftKey && event.key === 'I') { event.preventDefault(); }
+//   });
+//   document.addEventListener('contextmenu', function (event) { event.preventDefault(); });
     </script>
 </body>
 
