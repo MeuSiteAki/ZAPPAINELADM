@@ -1068,9 +1068,17 @@ window.cancelarMesa = async (n) => {
                 const isMesa = p.nome.includes("MESA");
                 const statusColor = p.status === 'recebido' ? '#22c55e' : (p.status === 'saiu' ? '#3b82f6' : 'var(--gold)');
 
-                cont.innerHTML += `
-    <div class="order-card" style="border-left: 6px solid ${statusColor}; margin-bottom: 15px; padding: 15px; background: #1a1a1a; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-        <div style="display:flex; justify-content:space-between; align-items: flex-start;">
+cont.innerHTML += `
+    <div class="order-card" style="position: relative; border-left: 6px solid ${statusColor}; margin-bottom: 15px; padding: 15px; background: #1a1a1a; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+        
+        <button onclick="deletarPedido('${id}', '${p.nome}')" 
+            style="position:absolute; top:10px; right:10px; background:rgba(239, 68, 68, 0.15); border:none; color:#ef4444; width:28px; height:28px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10; transition: 0.2s;"
+            onmouseover="this.style.background='rgba(239, 68, 68, 0.3)'" 
+            onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'">
+            <i class="fas fa-times"></i>
+        </button>
+
+        <div style="display:flex; justify-content:space-between; align-items: flex-start; padding-right: 30px;">
             <div>
                 <b style="font-size:1.2rem; color:var(--gold)">${p.nome.toUpperCase()}</b><br>
                 <small style="color:#aaa"><i class="far fa-clock"></i> ${p.data ? new Date(p.data.toDate()).toLocaleTimeString() : 'Agora'}</small>
@@ -1085,7 +1093,7 @@ window.cancelarMesa = async (n) => {
                 <p style="margin:2px 0;"><b><i class="fas fa-phone"></i> Tel:</b> ${p.telefone || 'N/A'}</p>
                 <p style="margin:2px 0;"><b><i class="fas fa-map-marker-alt"></i> End:</b> ${p.endereco || 'Retirada'}</p>
                 <p style="margin:2px 0;"><b><i class="fas fa-home"></i> Bairro:</b> ${p.bairro || '---'}</p>
-            ` : `<p style="margin:2px 0; color: #aaa;"><i class="fas fa-info-circle"></i>CONSUMO NO LOCAL</p>`}
+            ` : `<p style="margin:2px 0; color: #aaa;"><i class="fas fa-info-circle"></i> CONSUMO NO LOCAL</p>`}
             
             <p style="margin:2px 0;"><b><i class="fas fa-wallet"></i> Pagamento:</b> ${p.pagamento || 'Pendente'} ${p.troco ? `<span style="color:var(--green)">(Troco: ${p.troco})</span>` : ''}</p>
         </div>
@@ -1139,6 +1147,32 @@ window.cancelarMesa = async (n) => {
             if (tel && tel !== '' && tel !== 'undefined') window.open(`https://wa.me/55${tel.replace(/\D/g, '')}?text=Olá, seu pedido ja saiu para entrega, aproveite bem e volte sempre. ZAPLANCHES agradece!`);
         };
 
+// Função para excluir um pedido específico do Delivery/Caixa
+window.deletarPedido = async (id, nome) => {
+    const { isConfirmed } = await Swal.fire({
+        title: `EXCLUIR PEDIDO?`,
+        text: `Deseja apagar o pedido de "${nome}"? O valor será removido do caixa imediatamente.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#333',
+        confirmButtonText: 'Sim, excluir',
+        cancelButtonText: 'Cancelar',
+        background: '#161618',
+        color: '#fff'
+    });
+
+    if (isConfirmed) {
+        try {
+            await deleteDoc(doc(db, "pedidos", id));
+            // O onSnapshot cuidará de atualizar os totais e remover o card da tela
+            Swal.fire({ title: 'Pedido removido!', icon: 'success', timer: 800, showConfirmButton: false });
+        } catch (error) {
+            console.error("Erro ao deletar:", error);
+            Swal.fire('Erro', 'Não foi possível excluir o pedido.', 'error');
+        }
+    }
+};
        document.getElementById('btn-limpar-tudo').onclick = async () => {
     const { value: pass } = await Swal.fire({ 
         title: 'Limpeza Geral', 
@@ -1271,3 +1305,5 @@ window.cancelarMesa = async (n) => {
 </body>
 
 </html>
+
+despacharPedido
