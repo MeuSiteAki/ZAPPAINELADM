@@ -1,989 +1,594 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ZapLanche | Cardápio Digital</title>
-    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin | ZapLanches</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <style>
         :root {
             --primary: #15ff00;
-            --dark: #0f0f0f;
-            --card: #1a1a1a;
+            --gold: #2cdb00;
+            --dark-bg: #0a0a0b;
+            --card-bg: #161618;
+            --surface: #212124;
             --text: #ffffff;
-            --green: #25D366;
-            --gray: #333;
-            --danger: #ff3b30;
-            --btn-success: rgb(0, 100, 0);
+            --green: #22c55e;
+            --blue: #3b82f6;
+            --danger: #ef4444;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
-            background-color: var(--dark);
+            background-color: var(--dark-bg);
             color: var(--text);
-            scroll-behavior: smooth;
             overflow-x: hidden;
+            padding-bottom: 50px;
         }
 
-        /* Tela de Carregamento */
-        #intro-screen {
-            position: fixed;
-            inset: 0;
-            background: var(--dark);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            animation: fadeOut 0.5s forwards 2.5s;
-        }
-
-        .intro-logo {
-            width: 50%;
-            animation: pulse 1s infinite alternate;
-            border-radius: 50px;
-        }
-
-        @keyframes pulse {
-            from {
-                transform: scale(1);
-            }
-
-            to {
-                transform: scale(1.1);
-            }
-        }
-
-        @keyframes fadeOut {
-            to {
-                opacity: 0;
-                visibility: hidden;
-            }
-        }
-
-        /* Header / Brand */
-        .brand-section {
-            padding: 40px 20px;
-            text-align: center;
-            background: linear-gradient(180deg, #1e1e1e 0%, #0f0f0f 100%);
-            border-bottom: 1px solid var(--gray);
-        }
-
-        .logo-box {
-            position: relative;
-            display: inline-block;
-            margin-bottom: 15px;
-        }
-
-        .logo-box img {
-            width: 200px;
-            height: 100px;
-            border-radius: 50%;
-            border: 3px solid var(--primary);
-            box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
-        }
-
-        .brand-info h1 {
-            font-size: 100px;
-            letter-spacing: -1px;
-        }
-
-        .brand-info h1 span {
-            color: var(--primary);
-        }
-
-        .status-badge {
-            font-size: 0.9rem;
-            margin-top: 5px;
-            opacity: 0.9;
-        }
-
-        /* Transição suave para a cor não mudar bruscamente */
-        .brand-section {
-            transition: background-color 0.5s ease;
-            padding: 20px;
-            /* Ajuste o padding se necessário */
-        }
-
-        /* Cores de fundo */
-        .bg-aberto {
-            background-color: #1b4332 !important;
-            /* Verde escuro profissional */
-        }
-
-        .bg-fechado {
-            background-color: #ff0000 !important;
-            /* Vermelho escuro profissional */
-        }
-
-        /* Garante que o texto continue visível no fundo colorido */
-        .brand-section h1,
-        .brand-section .brand-info,
-        .brand-section .status-badge {
-            color: white !important;
-            font-size: 20px;
-        }
-
-        /* Busca */
-        .search-container {
-            max-width: 500px;
-            margin: 25px auto 0;
-            position: relative;
-            padding: 0 20px;
-        }
-
-        .search-container input {
-            width: 100%;
-            padding: 15px 20px 15px 50px;
-            border-radius: 30px;
-            border: 1px solid var(--gray);
-            background: #222;
-            color: white;
-            outline: none;
-            transition: 0.3s;
-            font-size: 1rem;
-        }
-
-        .search-container input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
-        }
-
-        .search-container i {
-            position: absolute;
-            left: 35px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--primary);
-            font-size: 1.2rem;
-        }
-
-        /* Menu de Categorias - GRID 2x2 NO MOBILE / LINHA NO PC */
-        .categories-wrapper {
-            max-width: 1000px;
-            margin: 15px auto;
-            position: sticky;
-            top: 0;
-            background: rgba(255, 255, 255, 0.233);
-            backdrop-filter: blur(10px);
-            z-index: 500;
-            padding: 10px;
-            border-radius: 20px;
-        }
-
-        .tabs-container {
-            display: flex;
-            justify-content: center;
-            /* Centraliza no PC */
-            gap: 12px;
-            width: 100%;
-            padding: 5px;
-        }
-
-        .tab-item {
-            flex: 1;
-            max-width: 200px;
-            padding: 12px 20px;
-            border-radius: 15px;
-            border: 1px solid var(--gray);
-            background: var(--card);
-            color: white;
-            cursor: pointer;
-            text-align: center;
-            font-size: 0.9rem;
-            font-weight: 600;
-            transition: 0.2s;
-            white-space: nowrap;
-        }
-
-        .tab-item.active {
-            background: var(--primary);
-            color: black;
-            border-color: var(--primary);
-        }
-
-        /* Ajuste Celular: Grid 2 colunas e Remove setas */
-        @media (max-width: 600px) {
-            .tabs-container {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                /* 2 Colunas */
-                gap: 10px;
-            }
-
-            .tab-item {
-                max-width: none;
-                padding: 15px 5px;
-            }
-
-            .nav-arrow {
-                display: none !important;
-            }
-
-            /* Garante que setas sumam */
-        }
-
-        /* Listagem de Produtos */
-        .products-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .product-card {
-            background: var(--card);
-            border-radius: 20px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            transition: 0.3s;
-            border: 1px solid transparent;
-        }
-
-        .product-card:hover {
-            border-color: var(--gray);
-            transform: translateY(-5px);
-        }
-
-        .product-card img {
-            width: 100%;
-            height: 140px;
-            object-fit: cover;
-        }
-
-        .p-content {
-            padding: 15px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .p-content h3 {
-            font-size: 1rem;
-            margin-bottom: 5px;
-            height: 45px;
-            overflow: hidden;
-            line-height: 1.2;
-        }
-
-        .p-price {
-            color: var(--primary);
-            font-size: 1.2rem;
-            font-weight: 800;
-            margin-bottom: 15px;
-        }
-
-        /* Botão ADICIONAR Personalizado Verde */
-        .p-actions {
-            margin-top: auto;
-        }
-
-        .p-actions .btn-details {
-            width: 100%;
-            background: var(--btn-success);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 12px;
-            font-size: 1rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-            transition: 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 100, 0, 0.3);
-        }
-
-        .p-actions .btn-details:hover {
-            background: #27ec00;
-            transform: translateY(-2px);
-        }
-
-        /* Modais */
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(8px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 30000;
-            padding: 20px;
-        }
-
-        .modal-content {
-            background: var(--card);
-            width: 100%;
-            max-width: 500px;
-            border-radius: 25px;
-            overflow: hidden;
-            position: relative;
-            animation: modalIn 0.3s ease-out;
-            max-height: 95vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        @keyframes modalIn {
-            from {
-                transform: translateY(50px);
-                opacity: 0;
-            }
-        }
-
-        .close-modal {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(0, 0, 0, 0.6);
-            color: white;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            font-size: 1.5rem;
-            cursor: pointer;
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #modal-img {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-        }
-
-        #modal-desc {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-        }
-
-        /* Controles de Adicionais +/- */
-        .add-item-row {
+        nav {
+            background: var(--card-bg);
+            padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 0;
+            border-bottom: 1px solid #2d2d30;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        .tab-container {
+            display: flex;
+            justify-content: center;
+            background: var(--card-bg);
             border-bottom: 1px solid #333;
         }
 
-        .add-controls {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .btn-add-minus {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: 1px solid var(--primary);
-            background: transparent;
-            color: var(--primary);
-            font-weight: bold;
+        .tab-btn {
+            padding: 15px 25px;
+            border: none;
+            background: none;
+            color: #888;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.2s;
+            font-weight: 700;
+            transition: 0.3s;
+            border-bottom: 3px solid transparent;
         }
 
-        .btn-add-minus:active {
-            background: var(--primary);
-            color: white;
+        .tab-btn.active {
+            color: var(--gold);
+            border-bottom-color: var(--gold);
+            background: rgba(255, 215, 0, 0.05);
         }
 
-        .add-qty {
-            font-weight: bold;
-            min-width: 20px;
-            text-align: center;
-            color: white;
+        .tab-content {
+            display: none;
+            padding: 20px;
+            animation: fadeIn 0.3s;
         }
 
-        /* Rodapé do Modal Fixo */
-        .modal-footer {
+        .tab-content.active {
+            display: block;
+        }
+
+        .grid-mesas {
+            display: grid;
+            /* No mobile: 2 colunas iguais (1fr 1fr). No desktop: colunas de 220px */
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            /* Reduzi um pouco o espaço para caber melhor em telas pequenas */
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Ajuste para telas maiores (Desktop) */
+        @media (min-width: 600px) {
+            .grid-mesas {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 20px;
+            }
+        }
+
+        .mesa-card {
+            background: var(--card-bg);
+            border: 1px solid #333;
+            border-radius: 20px;
             padding: 15px;
-            background: var(--card);
-            border-top: 1px solid var(--gray);
+            display: flex;
+            flex-direction: column;
+            transition: 0.3s;
+        }
+
+        .mesa-card.aberta {
+            border-color: var(--gold);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
+        }
+
+        .mesa-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 5px;
         }
 
-        /* Carrinho Sidebar */
-        /* --- Carrinho Sidebar (Visual Original Restaurado) --- */
-        #cart-sidebar {
+        .mesa-itens-lista {
+            flex-grow: 1;
+            font-size: 0.8rem;
+            color: #aaa;
+            text-align: left;
+            margin: 10px 0;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .mesa-item-doc {
+            border-bottom: 1px solid #222;
+            padding: 4px 0;
+        }
+
+        .garcom-tag {
+            font-size: 0.7rem;
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--gold);
+        }
+
+        #menu-lateral {
             position: fixed;
-            right: -100%;
+            right: -420px;
             top: 0;
-            width: 100%;
-            max-width: 450px;
+            width: 400px;
             height: 100%;
-            background: #0a0a0a;
-            z-index: 4000;
-            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: flex;
-            flex-direction: column;
-            border-left: 1px solid var(--gray);
+            background: #111;
+            z-index: 2000;
+            transition: 0.4s;
+            padding: 20px;
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.5);
+            border-left: 1px solid var(--gold);
+            overflow-y: auto;
         }
 
-        #cart-sidebar.open {
+        #menu-lateral.active {
             right: 0;
         }
 
-        .cart-header {
-            padding: 15px 20px;
-            border-bottom: 1px solid var(--gray);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .cart-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-        }
-
-        .cart-footer {
-            padding: 15px 20px;
-            background: #111;
-            border-top: 2px solid var(--gray);
-        }
-
-        /* Itens do Carrinho Original */
-        .cart-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #1a1a1a;
-            padding: 10px 15px;
-            border-radius: 12px;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-
-        .qty-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .btn-qty {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            color: white;
-            background: #333;
-        }
-
-        /* --- Tipo de Pedido (Radios Originais) --- */
-        .order-type {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .order-type label {
-            flex: 1;
-            text-align: center;
-            padding: 8px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 0.85rem;
+        .cat-head {
+            width: 100%;
+            padding: 12px;
             background: #222;
-            border: 1px solid var(--gray);
-            transition: 0.3s;
-            color: #aaa;
+            border: none;
+            color: white;
+            text-align: left;
+            font-weight: 800;
+            margin-top: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
         }
 
-        .order-type input {
+        .hidden {
             display: none;
         }
 
-        .order-type label:has(input:checked) {
-            background: var(--primary);
-            color: black;
-            font-weight: bold;
-            border-color: var(--primary);
-        }
-
-        /* --- Inputs e Botão Finalizar Originais --- */
-        .cart-footer input,
-        .cart-footer select {
+        .btn-confirm {
             width: 100%;
-            background: #1a1a1a;
-            border: 1px solid var(--gray);
-            padding: 10px 14px;
-            border-radius: 10px;
-            color: white;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-
-        .total-row {
-            font-size: 1.2rem;
-            font-weight: 800;
-            color: var(--primary);
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
-        }
-
-        .btn-finalizar {
-            width: 100%;
-            padding: 15px;
-            background: var(--green);
             border: none;
-            color: white;
-            font-weight: 800;
-            font-size: 1rem;
+            padding: 12px;
             border-radius: 12px;
+            background: var(--gold);
+            color: #000;
+            font-weight: 800;
             cursor: pointer;
         }
 
-        /* --- Botão Flutuante e Toast Originais --- */
-        #float-cart {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 70px;
-            height: 70px;
-            background: var(--primary);
-            border-radius: 22px;
-            border: none;
-            font-size: 30px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
-            cursor: pointer;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.3s;
-        }
-
-        #float-cart:active {
-            transform: scale(0.9);
-        }
-
-        #cart-count {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: var(--danger);
+        .btn-nav {
+            background: var(--surface);
+            border: 1px solid #3f3f46;
             color: white;
-            font-size: 13px;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 3px solid var(--dark);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
         }
 
-        #toast {
-            visibility: hidden;
-            position: fixed;
-            bottom: 120px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgb(255, 230, 0);
-            color: rgb(0, 0, 0);
-            padding: 15px 30px;
-            border-radius: 40px;
-            z-index: 5000;
-            font-weight: bold;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        .item-carrinho {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 3px solid var(--gold);
         }
 
-        @media (max-width: 600px) {
-            .brand-info h1 {
-                font-size: 1.8rem;
+        .obs-item-input {
+            width: 100%;
+            background: #000;
+            border: 1px solid #333;
+            color: #00ff00;
+            padding: 5px;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .order-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #2d2d30;
+            border-left: 5px solid var(--primary);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
             }
 
-            .products-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-                padding: 10px;
-            }
-
-            .product-card img {
-                height: 120px;
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
 
-        /* Container principal do Modal Pix */
-        #pix-modal {
+        /* Escurece o fundo e desfoca as outras mesas */
+        body.mesa-em-foco::before {
+            content: '';
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            /* Fundo escuro semi-transparente */
-            display: none;
-            /* Inicialmente escondido, o JS muda para 'flex' */
-            justify-content: center;
-            align-items: center;
-            z-index: 999999;
-            /* Valor altíssimo para ficar na frente de TUDO (inclusive do carrinho) */
-            padding: 20px;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 1500;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s;
         }
 
-        /* A caixa branca/escura que contém o conteúdo do Pix */
-        .pix-content {
-            background: var(--card-bg);
-            /* Ou #161618 */
-            padding: 25px;
-            border-radius: 15px;
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-            /* Centraliza o texto e o QR Code */
-            border: 1px solid var(--primary);
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+        /* Destaca a mesa ativa */
+        .mesa-card.em-destaque {
+            position: relative;
+            z-index: 1600;
+            transform: scale(1.05);
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 30px rgba(21, 255, 0, 0.4);
+            animation: pulseHighlight 2s infinite;
         }
 
-        /* Garante que a imagem do QR Code seja centralizada e não estoure o tamanho */
-        #qrcode-img {
-            display: block;
-            margin: 15px auto;
-            max-width: 200px;
-            border-radius: 10px;
-            background: #fff;
-            /* Fundo branco para o QR Code ser lido facilmente */
-            padding: 10px;
-        }
+        @keyframes pulseHighlight {
+            0% {
+                box-shadow: 0 0 20px rgba(21, 255, 0, 0.3);
+            }
 
-        /* O texto do código "Copia e Cola" */
-        #pix-payload-text {
-            word-break: break-all;
-            /* Quebra o texto longo para não sair da tela */
-            font-size: 0.8rem;
-            background: #000000;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            color: var(--text-dim);
-        }
-        
-    </style>
-</head>
+            50% {
+                box-shadow: 0 0 40px rgba(21, 255, 0, 0.6);
+            }
 
-<body>
-
-    <div id="intro-screen">
-        <img src="logo.png" class="intro-logo">
-        <h1 style="margin-top:15px; color: white;">ZAP<span style="color: var(--primary);">LANCHES</span></h1>
-    </div>
-
-    <audio id="success-sound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
-
-    <header class="brand-section">
-        <div class="logo-box">
-            <img src="logo.png" alt="Logo ZapLanche">
-        </div>
-        <div class="brand-info">
-            <h1>ZAP<span>LANCHES</span></h1>
-           <div class="status-badge"><span style="color:var(--green)">●</span> Aberto = 18:00 às 23:30</div>
-        </div>
-        <div class="search-container">
-            <i class="fas fa-search"></i>
-            <input type="text" id="search-input" placeholder="Pesquisar lanche..." oninput="searchItems(this.value)">
-        </div>
-    </header>
-    <script>
-        function atualizarStatusLoja() {
-            const agora = new Date();
-            const diaSemana = agora.getDay(); // 0:Dom, 4:Qui
-            const hora = agora.getHours();
-            const minutos = agora.getMinutes();
-            const horarioAtual = hora + (minutos / 60);
-
-            const header = document.querySelector('.brand-section');
-            const badge = document.querySelector('.status-badge');
-            const btnFinalizar = document.getElementById('btn-finalizar-pedido');
-
-            // Configurações: Aberto 18:30 às 23:59 | Folga na Quinta (4)
-            const isQuinta = (diaSemana === 4);
-            const isHorario = (horarioAtual >= 18.5 && horarioAtual <= 23.59);
-
-            if (!isQuinta && isHorario) {
-                // --- ESTADO ABERTO ---
-                header.classList.remove('bg-fechado');
-                header.classList.add('bg-aberto');
-                badge.innerHTML = `<span style="color:#24b400; font-size:35px">●</span> Aberto • 18:30 às 23:59`;
-                if (btnFinalizar) btnFinalizar.disabled = false;
-            } else {
-                // --- ESTADO FECHADO ---
-                header.classList.remove('bg-aberto');
-                header.classList.add('bg-fechado');
-
-                let motivo = isQuinta ? "Folga hoje" : "Abrimos às 18:30";
-                badge.innerHTML = `<span style="color:#ff0000; font-size:35px">●</span> Fechado • ${motivo}`;
-                if (btnFinalizar) btnFinalizar.disabled = true;
+            100% {
+                box-shadow: 0 0 20px rgba(21, 255, 0, 0.3);
             }
         }
+        /* Container para posicionar o olho sobre o input */
+.swal2-input-container {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
 
-        // Executa ao carregar
-        atualizarStatusLoja();
-        // Atualiza a cada 30 segundos
-        setInterval(atualizarStatusLoja, 30000);
-    </script>
-    <div class="categories-wrapper">
-        <nav class="tabs-container" id="tabs-scroll">
-            <button class="tab-item active" onclick="filterItems('todos', this)">🔥 Todos</button>
-            <button class="tab-item" onclick="filterItems('burgers', this)">🥪 TRADICIONAIS</button>
-            <button class="tab-item" onclick="filterItems('art', this)">🍔 ARTESANAIS</button>
-            <button class="tab-item" onclick="filterItems('bebidas', this)">🍹 BEBIDAS</button>
-        </nav>
+.toggle-password-icon {
+    position: absolute;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #888;
+    z-index: 10;
+    padding: 10px;
+}
+/* Container da Grade */
+.atendentes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 colunas */
+    gap: 15px;
+    padding: 20px 10px;
+}
+
+/* Botão Individual do Atendente */
+.atendente-btn {
+    background: #212124;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 15px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.atendente-btn:hover {
+    border-color: var(--gold);
+    background: #2a2a2d;
+    transform: translateY(-3px);
+}
+
+/* Avatar com a Inicial */
+.atendente-avatar {
+    width: 30px;
+    height: 30px;
+    background: var(--gold);
+    color: black;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 20px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.atendente-btn span {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 400px) {
+    .atendentes-grid {
+        grid-template-columns: 1fr;
+    }
+}
+/* Grid de Pagamento no SweetAlert */
+.pagamento-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.pgt-btn {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 15px 25px;
+    background: #2a2a2a;
+    border: 2px solid #444;
+    border-radius: 12px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pgt-btn:hover {
+    background: #333;
+    border-color: var(--green);
+    transform: scale(1.02);
+}
+
+.pgt-btn i {
+    font-size: 1.5rem;
+    margin-right: 20px;
+    color: var(--green);
+}
+
+.pgt-btn span {
+    font-size: 1.1rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+/* No celular, os botões ficam um pouco menores para caber melhor */
+@media (max-width: 480px) {
+    .pgt-btn { padding: 12px 20px; }
+}
+/* Área de rolagem para não esticar o celular */
+.modal-scroll-area {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Customização da barra de rolagem */
+.modal-scroll-area::-webkit-scrollbar { width: 5px; }
+.modal-scroll-area::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+.linha-add {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #222;
+}
+
+.info-add { display: flex; flex-direction: column; text-align: left; }
+.nome-add { font-weight: bold; color: #fff; font-size: 0.95rem; }
+.preco-add { color: var(--gold); font-size: 0.85rem; }
+
+.controles-add { display: flex; align-items: center; gap: 15px; }
+
+.btn-menor, .btn-maior {
+    width: 32px; height: 32px;
+    border-radius: 50%; border: none;
+    font-size: 1.2rem; font-weight: bold;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+
+.btn-menor { background: #444; color: #fff; }
+.btn-maior { background: var(--green); color: #fff; }
+
+.qtd-numero { font-weight: bold; font-size: 1.1rem; min-width: 20px; text-align: center; }
+
+/* Grid de remoção simplificado */
+.grid-remocao {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+.item-rem {
+    background: #222; padding: 8px; border-radius: 5px; font-size: 0.85rem;
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+}
+.check-rem { transform: scale(1.2); }
+.swal2-container {
+    z-index: 99999 !important;
+}
+.pagamento-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+}
+.pgt-btn {
+    background: #2a2a2a;
+    border: 1px solid #444;
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.pgt-btn:hover {
+    background: var(--gold);
+    color: black;
+}
+    </style>
+</head>
+<body>
+    <audio id="bell" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3" preload="auto"></audio>
+
+    <nav>
+        <div class="logo">ZAP<span>LANCHES</span></div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-nav" id="btn-som" onclick="toggleSom()"><i class="fas fa-bell-slash"
+                    id="som-icon"></i></button>
+            <button class="btn-nav" id="btn-limpar-tudo" style="color:var(--danger)"><i
+                    class="fas fa-trash"></i></button>
+        </div>
+    </nav>
+
+    <div class="tab-container">
+        <button class="tab-btn" data-target="tab-delivery" onclick="switchTab(this)">DELIVERY</button>
+        <button class="tab-btn active" data-target="tab-mesas" onclick="switchTab(this)">MESAS</button>
+        <button class="tab-btn" data-target="tab-balanco" id="tab-caixa-btn">CAIXA</button>
     </div>
-<span style="font-size: 10px;">*Imagem meramente ilustrativa</span>
-    <main id="menu-grid" class="products-grid"></main>
 
-    <div id="product-modal" class="modal" onclick="closeModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <button class="close-modal" onclick="closeModal()"><i class="fas fa-times"></i></button>
-
-            <img id="modal-img" src="" alt="Imagem do Produto">
-
-            <div id="modal-desc">
-                <h2 id="modal-title" style="font-size: 1.5rem; margin-bottom: 5px; color: var(--text);"></h2>
-                <div id="modal-desc-content"></div>
-
-            </div>
-
-            <div class="modal-footer">
-                <div style="display: flex; flex-direction: column;">
-                    <span style="font-size: 0.8rem; color: #aaa;">Preço Total:</span>
-                    <span id="modal-price" style="color: var(--primary); font-weight: 900; font-size: 1.4rem;">R$
-                        0,00</span>
-                </div>
-                <button id="modal-add-btn" class="btn-finalizar" style="flex: 1; margin-left: 15px;">
-                    CONFIRMAR
-                </button>
-            </div>
-        </div>
+    <div id="tab-mesas" class="tab-content active">
+        <div id="container-mesas" class="grid-mesas"></div>
     </div>
-
-    <div id="pix-modal" class="modal" onclick="closePixModal()">
-        <div class="pix-container" onclick="event.stopPropagation()">
-            <h2 style="color: #25D366; font-size: 1.5rem;"><i class="fas fa-qrcode"></i> Pagamento Pix</h2>
-            <p style="font-size:0.85rem; margin-top:5px; color:#666;">Pague agora para agilizar seu pedido</p>
-            <img id="qrcode-img" src="">
-            <div class="pix-payload-box" id="pix-payload-text"></div>
-            <button onclick="copyPixCode()"
-                style="width:100%; padding:14px; background:#007bff; color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer; margin-bottom:12px;">COPIAR
-                CÓDIGO PIX</button>
-            <button onclick="confirmarEPublicar()"
-                style="width:100%; padding:16px; background:var(--green); color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer; font-size:1rem;">JÁ
-                PAGUEI, ENVIAR PEDIDO</button>
-        </div>
+    <div id="tab-delivery" class="tab-content">
+        <div id="orders-container" class="orders-grid"></div>
     </div>
-
-    <aside id="cart-sidebar">
-        <div class="cart-header">
-            <h2 style="font-size:1.2rem;"><i class="fas fa-shopping-cart"></i> Seu Pedido</h2>
-            <button onclick="toggleCart()" style="background:none; border:none; color:white; font-size:1.5rem;"><i
-                    class="fas fa-times"></i></button>
+    <div id="tab-balanco" class="tab-content">
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+            <button onclick="gerarPDFBalanco()" class="btn-nav"
+                style="background: var(--gold); color: #000; border: none; font-weight: 800; cursor: pointer;">
+                <i class="fas fa-file-pdf"></i> BAIXAR BALANÇO PDF
+            </button>
         </div>
-
-        <div class="cart-body">
-            <div class="order-type">
-                <label>
-                    <input type="radio" name="tipo_pedido" value="delivery" checked onclick="toggleEntrega(true)">
-                    🏍️ Delivery
-                </label>
-                <label>
-                    <input type="radio" name="tipo_pedido" value="retirada" onclick="toggleEntrega(false)">
-                    🏪 Retirada
-                </label>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div style="background:var(--card-bg); padding:20px; border-radius:15px; text-align:center;">PIX<h2
+                    id="b-pix" style="color:var(--gold)">R$ 0,00</h2>
             </div>
-
-            <div id="cart-items"></div>
+            <div style="background:var(--card-bg); padding:20px; border-radius:15px; text-align:center;">CARTÃO<h2
+                    id="b-cartao" style="color:var(--gold)">R$ 0,00</h2>
+            </div>
+            <div style="background:var(--card-bg); padding:20px; border-radius:15px; text-align:center;">DINHEIRO<h2
+                    id="b-dinheiro" style="color:var(--gold)">R$ 0,00</h2>
+            </div>
+            
+</div>
+<div style="margin-top: 20px; background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px solid #333;">
+    <h3 style="color: var(--gold); border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 15px;">
+        <i class="fas fa-chart-line"></i> PRODUTOS VENDIDOS (HOJE)
+    </h3>
+    <div id="ranking-produtos" style="color: #eee; font-size: 0.9rem;">
         </div>
-
-        <div class="cart-footer">
             <div
-                style="display:flex; justify-content:space-between; margin-bottom:5px; font-size: 0.85rem; opacity:0.8;">
-                <!-- <span>Taxa de Entrega:</span>
-                <span id="frete">R$ 0,00</span> -->
-                <span>valor do frete somado automático</span>
+                style="background:var(--card-bg); padding:20px; border-radius:15px; text-align:center; border:2px solid var(--gold);">
+                TOTAL<h2 id="b-total" style="color:var(--gold)">R$ 0,00</h2>
             </div>
-            <div class="total-row">
-                <span>Total:</span>
-                <span id="cart-total">R$ 0,00</span>
-            </div>
-
-           <form id="checkout-form">
-    <input type="text" id="nome" placeholder="Seu Nome Completo" required>
-    <input type="tel" id="telefone" placeholder="Telefone / WhatsApp" required>
-
-    <div id="endereco-campos">
-        <select id="bairro" onchange="updateFrete()" required>
-            <option value="">Selecione seu Bairro *</option> 
-            <option value="Itinga-PA">Itinga-PA (R$ 6,00)</option>
-            <option value="Paulistão">Paulistão (R$ 6,00)</option>
-            <option value="Jamel">Jamel (R$ 4,00)</option>
-            <option value="São João">São João (R$ 3,00)</option>
-            <option value="São Sebastião">São Sebastião (R$ 2,00)</option>
-            <option value="Vila Samuel">Vila Samuel (R$ 2,00)</option>
-            <option value="Vila Emanuela">Vila Emanuela (R$ 2,00)</option>
-            <option value="Célio Brás">Célio Brás (R$ 2,00)</option>
-            <option value="Centro">Centro (R$ 2,00)</option>
-            <option value="Coqueiral">Coqueiral (R$ 2,00)</option>
-            <option value="Jardim Planalto">Jardim Planalto (R$ 2,00)</option>
-            <option value="Parque Primavera">Parque Primavera (R$ 2,00)</option>
-            <option value="Vila Pimentel 2">Vila Pimentel 2 (R$ 2,00)</option>
-            <option value="Loteamento Brasil">Loteamento Brasil (R$ 2,00)</option>
-            <option value="Paraíso">Paraíso (GRÁTIS)</option>
-        </select>
-       
-        <input type="text" id="endereco" placeholder="Endereço: Rua, número, apto..." required>
-    </div>
-
-    <select id="pagamento" onchange="checkPagamento(this.value)" required>
-        <option value="">Forma de Pagamento *</option>
-        <option value="Pix">Pagar com Pix (Online)</option>
-        <option value="Cartão">Cartão (Na entrega)</option>
-        <option value="Dinheiro">Dinheiro (Na entrega)</option>
-    </select>
-
-    <div id="troco-box" style="display:none">
-        <input type="number" id="troco" placeholder="Troco para quanto?">
-    </div>
-
-    <button type="submit" class="btn-finalizar">
-        FINALIZAR PEDIDO
-    </button>
-</form>
         </div>
-    </aside>
+    </div>
 
-    <button id="float-cart" onclick="toggleCart()">
-        <i class="fas fa-shopping-basket"></i>
-        <span id="cart-count">0</span>
-    </button>
-
-    <div id="toast"></div>
-    <!-- FOOTER -->
-
-    <footer class="site-footer">
-        <div class="footer-container">
-
-            <div class="footer-block footer-contact">
-                <h3><i class="fa-solid fa-headset"></i> CONTATOS:</h3>
-                <p><a href="tel:+5599992261907">(99) 99172-4374</a></p>
-                <p>Endereço: BR - 010 (proximo o avião)<br>Paraiso, Itinga do Maranhão.</p>
-            </div>
-
-            <div class="footer-block footer-hours">
-                <h3>Horário de Atendimento:</h3>
-                <p>Seg. a Dom.: 18:30 – 23:59</p>
-                <p>Folga todas as Quinta-feiras</p>
-            </div>
-
-            <div class="footer-block footer-payments">
-                <h3>Formas de Pagamento:</h3>
-                <img style="width: 200px; border-radius: 10px;" src="cartao.webp" alt="Emblemas de formas de pagamento">
-            </div>
-
+    <div id="menu-lateral">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h2 id="titulo-mesa" style="color:var(--gold);">MESA</h2>
+            <button onclick="toggleMenu(false)"
+                style="background:none; border:none; color:white; font-size:1.5rem;">&times;</button>
+        </div>
+        <div id="sanfona-menu"></div>
+        <div style="margin-top:20px; border-top:1px solid #333; padding-top:15px;">
+            <h4>💰CARRINHO:</h4>
+            <div id="lista-temp" style="margin:10px 0;"></div>
+            <h3 id="total-temp" style="margin:15px 0; color:var(--gold)">R$ 0,00</h3>
+            <!-- <div id="areaVozMenu" style="padding: 15px; background: #1a1a1a; border-radius: 10px; margin-bottom: 10px; border: 1px solid #333;">
+    <p style="font-size: 12px; color: #aaa; margin-bottom: 5px;">🎙️ Pedido Rápido por Voz</p>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <button id="btnVozMenu" onclick="iniciarEscutaVoz()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #ff4757; color: white; font-weight: bold; cursor: pointer;">
+            CLIQUE PARA FALAR
+        </button>
+        <div id="statusVoz" style="width: 12px; height: 12px; border-radius: 50%; background: #333;"></div>
+    </div> -->
+    <p id="textoCapturado" style="font-size: 13px; color: #2ed573; margin-top: 8px; font-style: italic;"></p>
+</div>
+            <button class="btn-confirm" onclick="enviarCozinha()">ENVIAR PARA COZINHA</button>
         </div>
         
-        <div class="footer-copy">
-            <img style="width: 50px; border-radius: 50px;" src="logo2.png" alt=""><br>
-            Site criado por: Carlos de Freitas Rocha.<br>
-            <a style="color: #fdfdfd;" href="https://wa.me/5599992247546">Clique aqui e faça seu orçamento.</a>
-        </div>
-    </footer>
-    <style>
-        .site-footer {
-            background: linear-gradient(135deg, #272931, #1c1e26);
-            color: #f0f0f0;
-            padding: 5px;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-size: 14px;
-            line-height: 1.6;
-            text-align: center;
-            border-radius: 10px;
-        }
+    </div>
 
-        .footer-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            max-width: 1200px;
-            margin: auto;
-        }
+    <audio id="audio-bip" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+    </audio>
 
-        .footer-block {
-            flex: 1 1 280px;
-            margin: 10px;
-        }
-
-        .footer-block h3 {
-            margin-bottom: 12px;
-            font-size: 16px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: #ffffff;
-        }
-
-        .footer-block p {
-            margin: 4px 0;
-        }
-
-        .footer-contact a {
-            color: #ffcc00;
-            text-decoration: none;
-            transition: color .3s;
-        }
-
-        .footer-contact a:hover {
-            color: #ffe066;
-        }
-
-        .off-day {
-            font-style: italic;
-            color: #c1c1c1;
-        }
-
-        .footer-payments img {
-            max-width: 100%;
-            height: auto;
-            margin-top: 8px;
-        }
-
-        .footer-copy {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 15px;
-            color: #ffffff;
-        }
-    </style><br>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import {
+    getFirestore,
+    initializeFirestore,
+    memoryLocalCache,
+    collection,
+    onSnapshot,
+    query,
+    orderBy,
+    doc,
+    getDoc,      // <-- ADICIONE ESTE AQUI (Singular)
+    updateDoc,
+    deleteDoc,
+    getDocs,     // (Este você já tem, é para listas)
+    setDoc,
+    addDoc,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"; // Verifique se a versão é essa mesma que você usa
 
         const firebaseConfig = {
             apiKey: "AIzaSyDRj1Cj0o1z9u7fS9InPlSlqvmcetMmMUU",
@@ -995,613 +600,971 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        const db = initializeFirestore(app, { localCache: memoryLocalCache() });
 
-        // --- DADOS ---
+        const _0x4f22 = "emFwMjAyNkA=";
+        const checkPass = (p) => btoa(p) === _0x4f22;
 
-        const produtos = [
-            // --- BURGERS GOURMET ---
-            { id: 1, nome: "Burguer Mini", preco: 21.00, cat: "art", desc: "Blend bovino grelhado (160g), queijo mussarela, salada, batata frita e molho barbecue.", img: "https://images.unsplash.com/photo-1508737027454-e6454ef45afd?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTh8fGhhbWJ1cmdlcnxlbnwwfHwwfHx8MA%3D%3D" },
-            { id: 2, nome: "Burguer Classic", preco: 22.00, cat: "art", desc: "Blend bovino (160g), mussarela, molho cheddar, salada, fritas e barbecue.", img: "https://images.unsplash.com/photo-1508736793122-f516e3ba5569?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nzl8fGhhbWJ1cmdlcnxlbnwwfHwwfHx8MA%3D%3D" },
-            { id: 3, nome: "Burguer Poleguinho", preco: 23.00, cat: "art", desc: "Blend bovino (160g), mussarela, queijo polenguinho, salada, fritas e barbecue.", img: "https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?w=400" },
-            { id: 4, nome: "Burguer Pepperoni", preco: 25.00, cat: "art", desc: "Blend (160g), mussarela, cheddar, calabresa, cebola caramelizada, salada e fritas.", img: "https://images.unsplash.com/photo-1550547660-d9450f859349?w=400" },
-            { id: 5, nome: "Burguer Cheese Bacon", preco: 26.00, cat: "art", desc: "Blend (160g), mussarela, cheddar, bacon defumado, cebola caramelizada, salada e fritas.", img: "https://images.unsplash.com/photo-1700835880532-6a66115168ae?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" },
-            { id: 6, nome: "Burguer Double", preco: 32.00, cat: "art", desc: "2 Blends (160g), mussarela, cheddar, bacon, cebola caramelizada, salada e fritas.", img: "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=400" },
+        const cardapio = {
+            "🥪 ARTESANAIS": [
+                { n: "Burguer Mini", p: 21.00 },
+                { n: "Burguer Classic", p: 22.00 },
+                { n: "Burguer Poleguinho", p: 23.00 },
+                { n: "Burguer Pepperoni", p: 25.00 },
+                { n: "Burguer Cheese Bacon", p: 26.00 },
+                { n: "Burguer Double", p: 32.00 }
+            ],
+            "🍔 TRADICIONAIS": [
+                { n: "Zap Quente", p: 6.00 },
+                { n: "Zap X-Burguer", p: 12.00 },
+                { n: "Zap Egg", p: 14.00 },
+                { n: "Zap Bacon", p: 16.00 },
+                { n: "Zap Calabresa", p: 14.00 },
+                { n: "Zap Salada Especial", p: 15.00 },
+                { n: "Zap Tudo", p: 20.00 },
+                { n: "Zap Broca", p: 25.00 },
+                { n: "Zap Frango", p: 20.00 },
+                { n: "Zap Filé", p: 22.00 }
+            ],
+            "🍟 PORÇÕES": [
+                { n: "Porção Batata Frita", p: 17.00 }
+            ],
+            "🥤 BEBIDAS": [
+                { n: "Suco Acerola", p: 7.00 },
+                { n: "Suco Goiaba", p: 7.00 },
+                { n: "Suco Maracujá", p: 8.00 },
+                { n: "Refrigerante Lata", p: 6.00 },
+                { n: "Refrigerante 1 Litro", p: 10.00 },
+                { n: "Refrigerante 2 Litros", p: 14.00 }
+            ],
+           
+        };
 
-            // --- BURGERS TRADICIONAIS ---
-            
-            { id: 7, nome: "Zap Quente", preco: 6.00, cat: "burgers", desc: "Pão com gergelim, queijo e presunto.", img: "https://images.unsplash.com/photo-1750515422413-25ec41b09d2e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTR8fG1pc3RvJTIwcXVlbnRlJTIwc2FuZHVpY2hlfGVufDB8fDB8fHww" },
-            { id: 8, nome: "Zap X-Burguer", preco: 12.00, cat: "burgers", desc: "Pão, salada, carne, queijo e batata palha.", img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400" },
-            { id: 9, nome: "Zap Egg", preco: 14.00, cat: "burgers", desc: "Pão, salada, carne, queijo, ovo e batata palha.", img: "https://images.unsplash.com/photo-1547584370-2cc98b8b8dc8?w=400" },
-            { id: 10, nome: "Zap Bacon", preco: 16.00, cat: "burgers", desc: "Pão, salada, carne, queijo, bacon, ovo e batata palha.", img: "https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=400" },
-            { id: 11, nome: "Zap Calabresa", preco: 14.00, cat: "burgers", desc: "Pão, salada, carne, queijo, calabresa e batata palha.", img: "https://images.unsplash.com/photo-1566706541274-d35d8fd14160?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTEwfHxoYW1iJUMzJUJBcmd1ZXJ8ZW58MHx8MHx8fDA%3D" },
-            { id: 12, nome: "Zap Salada Especial", preco: 15.00, cat: "burgers", desc: "Pão, salada, carne, queijo, presunto, ovo, milho e batata palha.", img: "https://images.unsplash.com/photo-1512152272829-e3139592d56f?w=400" },
-            { id: 13, nome: "Zap Tudo", preco: 20.00, cat: "burgers", desc: "Pão, salada, carne, queijo, presunto, ovo, bacon, salsicha, cheddar, milho e palha.", img: "https://images.unsplash.com/photo-1648999599490-9348c7f686e5?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mjk4fHxoYW1iJUMzJUJBcmd1ZXJ8ZW58MHx8MHx8fDA%3D" },
-            { id: 14, nome: "Zap Broca", preco: 25.00, cat: "burgers", desc: "Pão, salada, 2 carnes, queijo, presunto, 2 ovos, bacon, salsicha, cheddar, milho e palha.", img: "https://images.unsplash.com/photo-1544037803-ed377ec9a75e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8ODR8fGhhbWJ1cmdlcnxlbnwwfHwwfHx8MA%3D%3D" },
-            { id: 15, nome: "Zap Frango", preco: 20.00, cat: "burgers", desc: "Pão, salada, filé de frango, queijo, presunto, cheddar e batata palha.", img: "https://images.unsplash.com/photo-1645024679624-e8351ac98f01?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjJ8fGhhbWJ1cmdlciUyMGRlJTIwZnJhbmdvfGVufDB8fDB8fHww" },
-            { id: 16, nome: "Zap Filé", preco: 22.00, cat: "burgers", desc: "Pão, salada, filé de gado, queijo, presunto, cheddar e batata palha.", img: "https://images.unsplash.com/photo-1667329829058-ac191ba4a905?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjN8fGhhbWJ1cmdlcnxlbnwwfHwwfHx8MA%3D%3D" },
+        const garcons = ["Robson", "Sarah", "Vanilza", "Vitória",];
+        let mesas = [], mesaAtiva = null, carrinhoTemp = [], somAtivo = false, inicializado = false;
 
-            // --- PORÇÕES ---
-            { id: 17, nome: "Batata Frita", preco: 17.00, cat: "burgers", desc: "Porção individual de batata frita crocante.", img: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400" },
+        async function initMesas() {
+            const snap = await getDocs(collection(db, "estado_mesas"));
+            if (snap.empty) {
+                for (let i = 1; i <= 10; i++) {
+                    await setDoc(doc(db, "estado_mesas", `mesa_${i}`), { n: i, aberta: false, itens: [], total: 0, garcom: '' });
+                }
+            }
+        }
+        initMesas();
 
-            // --- SUCOS ---
-            // Adicione/Substitua no seu array de produtos:
-            { id: 200, nome: "Refrigerante Lata", preco: 6.00, cat: "bebidas", desc: "Escolha o sabor no próximo passo.", img: "data:image/jpeg;base64,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", opcoes: ["Coca Cola", "Fanta Laranja", "Guaraná Antártica", "Sprite", "Coca Zero", "Fanta Uva", "Guaraná Jesus"] },
-            { id: 300, nome: "Refrigerante 1 Litro", preco: 10.00, cat: "bebidas", desc: "Escolha o sabor no próximo passo.", img: "data:image/jpeg;base64,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", opcoes: ["Coca Cola", "Fanta Laranja", "Guaraná Antártica", "Coca Zero"] },
-            { id: 400, nome: "Refrigerante 2 Litros", preco: 14.00, cat: "bebidas", desc: "Escolha o sabor no próximo passo.", img: "data:image/jpeg;base64,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", opcoes: ["Coca Cola", "Fanta Laranja", "Guaraná Antártica", "Coca Zero"] },
-            { id: 100, nome: "Sucos Naturais", preco: 7.00, cat: "bebidas", desc: "Escolha o sabor:", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSkLWOBmCcX79zOzB3VUKKnoAaq3YsaCdGV8w&s", opcoes: ["Acerola", "Goiaba", "Maracujá"] },
-        ];
+        window.toggleSom = () => {
+            somAtivo = !somAtivo;
+            document.getElementById('som-icon').className = somAtivo ? "fas fa-bell" : "fas fa-bell-slash";
+        };
 
-        const listaAdicionais = [
-            { nome: "Ovo", preco: 2.00 },
-            { nome: "Queijo Mussarela", preco: 4.00 },
-            { nome: "Queijo Polenguinho", preco: 5.00 },
-            { nome: "Molho Cheddar", preco: 5.00 },
-            { nome: "Cebola Caramelizada", preco: 5.00 },
-            { nome: "Bacon Defumado", preco: 6.00 },
-            { nome: "Calabresa", preco: 5.00 },
-            { nome: "Carne Extra", preco: 6.00 },
-            { id_art: "blend", nome: "Blend Bovino (160g)", preco: 10.00 },
-            { nome: "Presunto", preco: 4.00 },
-            { nome: "Salsicha", preco: 3.00 },
-            { nome: "Filé Frango/Gado", preco: 10.00 },
-            { nome: "Molho Extra", preco: 3.00 }
-        ];
+        function playSom() {
+            if (!somAtivo) return;
+            const audio = document.getElementById('audio-bip');
+            if (audio) { audio.currentTime = 0; audio.play().catch(() => { }); }
+        }
 
-        let carrinho = {};
-        let valorSubtotal = 0;
-        let valorFrete = 0;
-        let isDelivery = true;
-        let itemAtualParaAdicionar = null;
-        let adicionaisTemp = {};
-
-        window.filterItems = (cat, btn) => {
-            document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+        window.switchTab = (btn) => {
+            document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(btn.getAttribute('data-target')).classList.add('active');
             btn.classList.add('active');
-            renderMenu(cat === 'todos' ? produtos : produtos.filter(p => p.cat === cat));
-            window.scrollTo({ top: document.getElementById('menu-grid').offsetTop - 120, behavior: 'smooth' });
         };
 
-        window.searchItems = (q) => {
-            const filtrados = produtos.filter(p => p.nome.toLowerCase().includes(q.toLowerCase()));
-            renderMenu(filtrados);
-            if (q.length > 0) {
-                window.scrollTo({ top: document.getElementById('menu-grid').offsetTop - 120, behavior: 'auto' });
-            }
-        };
+       document.getElementById('tab-caixa-btn').onclick = async function() {
+    const { value: pass } = await Swal.fire({
+        title: 'Acesso Restrito',
+        input: 'password',
+        inputPlaceholder: 'Senha do Gerente',
+        inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
+        showCancelButton: true,
+        didOpen: () => {
+            // Cria o ícone do olho
+            const input = Swal.getInput();
+            const icon = document.createElement('i');
+            icon.classList.add('fas', 'fa-eye', 'toggle-password-icon');
+            
+            // Insere o ícone após o input
+            input.parentElement.style.position = 'relative';
+            input.parentElement.appendChild(icon);
 
-        // --- MODAL E ADICIONAIS ATUALIZADO ---
-        // --- FUNÇÃO PARA ABRIR O MODAL ---
-        window.abrirModalCustomizacao = (id) => {
-            const p = produtos.find(i => i.id === id);
-            if (!p) return;
-
-            // Criamos uma cópia do produto e limpamos os adicionais temporários
-            itemAtualParaAdicionar = { ...p, sabor: "" };
-            adicionaisTemp = {}; // Reinicia o objeto de contagem
-
-            document.getElementById('modal-img').src = p.img;
-            document.getElementById('modal-title').innerText = p.nome;
-
-            let htmlContent = `<p style="margin-bottom:12px; font-size:0.9rem; color:#ccc;">${p.desc}</p>`;
-
-            // 1. SE FOR BEBIDA OU SUCO (ITENS COM OPÇÕES)
-            if (p.opcoes) {
-                htmlContent += `
-            <div style="text-align:left; background:#222; padding:15px; border-radius:12px; margin-bottom:15px;">
-                <b style="color:var(--primary); font-size:1rem; display:block; margin-bottom:12px;">ESCOLHA O SABOR:</b>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    ${p.opcoes.map(sabor => `
-                        <label style="display: flex; align-items:center; gap: 10px; background:#333; padding:12px; border-radius:10px; cursor:pointer; border: 1px solid #444;">
-                            <input type="radio" name="sabor_bebida" value="${sabor}" 
-                                   onchange="window.definirSabor('${sabor}', ${p.id})" 
-                                   style="accent-color:var(--primary); width:18px; height:18px;">
-                            <span style="color:white; font-size:1rem;">${sabor}</span>
-                        </label>
-                    `).join('')}
-                </div>
-            </div>`;
-            }
-
-            // 2. SE FOR LANCHE (MOSTRAR ADICIONAIS ESCONDIDOS)
-            else {
-                htmlContent += `
-            <div style="text-align:left; margin-bottom:15px;">
-                <button type="button" onclick="window.toggleAdicionais()" 
-                    style="width:100%; background:#333; color:var(--primary); border:1px solid #444; padding:12px; border-radius:10px; font-weight:bold; display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
-                    ADICIONAR EXTRAS? 
-                    <span id="seta-adicionais">▼</span>
-                </button>
-
-                <div id="lista-adicionais-content" style="display:none; background:#222; padding:12px; border-radius:0 0 10px 10px; border:1px solid #444; border-top:none; max-height:250px; overflow-y:auto; transition: 0.3s;">
-                    <div id="lista-adicionais-container">
-                        ${listaAdicionais.map((add, index) => {
-                    adicionaisTemp[index] = 0;
-                    return `
-                            <div class="add-item-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; background:#2a2a2a; padding:8px; border-radius:8px;">
-                                <div class="add-controls" style="display:flex; align-items:center; gap:10px;">
-                                    <button type="button" class="btn-add-minus" onclick="window.updateAddon(${index}, -1)" style="width:30px; height:30px; border-radius:5px; border:none; background:#444; color:white;">-</button>
-                                    <span class="add-qty" id="qty-add-${index}" style="color:white; font-weight:bold; min-width:15px; text-align:center;">0</span>
-                                    <button type="button" class="btn-add-minus" onclick="window.updateAddon(${index}, 1)" style="width:30px; height:30px; border-radius:5px; border:none; background:var(--primary); color:black;">+</button>
-                                    <span style="font-size:0.9rem; color:white;">${add.nome}</span>
-                                </div>
-                                <span style="color:var(--primary); font-size:0.85rem;">+ R$ ${add.preco.toFixed(2)}</span>
-                            </div>`;
-                }).join('')}
-                    </div>
-                </div>
-            </div>`;
-            }
-
-            // Campo de Observação
-            htmlContent += `
-        <b style="color:var(--primary); display:block; margin-top:15px; font-size:1rem;">OBSERVAÇÃO:</b>
-        <textarea id="item-obs" placeholder="Ex: Sem cebola, bem passado..." style="width:100%; padding:10px; border-radius:10px; background:#111; color:white; border:1px solid #444; margin-top:8px; height:60px; resize:none; font-size:0.85rem;"></textarea>
-    `;
-
-            document.getElementById('modal-desc-content').innerHTML = htmlContent;
-            window.atualizarPrecoModal();
-            document.getElementById('product-modal').style.display = 'flex';
-        };
-        window.toggleAdicionais = () => {
-            const content = document.getElementById('lista-adicionais-content');
-            const seta = document.getElementById('seta-adicionais');
-
-            if (content.style.display === 'none') {
-                content.style.display = 'block';
-                seta.innerText = '▲';
-                // Faz um scroll suave para mostrar os adicionais
-                content.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            } else {
-                content.style.display = 'none';
-                seta.innerText = '▼';
-            }
-        };
-        // --- FUNÇÃO PARA ATUALIZAR A QUANTIDADE DE ADICIONAIS NO CLIQUE ---
-        window.updateAddon = (index, delta) => {
-            // Pegamos a quantidade atual ou 0
-            let qtdAtual = adicionaisTemp[index] || 0;
-            let novaQtd = qtdAtual + delta;
-
-            // Impede que a quantidade seja menor que zero
-            if (novaQtd >= 0) {
-                adicionaisTemp[index] = novaQtd;
-
-                // Atualiza o número que aparece entre o + e o -
-                const display = document.getElementById(`qty-add-${index}`);
-                if (display) display.innerText = novaQtd;
-
-                // Atualiza o preço total no rodapé do modal
-                window.atualizarPrecoModal();
-            }
-        };
-
-        // --- FUNÇÃO PARA DEFINIR O SABOR ---
-        window.definirSabor = (sabor, id) => {
-            itemAtualParaAdicionar.sabor = sabor;
-
-            // Lógica do preço do Maracujá (ID 100 é o de Sucos)
-            if (id === 100) {
-                itemAtualParaAdicionar.preco = (sabor === 'Maracujá') ? 8.00 : 7.00;
-            }
-            window.atualizarPrecoModal();
-        };
-
-        // --- ATUALIZAR PREÇO NO MODAL ---
-        window.atualizarPrecoModal = () => {
-            let extra = 0;
-            // Só soma adicionais se não tiver opções de sabor (ou seja, se for lanche)
-            if (!itemAtualParaAdicionar.opcoes) {
-                listaAdicionais.forEach((add, index) => {
-                    extra += add.preco * (adicionaisTemp[index] || 0);
-                });
-            }
-            const totalItem = itemAtualParaAdicionar.preco + extra;
-            document.getElementById('modal-price').innerText = `R$ ${totalItem.toFixed(2)}`;
-        };
-        // --- CARRINHO LOGICA CORRIGIDA ---
-
-        window.finalizarInclusao = () => {
-            const p = itemAtualParaAdicionar;
-
-            // 1. Validação para Bebidas/Sucos
-            if (p.opcoes && !p.sabor) {
-                alert("⚠️ Por favor, escolha um sabor!");
-                return;
-            }
-
-            let escolhidos = [];
-            let precoExtra = 0;
-            let nomeFinal = p.nome;
-
-            // 2. Se tiver sabor (Bebidas), ajusta o nome
-            if (p.sabor) {
-                nomeFinal = `${p.nome} (${p.sabor})`;
-            }
-
-            // 3. SE NÃO FOR BEBIDA, PROCESSA OS ADICIONAIS (Lanches)
-            // O segredo está em usar o objeto 'adicionaisTemp' que criamos no abrirModal
-            if (!p.opcoes) {
-                listaAdicionais.forEach((add, index) => {
-                    const quantidade = adicionaisTemp[index] || 0;
-                    if (quantidade > 0) {
-                        escolhidos.push(`${quantidade}x ${add.nome}`);
-                        precoExtra += add.preco * quantidade;
-                    }
-                });
-            }
-
-            const obs = document.getElementById('item-obs').value;
-            const cartId = "cart_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
-
-            // 4. Salva no carrinho com o preço total (Base + Adicionais)
-            carrinho[cartId] = {
-                ...p,
-                nome: nomeFinal,
-                preco: p.preco + precoExtra, // Soma o valor base + extras
-                qtd: 1,
-                obs: obs,
-                adicionais: escolhidos, // Aqui entram os nomes: ["1x Ovo", "2x Bacon"]
-                cartId: cartId
-            };
-
-            window.atualizarUI();
-            window.closeModal();
-            window.showToast("✅ Adicionado!");
-        };
-
-        window.mudarQtd = (cartId, delta) => {
-            if (carrinho[cartId]) {
-                if (carrinho[cartId].qtd + delta > 0) {
-                    carrinho[cartId].qtd += delta;
+            // Lógica de clicar no olho
+            icon.onclick = () => {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.replace('fa-eye', 'fa-eye-slash');
                 } else {
-                    delete carrinho[cartId];
+                    input.type = 'password';
+                    icon.classList.replace('fa-eye-slash', 'fa-eye');
                 }
-                window.atualizarUI();
-            }
-        };
-
-        // --- RENDERIZAR UI ORIGINAL CORRIGIDA ---
-        window.atualizarUI = () => {
-            const container = document.getElementById('cart-items');
-            valorSubtotal = 0; let totalItens = 0;
-
-            container.innerHTML = Object.values(carrinho).map(item => {
-                valorSubtotal += item.preco * item.qtd;
-                totalItens += item.qtd;
-
-                // Se for bebida, item.adicionais estará vazio, então não aparece nada de "+ ovo/bacon"
-                const htmlAdd = item.adicionais.length > 0 ? `<br><small style="color:var(--primary)">+ ${item.adicionais.join(', ')}</small>` : '';
-                const htmlObs = item.obs ? `<br><small style="opacity:0.8; font-style:italic">Obs: ${item.obs}</small>` : '';
-
-                return `
-        <div class="cart-item">
-            <div style="flex:1">
-                <b style="text-transform: uppercase;">${item.nome}</b>
-                ${htmlAdd}
-                ${htmlObs}
-                <br><small>R$ ${item.preco.toFixed(2)}</small>
-            </div>
-            <div class="qty-controls">
-                <button class="btn-qty" onclick="window.mudarQtd('${item.cartId}', -1)">-</button>
-                <span>${item.qtd}</span>
-                <button class="btn-qty" style="background:var(--primary); color: black;" onclick="window.mudarQtd('${item.cartId}', 1)">+</button>
-            </div>
-        </div>`;
-            }).join('');
-
-            // Atualiza totais (mantenha o restante do seu código igual...)
-            const totalEl = document.getElementById('cart-total');
-            const countEl = document.getElementById('cart-count');
-            if (totalEl) totalEl.innerText = `R$ ${(valorSubtotal + valorFrete).toFixed(2)}`;
-            if (countEl) countEl.innerText = totalItens;
-        };
-
-        // --- UTILITÁRIOS ---
-
-        window.closeModal = () => document.getElementById('product-modal').style.display = 'none';
-        window.closePixModal = () => document.getElementById('pix-modal').style.display = 'none';
-        window.toggleCart = () => document.getElementById('cart-sidebar').classList.toggle('open');
-        window.showToast = (m) => { const t = document.getElementById('toast'); t.innerText = m; t.style.visibility = "visible"; setTimeout(() => t.style.visibility = "hidden", 2000); };
-
-        window.toggleEntrega = (delivery) => {
-            isDelivery = delivery;
-            document.getElementById('endereco-campos').style.display = delivery ? 'block' : 'none';
-            if (!delivery) valorFrete = 0; else window.updateFrete();
-            window.atualizarUI();
-        };
-
-        window.updateFrete = () => {
-            const b = document.getElementById('bairro').value;
-
-            if (!isDelivery || !b) {
-                valorFrete = 0;
-            } else {
-                // Lógica baseada na tabela da imagem
-                switch (b) {
-                    case 'Itinga-PA':
-                    case 'Paulistão':
-                        valorFrete = 6.00;
-                        break;
-                    case 'Jamel':
-                        valorFrete = 4.00;
-                        break;
-                    case 'São João':
-                        valorFrete = 3.00;
-                        break;
-                    case 'Paraíso':
-                        valorFrete = 0.00;
-                        break;
-                    default:
-                        // Todos os outros bairros da lista custam R$ 2,00
-                        valorFrete = 2.00;
-                        break;
-                }
-            }
-            window.atualizarUI();
-        };
-
-        window.checkPagamento = (v) => {
-            document.getElementById('troco-box').style.display = v === 'Dinheiro' ? 'block' : 'none';
-        };
-
-        window.copyPixCode = () => {
-            navigator.clipboard.writeText(document.getElementById('pix-payload-text').innerText);
-            alert("Código Pix Copiado!");
-        };
-
-        // --- INICIALIZAR ---
-
-        // Liga o botão de confirmar do modal
-        const modalBtn = document.getElementById('modal-add-btn');
-        if (modalBtn) modalBtn.onclick = () => window.finalizarInclusao();
-
-        // Liga o form de checkout
-        const checkoutForm = document.getElementById('checkout-form');
-        if (checkoutForm) checkoutForm.onsubmit = (e) => handleCheckout(e);
-
-        // Substitua o seu handleCheckout antigo por este:
-// --- VARIÁVEL DE CONTROLE GLOBAL (IMPORTANTE: DEVE FICAR FORA DAS FUNÇÕES) ---
-let enviandoPedido = false;
-
-// --- FUNÇÃO DE CHECKOUT ---
-async function handleCheckout(e) {
-    e.preventDefault();
-
-    // Trava para evitar múltiplos cliques
-    if (enviandoPedido) return;
-
-    if (Object.keys(carrinho).length === 0) {
-        alert("⚠️ Seu carrinho está vazio!");
-        return;
-    }
-
-    const pgt = document.getElementById('pagamento').value;
-    const totalFloat = parseFloat(valorSubtotal + valorFrete);
-
-    // Validação de segurança para o valor total
-    if (isNaN(totalFloat) || totalFloat <= 0) {
-        alert("⚠️ Erro no cálculo do valor total. Por favor, reinicie o pedido.");
-        return;
-    }
-
-    if (pgt === 'Pix') {
-        const pixKey = "23078414000139"; // Sua chave CNPJ
-
-        // Gera o código Pix
-        const pixCode = buildPixBRCode(
-            pixKey,
-            "ZAPLANCHE",
-            "ITINGA MA",
-            totalFloat
-        );
-
-        document.getElementById('pix-payload-text').innerText = pixCode;
-        document.getElementById('qrcode-img').src = `https://quickchart.io/qr?text=${encodeURIComponent(pixCode)}&size=250`;
-        document.getElementById('pix-modal').style.display = 'flex';
-    } else {
-        await window.confirmarEPublicar();
-    }
-}
-
-// --- MOTOR DO PIX (Cálculo de CRC e Estrutura) ---
-function crc16(payload) {
-    let crc = 0xFFFF;
-    const bytes = new TextEncoder().encode(payload);
-    for (const byte of bytes) {
-        crc ^= (byte << 8);
-        for (let i = 0; i < 8; i++) {
-            if (crc & 0x8000) crc = (crc << 1) ^ 0x1021;
-            else crc = (crc << 1);
-            crc &= 0xFFFF;
+            };
         }
-    }
-    return crc.toString(16).toUpperCase().padStart(4, '0');
-}
+    });
 
-function buildPixBRCode(key, name, city, amount) {
-    const tlv = (id, val) => id + String(val.length).padStart(2, '0') + val;
-    const gui = "BR.GOV.BCB.PIX";
-    const mai = tlv("00", gui) + tlv("01", key);
-    const merchantAccount = tlv("26", mai);
-
-    let payload = "";
-    payload += tlv("00", "01");
-    payload += tlv("01", "11");
-    payload += merchantAccount;
-    payload += tlv("52", "0000");
-    payload += tlv("53", "986");
-    if (amount > 0) payload += tlv("54", amount.toFixed(2));
-    payload += tlv("58", "BR");
-    payload += tlv("59", name.substring(0, 25).toUpperCase());
-    payload += tlv("60", city.substring(0, 15).toUpperCase());
-    payload += tlv("62", tlv("05", "***"));
-    payload += "6304";
-
-    return payload + crc16(payload);
-}
-
-// --- FINALIZAÇÃO (FIREBASE + WHATSAPP) ---
-window.confirmarEPublicar = async () => {
-    // 1. TRAVA DE SEGURANÇA CONTRA CLIQUE DUPLO
-    if (enviandoPedido) return;
-
-    // CAPTURA DE VALORES
-    const n = document.getElementById('nome').value.trim();
-    const tel = document.getElementById('telefone').value.trim();
-    const b = document.getElementById('bairro').value;
-    const end = document.getElementById('endereco').value.trim();
-    const pgt = document.getElementById('pagamento').value;
-    const tr = document.getElementById('troco').value;
-    const totalFloat = parseFloat(valorSubtotal + valorFrete);
-
-    // 2. VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS
-    if (!n || !tel) {
-        alert("⚠️ Por favor, preencha seu Nome e Telefone!");
-        return;
-    }
-
-    if (isDelivery) {
-        if (!b || b === "") {
-            alert("⚠️ ERRO: Você deve selecionar um BAIRRO para calcular o frete!");
-            document.getElementById('bairro').focus();
-            return;
-        }
-        if (!end) {
-            alert("⚠️ Por favor, preencha seu ENDEREÇO completo!");
-            document.getElementById('endereco').focus();
-            return;
-        }
-    }
-
-    if (Object.keys(carrinho).length === 0 || isNaN(totalFloat)) {
-        alert("⚠️ Seu carrinho está vazio ou inválido!");
-        return;
-    }
-
-    // ATIVA A TRAVA PARA O BOTÃO NÃO FUNCIONAR DE NOVO
-    enviandoPedido = true;
-
-    try {
-        const timestamp = serverTimestamp();
-        const pedidoAgrupadorID = "ZAP-" + Date.now();
-
-        // 3. SEPARAÇÃO DE ITENS POR CATEGORIA (COZINHAS)
-        const itensTradicionais = Object.values(carrinho).filter(i => i.cat === 'burgers');
-        const itensArtesanais = Object.values(carrinho).filter(i => i.cat === 'art');
-
-        // 4. ENVIO DO PEDIDO COMPLETO (CAIXA / PAINEL ADMIN)
-        const itensParaFirebase = Object.values(carrinho).map(i => ({
-            n: i.adicionais.length > 0 ? `${i.nome} (+ ${i.adicionais.join(', ')})` : i.nome,
-            q: i.qtd,
-            p: i.preco,
-            obs: i.obs || ""
-        }));
-
-        await addDoc(collection(db, "pedidos"), {
-            pedidoID: pedidoAgrupadorID,
-            nome: n.toUpperCase(),
-            telefone: tel,
-            total: totalFloat.toFixed(2), // Salva como string formatada para segurança
-            pagamento: pgt,
-            troco: tr || "Não precisa",
-            itens: itensParaFirebase,
-            tipo: isDelivery ? "DELIVERY" : "RETIRADA",
-            origem: "SITE",
-            bairro: b,
-            endereco: end,
-            frete: valorFrete,
-            status: 'novo',
-            data: timestamp
-        });
-
-        // 5. ENVIO COMANDA TRADICIONAL (SÓ SE HOUVER)
-        if (itensTradicionais.length > 0) {
-            await addDoc(collection(db, "pedidos"), {
-                pedidoID: pedidoAgrupadorID,
-                nome: n.toUpperCase(),
-                itens: itensTradicionais.map(i => ({
-                    n: i.adicionais.length > 0 ? `${i.nome} (+ ${i.adicionais.join(', ')})` : i.nome,
-                    q: i.qtd,
-                    obs: i.obs || ""
-                })),
-                origem: "COZINHA_TRADICIONAL",
-                status: 'imprimir',
-                data: timestamp
-            });
-        }
-
-        // 6. ENVIO COMANDA ARTESANAL (SÓ SE HOUVER)
-        if (itensArtesanais.length > 0) {
-            await addDoc(collection(db, "pedidos"), {
-                pedidoID: pedidoAgrupadorID,
-                nome: n.toUpperCase(),
-                itens: itensArtesanais.map(i => ({
-                    n: i.adicionais.length > 0 ? `${i.nome} (+ ${i.adicionais.join(', ')})` : i.nome,
-                    q: i.qtd,
-                    obs: i.obs || ""
-                })),
-                origem: "COZINHA_ARTESANAL",
-                status: 'imprimir',
-                data: timestamp
-            });
-        }
-
-        // 7. MONTAGEM DA MENSAGEM WHATSAPP
-        let itensWpp = Object.values(carrinho).map(i => {
-            let itemStr = `✅ *${i.qtd}x ${i.nome.toUpperCase()}*`;
-            if (i.adicionais.length > 0) itemStr += `%0A      *+Add:* _${i.adicionais.join(', ')}_`;
-            if (i.obs && i.obs.trim() !== "") itemStr += `%0A      *OBS:* ${i.obs.trim()}`;
-            itemStr += `%0A      *R$ ${(i.preco * i.qtd).toFixed(2)}*`;
-            return itemStr;
-        }).join('%0A%0A');
-
-        let msg = `*🔥 PEDIDO - ZAPLANCHES 🔥*%0A`;
-        msg += `*CLIENTE:* ${n.toUpperCase()}%0A`;
-        msg += `*CONTATO:* ${tel}%0A%0A`;
-        msg += `*🛒 ITENS:*%0A${itensWpp}%0A%0A`;
-        msg += `*ENTREGA:* ${isDelivery ? 'Delivery' : 'Retirada'}%0A`;
-        if (isDelivery) msg += `*END:* ${end} (${b})%0A`;
-        msg += `*PAGAMENTO:* ${pgt}%0A`;
-        if (pgt === 'Dinheiro' && tr) msg += `*💵 TROCO PARA:* R$ ${parseFloat(tr).toFixed(2)}%0A`;
-        msg += `*💰 TOTAL: R$ ${totalFloat.toFixed(2)}*%0A%0A`;
-        msg += `*POR FAVOR, ENVIE O COMPROVANTE SE FOR PIX!*`;
-
-        // 8. FINALIZAÇÃO
-        window.open(`https://wa.me/5599991724374?text=${msg}`);
-        
-        setTimeout(() => { 
-            carrinho = {}; 
-            location.reload(); 
-        }, 1000);
-
-    } catch (err) {
-        enviandoPedido = false; // Libera a trava em caso de erro para tentar de novo
-        console.error(err);
-        alert("❌ Erro ao enviar pedido: " + err.message);
+    if (checkPass(pass)) { 
+        switchTab(this); 
+    } else if (pass) { 
+        Swal.fire('Erro', 'Senha Incorreta!', 'error'); 
     }
 };
 
-        // Renderizar o menu e o carrinho inicial
-        window.renderMenu = (lista = produtos) => {
-            const grid = document.getElementById('menu-grid');
-            grid.innerHTML = lista.map(p => `
-            <div class="product-card">
-                <img src="${p.img}">
-                <div class="p-content">
-                    <h3>${p.nome}</h3>
-                    <span class="p-price">R$ ${p.preco.toFixed(2)}</span>
-                    <div class="p-actions" style="margin-top: auto;">
-                        <button class="btn-details" style="width:100%" onclick="window.abrirModalCustomizacao(${p.id})">ADICIONAR</button>
-                    </div>
-                </div>
-            </div>`).join('');
+        window.toggleMenu = (s) => document.getElementById('menu-lateral').classList.toggle('active', s);
+
+        onSnapshot(collection(db, "estado_mesas"), (snap) => {
+    mesas = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.n - b.n);
+    const container = document.getElementById('container-mesas');
+    if (!container) return;
+    
+    container.innerHTML = mesas.map(m => `
+    <div class="mesa-card ${m.aberta ? 'aberta' : ''}" style="position: relative; min-height: 180px; display: flex; flex-direction: column;">
+        
+        ${m.aberta ? `
+            <button onclick="window.cancelarMesa(${m.n})" 
+                style="position:absolute; top:12px; right:12px; background:rgba(239, 68, 68, 0.15); border:none; color:#ef4444; width:30px; height:30px; border-radius:50%; cursor:pointer; z-index:10; display:flex; align-items:center; justify-content:center;">
+                <i class="fas fa-times"></i>
+            </button>
+        ` : ''}
+
+        <div class="mesa-header" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-bottom: 12px;">
+            <span style="font-weight:800; font-size: 1.1rem; color: #fff;">MESA ${m.n}</span>
+            
+            ${m.aberta ? `
+                <span class="garcom-tag" style="font-size: 0.75rem; padding: 2px 8px; background: #333; border-radius: 4px; color: var(--gold); border: 1px solid rgba(255,215,0,0.2);">
+                    <i class="fas fa-user-edit" style="font-size: 0.7rem; margin-right: 4px;"></i>${m.garcom || 'Geral'}
+                </span>
+            ` : '<span style="font-size: 0.75rem; color: #666;">Disponível</span>'}
+        </div>
+
+        <div class="mesa-itens-lista" style="flex-grow: 1;">
+            ${m.aberta ? (Array.isArray(m.itens) && m.itens.length > 0 ? m.itens.map(i => `
+                <div class="mesa-item-doc">
+                    <b>${i.q}x</b> ${i.n} 
+                    <br><small style="color:var(--green)">${i.obs || ''}</small>
+                </div>`).join('') : '<div style="color:#555; font-style:italic; font-size:0.9rem;">Mesa vazia...</div>') : ''}
+        </div>
+        
+        <div style="font-weight:bold; margin: 10px 0; color:var(--gold); font-size: 1.1rem;">
+            ${m.aberta ? 'R$ ' + parseFloat(m.total || 0).toFixed(2) : ''}
+        </div>
+
+        ${!m.aberta ?
+            `<button class="btn-confirm" onclick="abrirMesa(${m.n})">ABRIR MESA</button>` :
+            `<div class="row-btns" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                <button class="btn-confirm" style="background:#2a2a2a; color: white; font-size: 20px; border: 1px solid #444;" onclick="prepararAdd(${m.n})">+</button>
+                <button class="btn-confirm" style="background:green; color: white; font-size: 25px" onclick="fecharMesa(${m.n})">✔︎</button>
+            </div>`
+        }
+    </div>`).join('');
+});
+
+let timerVoz; // Variável para controlar o tempo de silêncio
+
+window.iniciarEscutaVoz = function() {
+    const btn = document.getElementById('btnVozMenu');
+    const textoCapturado = document.getElementById('textoCapturado');
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!Recognition) return alert("Navegador sem suporte.");
+
+    const rec = new Recognition();
+    rec.lang = 'pt-BR';
+    rec.continuous = true; // Permite falar várias coisas
+    rec.interimResults = true; // Ouve em tempo real, mas vamos filtrar no final
+
+    rec.onstart = () => {
+        btn.innerText = "🛑 OUVINDO... (FALE E PARE)";
+        btn.style.background = "#2ed573";
+        textoCapturado.innerText = "Pode falar o pedido completo...";
+    };
+
+    rec.onresult = (event) => {
+        // 1. Pega tudo o que foi falado até agora na frase atual
+        let falaCompleta = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            falaCompleta += event.results[i][0].transcript;
+        }
+
+        textoCapturado.innerText = "Processando: " + falaCompleta;
+
+        // 2. REGRAS DE OURO: Limpa o cronômetro toda vez que você fala algo novo
+        clearTimeout(timerVoz);
+
+        // 3. Só processa DE VERDADE após 1.2 segundos de silêncio total
+        timerVoz = setTimeout(() => {
+            processarComandoVozFinal(falaCompleta.toLowerCase());
+            rec.stop(); // Para o microfone após o pedido ser entendido
+        }, 1200);
+    };
+
+    rec.onend = () => {
+        btn.innerText = "CLIQUE PARA FALAR";
+        btn.style.background = "#ff4757";
+    };
+
+    rec.start();
+};
+
+function processarComandoVozFinal(texto) {
+    const fala = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    let itensDetectadosNestaFrase = new Set(); 
+
+    // Mapa de números por extenso para converter em algarismos
+    const numerosExtenso = { "um": 1, "dois": 2, "tres": 3, "quatro": 4, "cinco": 5 };
+
+    Object.keys(cardapio).forEach(categoria => {
+        cardapio[categoria].forEach(produto => {
+            const nomeProdOriginal = produto.n.toLowerCase();
+            const nomeProdLimpo = nomeProdOriginal.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            
+            if ((fala.includes(nomeProdLimpo) || nomeProdLimpo.includes(fala)) && !itensDetectadosNestaFrase.has(produto.n)) {
+                
+                // --- LÓGICA DE QUANTIDADE ---
+                let quantidade = 1; // Padrão é 1
+                
+                // Tenta encontrar um número encostado no nome do produto (ex: "2 zap" ou "dois zap")
+                const palavras = fala.split(" ");
+                const indexProduto = palavras.findIndex(p => nomeProdLimpo.includes(p));
+                
+                if (indexProduto > 0) {
+                    const termoAnterior = palavras[indexProduto - 1];
+                    // Verifica se é número (2) ou extenso (dois)
+                    if (!isNaN(termoAnterior)) {
+                        quantidade = parseInt(termoAnterior);
+                    } else if (numerosExtenso[termoAnterior]) {
+                        quantidade = numerosExtenso[termoAnterior];
+                    }
+                }
+                // ----------------------------
+
+                const preco = parseFloat(produto.p) || 0;
+                const itemNoCarrinho = carrinhoTemp.find(i => i.n === produto.n);
+
+                if (itemNoCarrinho) {
+                    itemNoCarrinho.q += quantidade; // Adiciona a quantidade falada
+                } else {
+                    carrinhoTemp.push({
+                        n: produto.n,
+                        p: preco,
+                        q: quantidade,
+                        obs: ""
+                    });
+                }
+
+                itensDetectadosNestaFrase.add(produto.n);
+                console.log(`✅ Reconhecido: ${quantidade}x ${produto.n}`);
+            }
+        });
+    });
+
+    if (itensDetectadosNestaFrase.size > 0) {
+        document.getElementById('audio-bip').play().catch(() => {});
+        document.getElementById('textoCapturado').innerText = "✅ Itens adicionados!";
+        if (typeof atualizarCarrinho === "function") {
+            atualizarCarrinho(); 
+        }
+    } else {
+        document.getElementById('textoCapturado').innerText = "❓ Não achei: '" + texto + "' no menu.";
+    }
+}
+//cancelar mesas
+window.cancelarMesa = async (n) => {
+    const { isConfirmed } = await Swal.fire({
+        title: `LIMPAR MESA ${n}?`,
+        text: "Isso apagará o consumo atual sem enviar para o caixa.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#333',
+        confirmButtonText: 'Sim, limpar mesa',
+        cancelButtonText: 'Cancelar',
+        background: '#161618',
+        color: '#fff'
+    });
+
+    if (isConfirmed) {
+        // Reseta a mesa
+        await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { 
+            aberta: false, itens: [], total: 0, garcom: '' 
+        });
+        
+        // (Opcional) Remove pedidos de cozinha dessa mesa para não poluir
+        const pedidosRef = collection(db, "pedidos");
+        const q = query(pedidosRef, where("nome", "==", `MESA ${n}`), where("tipo", "==", "COZINHA"));
+        const snap = await getDocs(q);
+        snap.forEach(async (d) => await deleteDoc(doc(db, "pedidos", d.id)));
+
+        Swal.fire({ title: 'Mesa liberada!', icon: 'success', timer: 800, showConfirmButton: false });
+    }
+};
+       window.abrirMesa = async (n) => {
+    // Geramos o HTML dos botões dos atendentes dinamicamente
+    const botoesHtml = garcons.map(g => `
+        <button type="button" class="atendente-btn" onclick="Swal.clickConfirm(); window._tempGarcom='${g}'">
+            <div class="atendente-avatar">${g.charAt(0)}</div>
+            <span>${g}</span>
+        </button>
+    `).join('');
+
+    const { isConfirmed } = await Swal.fire({
+        title: 'Selecione o Atendente',
+        html: `<div class="atendentes-grid">${botoesHtml}</div>`,
+        showConfirmButton: false, // O fechamento ocorre ao clicar no botão
+        showCancelButton: true,
+        cancelButtonText: 'Cancelar',
+        background: '#161618',
+        color: '#fff',
+        customClass: {
+            container: 'modal-moderno-atendente'
+        },
+        preConfirm: () => {
+            return window._tempGarcom;
+        }
+    });
+
+    if (isConfirmed && window._tempGarcom) {
+        const garcomFinal = window._tempGarcom;
+        await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { 
+            aberta: true, 
+            garcom: garcomFinal, 
+            itens: [], 
+            total: 0 
+        });
+        delete window._tempGarcom; // Limpa variável temporária
+    }
+};
+
+        window.prepararAdd = (n) => {
+            mesaAtiva = n; carrinhoTemp = []; renderTemp();
+            document.getElementById('titulo-mesa').innerText = `MESA ${n}`;
+            toggleMenu(true);
         };
 
-        window.renderMenu();
-        window.atualizarUI();
+        // Prepara a mesa e aplica o destaque visual
+       window.prepararAdd = (n) => {
+    mesaAtiva = n;
+    carrinhoTemp = [];
+    renderTemp();
 
-        // Bloqueios de segurança
+    // Apenas atualiza o título e abre o menu
+    document.getElementById('titulo-mesa').innerText = `PEDIDO MESA ${n}`;
+    toggleMenu(true);
+};
+
+        // Gerencia o menu lateral e remove os destaques ao fechar
+        window.toggleMenu = (s) => {
+            const menu = document.getElementById('menu-lateral');
+            if (s) {
+                menu.classList.add('active');
+            } else {
+                menu.classList.remove('active');
+                // Remove o destaque e o fundo escuro quando o menu fecha
+                document.body.classList.remove('mesa-em-foco');
+                document.querySelectorAll('.mesa-card').forEach(c => c.classList.remove('em-destaque'));
+            }
+        };
+
+        // Adiciona itens mantendo o foco na mesa
+     window.addItemTemp = async (nome, preco, opcoes, btn) => {
+    let precoBase = preco;
+    const listaAdicionais = [
+        { n: "Ovo", p: 2.00 },
+        { n: "Carne Hambúrguer", p: 6.00 },
+        { n: "Blend Bovino 160g", p: 10.00 },
+        { n: "Bacon / Calabresa", p: 6.00 },
+        { n: "Filé Frango/Gado", p: 10.00 }
+    ];
+
+    // Função interna para mostrar o aviso (Toast)
+    const mostrarAviso = () => {
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 1000,
+            background: '#1a1a1a',
+            color: '#fff',
+            iconColor: '#22c55e'
+        });
+        Toast.fire({ icon: 'success', title: 'Adicionado' });
+    };
+
+    // CASO 1: Hambúrgueres (Abre modal)
+    if (nome.includes("Burguer") || nome.includes("Zap")) {
+        const { value: resultado } = await Swal.fire({
+            title: 'ADICIONAIS',
+            background: '#161618',
+            color: '#fff',
+            html: `
+                <div class="modal-scroll-area">
+                    <div class="lista-adicionais-vertical">
+                        ${listaAdicionais.map((add, index) => `
+                            <div class="linha-add">
+                                <div class="info-add">
+                                    <span class="nome-add">${add.n}</span>
+                                    <span class="preco-add">R$ ${add.p.toFixed(2)}</span>
+                                </div>
+                                <div class="controles-add">
+                                    <button type="button" class="btn-menor" onclick="alterarQtdAdd(${index}, -1)">-</button>
+                                    <span id="qtd-add-${index}" class="qtd-numero">0</span>
+                                    <button type="button" class="btn-maior" onclick="alterarQtdAdd(${index}, 1)">+</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `,
+            didOpen: () => {
+                window._tempSelectedAdds = listaAdicionais.map(a => ({...a, q: 0}));
+                window.alterarQtdAdd = (idx, delta) => {
+                    const item = window._tempSelectedAdds[idx];
+                    item.q = Math.max(0, item.q + delta);
+                    document.getElementById(`qtd-add-${idx}`).innerText = item.q;
+                };
+            },
+            showCancelButton: true,
+            confirmButtonText: 'CONFIRMAR',
+            confirmButtonColor: 'var(--green)',
+            preConfirm: () => {
+                return { adds: window._tempSelectedAdds.filter(a => a.q > 0) };
+            }
+        });
+
+        if (resultado) {
+            let valorExtra = resultado.adds.reduce((total, a) => total + (a.p * a.q), 0);
+            let descAdds = resultado.adds.map(a => `+${a.q} ${a.n}`).join(', ');
+            
+            carrinhoTemp.push({ n: nome, p: precoBase + valorExtra, q: 1, obs: descAdds.trim() });
+            renderTemp();
+            setTimeout(mostrarAviso, 100); // Pequeno atraso para o Toast aparecer após o fechamento do modal
+        }
+    } 
+    // CASO 2: Outros itens (Bebidas/Porções - Direto)
+    else {
+        carrinhoTemp.push({ n: nome, p: preco, q: 1, obs: '' });
+        renderTemp();
+        mostrarAviso();
+    }
+};
+
+        window.updateObs = (idx, val) => { carrinhoTemp[idx].obs = val; };
+        window.removeItemTemp = (idx) => { carrinhoTemp.splice(idx, 1); renderTemp(); };
+
+        function renderTemp() {
+            const lista = document.getElementById('lista-temp');
+            if (!lista) return;
+            lista.innerHTML = carrinhoTemp.map((i, idx) => `
+            <div class="item-carrinho">
+                <div style="display:flex; justify-content:space-between">
+                    <b>${i.n}</b>
+                    <button onclick="removeItemTemp(${idx})" style="color:var(--danger); background:none; border:none;"><i class="fas fa-times"></i></button>
+                </div>
+                <input type="text" placeholder="Obs..." class="obs-item-input" onchange="updateObs(${idx}, this.value)" value="${i.obs}">
+            </div>`).join('');
+            document.getElementById('total-temp').innerText = `R$ ${carrinhoTemp.reduce((a, b) => a + (b.p * b.q), 0).toFixed(2)}`;
+        }
+
+        // ✅ CORREÇÃO: enviarCozinha agora usa tipo: "COZINHA" para não aparecer no Delivery
+       window.enviarCozinha = async () => {
+    if (carrinhoTemp.length === 0) return;
+    
+    // Desabilita o botão ou mostra carregando para evitar cliques duplos
+    Swal.showLoading(); 
+
+    const m = mesas.find(x => x.n === mesaAtiva);
+    const novosItensMesa = Array.isArray(m.itens) ? [...m.itens] : [];
+
+    // 1. Atualiza o estado da mesa (Consumo Acumulado)
+    carrinhoTemp.forEach(novo => {
+        const existe = novosItensMesa.find(x => x.n === novo.n && x.obs === novo.obs);
+        if (existe) { 
+            existe.q += novo.q; // Soma a quantidade vinda do carrinho
+        } else { 
+            novosItensMesa.push({ ...novo }); 
+        }
+    });
+
+    const novoTotal = novosItensMesa.reduce((a, b) => a + (b.p * b.q), 0);
+
+    // 2. Grava no banco de dados
+    try {
+        await updateDoc(doc(db, "estado_mesas", `mesa_${mesaAtiva}`), {
+            itens: novosItensMesa, 
+            total: novoTotal
+        });
+
+        // Este documento dispara o servidor da impressora (Node.js)
+        await addDoc(collection(db, "pedidos"), {
+            nome: `MESA ${mesaAtiva}`, 
+            origem: "MESA", 
+            tipo: "COZINHA", 
+            status: "aberto",
+            itens: [...carrinhoTemp], // Envia apenas o que foi pedido agora
+            garcom: m.garcom || 'Geral', 
+            data: serverTimestamp()
+        });
+
+        // 3. Limpa tudo e fecha
+        carrinhoTemp = []; // Limpa o carrinho temporário após enviar
+        playSom(); 
+        toggleMenu(false);
+        
+        Swal.fire({ title: 'Enviado para Cozinha!', icon: 'success', timer: 1000, showConfirmButton: false });
+    } catch (error) {
+        console.error("Erro ao enviar:", error);
+        Swal.fire('Erro', 'Não foi possível enviar o pedido.', 'error');
+    }
+};
+
+  window.fecharMesa = async (n) => {
+    try {
+        const mesaDoc = doc(db, "estado_mesas", `mesa_${n}`);
+        const snapMesa = await getDoc(mesaDoc);
+        
+        if (!snapMesa.exists()) {
+            Swal.fire('Erro', 'Mesa não encontrada no sistema.', 'error');
+            return;
+        }
+
+        const m = snapMesa.data();
+        if (!m || !m.aberta) {
+            Swal.fire('Aviso', 'Esta mesa já consta como fechada.', 'info');
+            return;
+        }
+
+        const totalRestante = parseFloat(m.total || 0);
+
+        const { value: pgtInfo } = await Swal.fire({
+            title: `FECHAR MESA ${n}`,
+            html: `
+                <div style="color:var(--gold); font-size:1.5rem; font-weight:bold; margin-bottom:10px;">
+                    TOTAL: R$ ${totalRestante.toFixed(2)}
+                </div>
+                <input type="number" id="valor-pagar" class="swal2-input" style="text-align:center;" value="${totalRestante.toFixed(2)}">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top:15px;">
+                    <button onclick="window._metodo='PIX'; Swal.clickConfirm()" style="padding:15px; background:#2a2a2a; color:white; border:1px solid #444; border-radius:8px; cursor:pointer; font-weight:bold;">PIX</button>
+                    <button onclick="window._metodo='Cartão'; Swal.clickConfirm()" style="padding:15px; background:#2a2a2a; color:white; border:1px solid #444; border-radius:8px; cursor:pointer; font-weight:bold;">CARTÃO</button>
+                    <button onclick="window._metodo='Dinheiro'; Swal.clickConfirm()" style="padding:15px; background:#2a2a2a; color:white; border:1px solid #444; border-radius:8px; cursor:pointer; font-weight:bold;">DINHEIRO</button>
+                    <button onclick="window._metodo='FUNCIONARIO'; Swal.clickConfirm()" style="padding:15px; background:#4b2185; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">FUNCIONÁRIO</button>
+                </div>
+            `,
+            showConfirmButton: false,
+            showCancelButton: true,
+            cancelButtonText: 'CANCELAR',
+            background: '#161618',
+            color: '#fff',
+            preConfirm: () => {
+                const valorDigitado = parseFloat(document.getElementById('valor-pagar').value);
+                if (isNaN(valorDigitado) || valorDigitado <= 0 || valorDigitado > (totalRestante + 0.10)) {
+                    Swal.showValidationMessage('Valor inválido ou acima do total');
+                    return false;
+                }
+                if (!window._metodo) {
+                    Swal.showValidationMessage('Escolha uma forma de pagamento');
+                    return false;
+                }
+                return { valor: valorDigitado, metodo: window._metodo };
+            }
+        });
+
+        if (pgtInfo) {
+            const { valor, metodo } = pgtInfo;
+            
+            // --- O SEGREDO ESTÁ AQUI: Enviando origem e status para o servidor imprimir ---
+            await addDoc(collection(db, "pedidos"), {
+                nome: `MESA ${n}${valor < (totalRestante - 0.10) ? ' (PARCIAL)' : ''}`,
+                origem: "MESA",        // Adicionado: Necessário para o Node.js reconhecer
+                status: "finalizado",  // Adicionado: Necessário para o Node.js reconhecer
+                total: valor,
+                pagamento: metodo,
+                itens: m.itens || [],
+                garcom: m.garcom || 'Geral',
+                data: serverTimestamp(),
+                contaImpressa: false   // Adicionado: Para o servidor saber que deve imprimir
+            });
+
+            const novoTotalMesa = Math.max(0, totalRestante - valor);
+
+            // Se o que sobrou for menor que 10 centavos, limpa a mesa
+            if (novoTotalMesa < 0.10) {
+                await updateDoc(mesaDoc, { aberta: false, itens: [], total: 0, garcom: '' });
+                Swal.fire({ icon: 'success', title: 'Mesa Finalizada!', timer: 1000, showConfirmButton: false });
+            } else {
+                await updateDoc(mesaDoc, { total: novoTotalMesa });
+                Swal.fire({ 
+                    icon: 'info', 
+                    title: 'Parcial Recebida', 
+                    text: `Ainda restam R$ ${novoTotalMesa.toFixed(2)}`,
+                    confirmButtonText: 'Próximo Pagamento'
+                }).then(() => {
+                    window._metodo = null; // Reseta o método para a próxima parcial
+                    window.fecharMesa(n);
+                });
+            }
+        }
+    } catch (error) {
+        console.error("Erro completo:", error);
+        Swal.fire('Erro Crítico', error.message, 'error');
+    }
+};
+
+        // Monitoramento do Caixa (Delivery + Mesas Fechadas)
+onSnapshot(query(collection(db, "pedidos"), orderBy("data", "desc")), (snap) => {
+    const cont = document.getElementById('orders-container');
+    if (!cont) return;
+    
+    let tPix = 0, tCard = 0, tDin = 0;
+    let vendasProdutos = {}; 
+    
+    // 1. Limpa o container antes de renderizar
+    cont.innerHTML = "";
+    
+    // 2. Criamos um Set para rastrear IDs e evitar duplicação visual absoluta
+    const idsRenderizados = new Set();
+
+    snap.forEach(docSnap => {
+        const p = docSnap.data();
+        const id = docSnap.id;
+
+        // 1. FILTRO DE DUPLICADOS (Pelo ID do documento)
+        if (idsRenderizados.has(id)) return;
+        idsRenderizados.add(id);
+
+        // 2. FILTRO DE ORIGEM (A CHAVE PARA PARAR DE DUPLICAR)
+        // Só mostra no painel se a origem for "SITE" ou se não tiver origem (pedidos manuais)
+        // Isso ignora as comandas "COZINHA_TRADICIONAL" e "COZINHA_ARTESANAL"
+        if (p.origem && p.origem.includes("COZINHA")) return;
+
+        // 3. Mantém o seu filtro de tipo, se houver
+        if (p.tipo === "COZINHA") return;
+
+        const val = parseFloat(p.total || 0);
+
+        // --- ATUALIZAÇÃO: FILTRO PARA NÃO SOMAR CONSUMO DE FUNCIONÁRIO NO CAIXA ---
+        if (p.pagamento !== "FUNCIONARIO") {
+            if (p.pagamento === "PIX" || p.pagamento === "Pix") tPix += val;
+            else if (p.pagamento === "Cartão") tCard += val;
+            else if (p.pagamento === "Dinheiro") tDin += val;
+        }
+
+        if (Array.isArray(p.itens)) {
+            p.itens.forEach(item => {
+                const nomeProd = item.n;
+                const qtd = parseInt(item.q || 0);
+                const valorTotalItem = parseFloat(item.p || 0) * qtd;
+                if (!vendasProdutos[nomeProd]) {
+                    vendasProdutos[nomeProd] = { qtd: 0, total: 0 };
+                }
+                vendasProdutos[nomeProd].qtd += qtd;
+                vendasProdutos[nomeProd].total += valorTotalItem;
+            });
+        }
+
+        const isMesa = p.nome.includes("MESA");
+        
+        // --- ATUALIZAÇÃO: COR ROXA PARA IDENTIFICAR FUNCIONÁRIO ---
+        const isFunc = p.pagamento === "FUNCIONARIO";
+        const statusColor = isFunc ? '#9333ea' : (p.status === 'recebido' ? '#22c55e' : (p.status === 'saiu' ? '#3b82f6' : 'var(--gold)'));
+
+        cont.innerHTML += `
+            <div class="order-card" style="position: relative; border-left: 6px solid ${statusColor}; margin-bottom: 15px; padding: 15px; background: #1a1a1a; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                
+                <button onclick="deletarPedido('${id}', '${p.nome}')" 
+                    style="position:absolute; top:10px; right:10px; background:rgba(239, 68, 68, 0.15); border:none; color:#ef4444; width:28px; height:28px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10; transition: 0.2s;">
+                    <i class="fas fa-times"></i>
+                </button>
+
+                <div style="display:flex; justify-content:space-between; align-items: flex-start; padding-right: 30px;">
+                    <div>
+                        <b style="font-size:1.2rem; color:var(--gold)">${p.nome.toUpperCase()} ${isFunc ? '<span style="color:#9333ea; font-size:0.8rem;">[INTERNO]</span>' : ''}</b><br>
+                        <small style="color:#aaa"><i class="far fa-clock"></i> ${p.data ? new Date(p.data.toDate()).toLocaleTimeString() : 'Agora'}</small>
+                    </div>
+                    <span class="garcom-tag" style="background:${isFunc ? '#9333ea' : (isMesa ? '#444' : '#25D366')}; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">
+                        ${isFunc ? 'FUNCIONÁRIO' : (isMesa ? `<i class="fas fa-utensils"></i> ${p.garcom || 'Mesa'}` : `<i class="fab fa-whatsapp"></i> DELIVERY`)}
+                    </span>
+                </div>
+
+                <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; font-size: 0.9rem; border: 1px solid #333;">
+                    ${!isMesa ? `
+                        <p style="margin:2px 0;"><b><i class="fas fa-phone"></i> Tel:</b> ${p.telefone || 'N/A'}</p>
+                        <p style="margin:2px 0;"><b><i class="fas fa-map-marker-alt"></i> End:</b> ${p.endereco || 'Retirada'}</p>
+                    ` : `<p style="margin:2px 0; color: #aaa;"><i class="fas fa-info-circle"></i> CONSUMO LOCAL</p>`}
+                    
+                    <p style="margin:2px 0;"><b><i class="fas fa-wallet"></i> Pagamento:</b> <span style="${isFunc ? 'color:#9333ea; font-weight:bold;' : ''}">${p.pagamento || 'Pendente'}</span></p>
+                </div>
+
+                <div class="mesa-itens-lista" style="border-top: 1px dashed #444; padding-top:10px; color:#eee;">
+                    ${Array.isArray(p.itens) ? p.itens.map((i, index) => `
+                        <div style="margin-bottom:8px; border-bottom: 1px solid #222; padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="flex: 1;">
+                                <span style="font-size: 1rem;"><b>${i.q}x</b> ${i.n}</span><br>
+                                <small style="color: #888;">R$ ${(i.p * i.q).toFixed(2)}</small>
+                            </div>
+                            
+                            <button onclick="window.removerItemEspecifico('${id}', ${index})" 
+                                style="background: #ef4444; color: white; border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; margin-left: 10px;"
+                                title="Remover este item">
+                                X
+                            </button>
+                        </div>`).join('') : `<p>${p.detalhes || 'Erro ao carregar itens'}</p>`}
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; border-top: 1px solid #333; padding-top:10px;">
+                    <b style="font-size:1.2rem; color:var(--gold)">TOTAL: R$ ${val.toFixed(2)}</b>
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="marcarRecebido('${id}', '${p.telefone}', '${p.nome}')" style="background:var(--green); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;"><i class="fas fa-check"></i></button>
+                        <button onclick="despacharPedido('${id}', '${p.telefone}', '${p.nome}')" style="background:var(--blue); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;"><i class="fas fa-motorcycle"></i></button>
+                    </div>
+                </div>
+            </div>`;
+    });
+
+
+    // Atualiza os painéis de totais (Balanço)
+    document.getElementById('b-pix').innerText = `R$ ${tPix.toFixed(2)}`;
+    document.getElementById('b-cartao').innerText = `R$ ${tCard.toFixed(2)}`;
+    document.getElementById('b-dinheiro').innerText = `R$ ${tDin.toFixed(2)}`;
+    document.getElementById('b-total').innerText = `R$ ${(tPix + tCard + tDin).toFixed(2)}`;
+
+    // Atualiza o ranking de produtos
+    const rankingCont = document.getElementById('ranking-produtos');
+    if (rankingCont) {
+        const listaOrdenada = Object.entries(vendasProdutos).sort((a, b) => b[1].qtd - a[1].qtd);
+        rankingCont.innerHTML = listaOrdenada.map(([nome, dados]) => `
+            <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #333;">
+                <span><b>${dados.qtd}x</b> ${nome}</span>
+                <span style="color:var(--gold)">R$ ${dados.total.toFixed(2)}</span>
+            </div>
+        `).join('') || '<p style="color:#666">Aguardando vendas...</p>';
+    }
+
+    if (inicializado && snap.docChanges().some(c => c.type === "added") && somAtivo) playSom();
+    inicializado = true;
+});
+
+// x do cards
+window.removerItemEspecifico = async (pedidoId, indexItem) => {
+    if (!confirm("Deseja remover este item e atualizar o total?")) return;
+
+    try {
+        const pedidoRef = doc(db, "pedidos", pedidoId);
+        const snapshot = await getDoc(pedidoRef);
+        
+        if (snapshot.exists()) {
+            const dados = snapshot.data();
+            let itensAtualizados = [...dados.itens];
+            
+            // Pega o item para calcular quanto subtrair do total
+            const item = itensAtualizados[indexItem];
+            const valorSubtrair = parseFloat(item.p || 0) * parseInt(item.q || 0);
+            
+            // Remove o item do array
+            itensAtualizados.splice(indexItem, 1);
+            
+            // Recalcula o total (evitando números negativos)
+            const novoTotal = Math.max(0, parseFloat(dados.total || 0) - valorSubtrair).toFixed(2);
+
+            // Se não sobrar nenhum item, talvez você queira deletar o pedido, 
+            // mas aqui apenas atualizaremos para lista vazia:
+            await updateDoc(pedidoRef, {
+                itens: itensAtualizados,
+                total: novoTotal
+            });
+            
+            console.log("Item removido com sucesso!");
+        }
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro ao remover item: " + error.message);
+    }
+};
+        // marcar recebido
+        window.marcarRecebido = async (id, tel, nome) => {
+            await updateDoc(doc(db, "pedidos", id), { status: 'recebido' });
+            if (tel && tel !== '' && tel !== 'undefined') window.open(`https://wa.me/55${tel.replace(/\D/g, '')}?text=Boa noite, seu pedido já esta da fila de produção, por favor aguarde...`);
+        };
+
+        window.despacharPedido = async (id, tel, nome) => {
+            await updateDoc(doc(db, "pedidos", id), { status: 'saiu' });
+            if (tel && tel !== '' && tel !== 'undefined') window.open(`https://wa.me/55${tel.replace(/\D/g, '')}?text=Olá, seu pedido ja saiu para entrega, aproveite bem e volte sempre. ZAPLANCHES agradece!`);
+        };
+
+// Função para excluir um pedido específico do Delivery/Caixa
+window.deletarPedido = async (id, nome) => {
+    const { isConfirmed } = await Swal.fire({
+        title: `EXCLUIR PEDIDO?`,
+        text: `Deseja apagar o pedido de "${nome}"? O valor será removido do caixa imediatamente.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#333',
+        confirmButtonText: 'Sim, excluir',
+        cancelButtonText: 'Cancelar',
+        background: '#161618',
+        color: '#fff'
+    });
+
+    if (isConfirmed) {
+        try {
+            await deleteDoc(doc(db, "pedidos", id));
+            // O onSnapshot cuidará de atualizar os totais e remover o card da tela
+            Swal.fire({ title: 'Pedido removido!', icon: 'success', timer: 800, showConfirmButton: false });
+        } catch (error) {
+            console.error("Erro ao deletar:", error);
+            Swal.fire('Erro', 'Não foi possível excluir o pedido.', 'error');
+        }
+    }
+};
+       document.getElementById('btn-limpar-tudo').onclick = async () => {
+    const { value: pass } = await Swal.fire({ 
+        title: 'Limpeza Geral', 
+    
+        input: 'password', 
+        inputPlaceholder: 'Senha do Gerente',
+  
+        showCancelButton: true, 
+        confirmButtonColor: '#d33', 
+        confirmButtonText: 'SIM, LIMPAR TUDO!',
+        cancelButtonText: 'Cancelar',
+        didOpen: () => {
+            const input = Swal.getInput();
+            const icon = document.createElement('i');
+            icon.classList.add('fas', 'fa-eye', 'toggle-password-icon');
+            
+            // Estilização direta para garantir o posicionamento no modal de aviso
+            input.parentElement.style.position = 'relative';
+            input.parentElement.appendChild(icon);
+
+            icon.onclick = () => {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.replace('fa-eye', 'fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.replace('fa-eye-slash', 'fa-eye');
+                }
+            };
+        }
+    });
+
+    if (checkPass(pass)) {
+        Swal.fire({ 
+            title: 'Limpando...', 
+            html: 'Aguarde enquanto os registros são apagados',
+            allowOutsideClick: false, 
+            didOpen: () => Swal.showLoading() 
+        });
+        
+        try {
+            const snap = await getDocs(collection(db, "pedidos"));
+            const promessas = snap.docs.map(d => deleteDoc(doc(db, "pedidos", d.id)));
+            await Promise.all(promessas);
+            Swal.fire('Limpo!', 'O histórico foi zerado com sucesso.', 'success');
+        } catch (error) {
+            Swal.fire('Erro', 'Não foi possível limpar os dados.', 'error');
+        }
+    } else if (pass) { 
+        Swal.fire('Erro', 'Senha incorreta!', 'error'); 
+    }
+};
+
+        const menuCont = document.getElementById('sanfona-menu');
+        if (menuCont) {
+            menuCont.innerHTML = "";
+            Object.keys(cardapio).forEach(cat => {
+                let html = `<button class="cat-head" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                        ${cat} <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="cat-content hidden" style="background:#1a1a1a; padding:10px;">`;
+
+                cardapio[cat].forEach(i => {
+                    // Prepara as opções para o JavaScript não quebrar
+                    const opcoesJSON = i.opcoes ? JSON.stringify(i.opcoes).replace(/"/g, '&quot;') : '[]';
+
+                    html += `<div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center; border-bottom:1px solid #333; padding-bottom:5px;">
+                        <span style="color:white">${i.n} <br><small style="color:var(--gold)">R$ ${i.p.toFixed(2)}</small></span> 
+                        
+                        <button onclick="window.addItemTemp('${i.n}', ${i.p}, ${opcoesJSON}, this)" 
+                                style="background:var(--gold); border:none; border-radius:4px; padding:8px 15px; font-weight:bold; cursor:pointer; transition: 0.2s;">
+                            +
+                        </button>
+                     </div>`;
+                });
+                menuCont.innerHTML += html + `</div>`;
+            });
+        }
+
+        // --- FUNÇÃO PARA GERAR O PDF DO CAIXA ---
+       window.gerarPDFBalanco = () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const pix = document.getElementById('b-pix').innerText;
+    const cartao = document.getElementById('b-cartao').innerText;
+    const dinheiro = document.getElementById('b-dinheiro').innerText;
+    const total = document.getElementById('b-total').innerText;
+    const dataHora = new Date().toLocaleString('pt-BR');
+
+    // 1. CABEÇALHO ESTILIZADO
+    doc.setFillColor(22, 22, 24);
+    doc.rect(0, 0, 210, 40, 'F');
+    doc.setTextColor(34, 197, 94); // Verde ZapLanches
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("ZAPLANCHE - BALANÇO DE CAIXA", 15, 25);
+    doc.setFontSize(10);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Relatório gerado em: ${dataHora}`, 15, 33);
+
+    // 2. TABELA FINANCEIRA (RESUMO DE PAGAMENTOS)
+    doc.autoTable({
+        startY: 50,
+        head: [['Descrição', 'Valor Acumulado']],
+        body: [
+            ['Total em PIX', pix],
+            ['Total em CARTÃO', cartao],
+            ['Total em DINHEIRO', dinheiro],
+            [{ content: 'TOTAL GERAL', styles: { fontStyle: 'bold', fillColor: [34, 197, 94], textColor: [0, 0, 0] } },
+             { content: total, styles: { fontStyle: 'bold', fillColor: [34, 197, 94], textColor: [0, 0, 0] } }]
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [33, 33, 36] },
+        styles: { fontSize: 12 }
+    });
+
+    // 3. TABELA DE PRODUTOS VENDIDOS (RANKING)
+    // Coleta os dados do elemento de ranking que criamos no HTML
+    const rankingCont = document.getElementById('ranking-produtos');
+    if (rankingCont && rankingCont.children.length > 0) {
+        const rowsProdutos = [];
+        // Percorre cada linha do ranking na tela para montar o PDF
+        Array.from(rankingCont.children).forEach(el => {
+            const texto = el.innerText.split('\n'); // Divide nome/qtd e valor
+            if (texto.length >= 2) {
+                rowsProdutos.push([texto[0], texto[1]]);
+            } else {
+                // Caso o innerText venha em linha única (depende do navegador)
+                const partes = el.innerText.split('R$');
+                rowsProdutos.push([partes[0].trim(), `R$ ${partes[1].trim()}`]);
+            }
+        });
+
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text("DETALHAMENTO DE VENDAS POR PRODUTO", 15, doc.lastAutoTable.finalY + 15);
+
+        doc.autoTable({
+            startY: doc.lastAutoTable.finalY + 20,
+            head: [['Produto / Quantidade', 'Subtotal']],
+            body: rowsProdutos,
+            theme: 'striped',
+            headStyles: { fillColor: [50, 50, 50] },
+            styles: { fontSize: 10 }
+        });
+    }
+
+    // 4. SALVAR ARQUIVO
+    doc.save(`balanco_zaplanche_${dataHora.replace(/[/ :]/g, '_')}.pdf`);
+};
+// Bloqueios de segurança
   document.addEventListener('keydown', function (e) {
     if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) { e.preventDefault(); }
     if (e.key === 'F12') { e.preventDefault(); }
@@ -1613,4 +1576,5 @@ window.confirmarEPublicar = async () => {
     </script>
 </body>
 
-</html>window.removerItemEspecifico
+</html>
+
