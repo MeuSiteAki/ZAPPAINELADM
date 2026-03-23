@@ -969,8 +969,17 @@ window.cancelarMesa = async (n) => {
         { n: "Ovo", p: 2.00 },
         { n: "Carne Hambúrguer", p: 6.00 },
         { n: "Blend Bovino 160g", p: 10.00 },
-        { n: "Bacon / Calabresa", p: 6.00 },
-        { n: "Filé Frango/Gado", p: 10.00 }
+        { n: "Bacon", p: 6.00 },
+        { n: "Salsicha", p: 3.00 },
+        { n: "Presunto", p: 4.00 },
+        { n: "Bacon Defumado", p: 6.00 },
+        { n: "Cebola Caramelizada", p: 5.00 },
+        { n: "Molho Cheddar", p: 5.00 },
+        { n: "Queijo Mussarela", p: 4.00 },
+        { n: "Queijo Polenguinho", p: 5.00 },
+        { n: "Calabresa", p: 5.00 },
+        { n: "Filé Gado", p: 10.00 },
+        { n: "Filé Frango", p: 10.00 }
     ];
 
     // Função interna para mostrar o aviso (Toast)
@@ -1062,55 +1071,56 @@ window.cancelarMesa = async (n) => {
             document.getElementById('total-temp').innerText = `R$ ${carrinhoTemp.reduce((a, b) => a + (b.p * b.q), 0).toFixed(2)}`;
         }
 
-        // ✅ CORREÇÃO: enviarCozinha agora usa tipo: "COZINHA" para não aparecer no Delivery
-       window.enviarCozinha = async () => {
+    // ✅ CORREÇÃO: enviarCozinha agora usa tipo: "COZINHA" para não aparecer no Delivery
+   window.enviarCozinha = async () => {
     if (carrinhoTemp.length === 0) return;
-    
-    // Desabilita o botão ou mostra carregando para evitar cliques duplos
-    Swal.showLoading(); 
+    Swal.showLoading();
 
-    const m = mesas.find(x => x.n === mesaAtiva);
-    const novosItensMesa = Array.isArray(m.itens) ? [...m.itens] : [];
-
-    // 1. Atualiza o estado da mesa (Consumo Acumulado)
-    carrinhoTemp.forEach(novo => {
-        const existe = novosItensMesa.find(x => x.n === novo.n && x.obs === novo.obs);
-        if (existe) { 
-            existe.q += novo.q; // Soma a quantidade vinda do carrinho
-        } else { 
-            novosItensMesa.push({ ...novo }); 
-        }
-    });
-
-    const novoTotal = novosItensMesa.reduce((a, b) => a + (b.p * b.q), 0);
-
-    // 2. Grava no banco de dados
     try {
-        await updateDoc(doc(db, "estado_mesas", `mesa_${mesaAtiva}`), {
-            itens: novosItensMesa, 
-            total: novoTotal
+        const m = mesas.find(x => x.n === mesaAtiva);
+        // Garante que pegamos a lista de itens atual da mesa
+        const novosItensMesa = Array.isArray(m.itens) ? [...m.itens] : [];
+
+        // 1. Atualiza o consumo acumulado da mesa (o que fica salvo no card da mesa)
+        carrinhoTemp.forEach(item => {
+            const existe = novosItensMesa.find(x => x.n === item.n && x.obs === item.obs);
+            if (existe) { 
+                existe.q += item.q; 
+            } else { 
+                novosItensMesa.push({ ...item }); 
+            }
         });
 
-        // Este documento dispara o servidor da impressora (Node.js)
+        const novoTotal = novosItensMesa.reduce((a, b) => a + (b.p * b.q), 0);
+
+        // 2. Atualiza o documento da mesa no Firestore
+        await updateDoc(doc(db, "estado_mesas", `mesa_${mesaAtiva}`), {
+            itens: novosItensMesa, 
+            total: novoTotal,
+            aberta: true 
+        });
+
+        // 3. ENVIO ÚNICO PARA IMPRESSÃO (Unifica Bebidas e Lanches)
+        // Criamos apenas UM documento no banco com todos os itens do carrinho
         await addDoc(collection(db, "pedidos"), {
-            nome: `MESA ${mesaAtiva}`, 
-            origem: "MESA", 
-            tipo: "COZINHA", 
-            status: "aberto",
-            itens: [...carrinhoTemp], // Envia apenas o que foi pedido agora
-            garcom: m.garcom || 'Geral', 
+            nome: `MESA ${mesaAtiva}`,
+            origem: "MESA",
+            tipo: "COZINHA",     // Tag para o servidor imprimir como comanda
+            itens: carrinhoTemp, // Envia o array inteiro (Lanche + Bebida + Batata)
             data: serverTimestamp()
         });
 
-        // 3. Limpa tudo e fecha
-        carrinhoTemp = []; // Limpa o carrinho temporário após enviar
-        playSom(); 
+        // Limpeza e Sucesso
+        carrinhoTemp = [];
+        renderTemp();
         toggleMenu(false);
+        Swal.fire({ title: 'Enviado!', icon: 'success', timer: 1000, showConfirmButton: false });
         
-        Swal.fire({ title: 'Enviado para Cozinha!', icon: 'success', timer: 1000, showConfirmButton: false });
+        if (typeof playSom === "function") playSom();
+
     } catch (error) {
-        console.error("Erro ao enviar:", error);
-        Swal.fire('Erro', 'Não foi possível enviar o pedido.', 'error');
+        console.error("Erro ao enviar para cozinha:", error);
+        Swal.fire('Erro', 'Falha ao enviar para cozinha', 'error');
     }
 };
 
@@ -1577,4 +1587,3 @@ window.deletarPedido = async (id, nome) => {
 </body>
 
 </html>
-
