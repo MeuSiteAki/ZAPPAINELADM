@@ -737,13 +737,20 @@
             ` : '<span style="font-size: 0.75rem; color: #666;">Disponível</span>'}
         </div>
 
-        <div class="mesa-itens-lista" style="flex-grow: 1;">
-            ${m.aberta ? (Array.isArray(m.itens) && m.itens.length > 0 ? m.itens.map(i => `
-                <div class="mesa-item-doc">
-                    <b>${i.q}x</b> ${i.n} 
-                    <br><small style="color:var(--green)">${i.obs || ''}</small>
-                </div>`).join('') : '<div style="color:#555; font-style:italic; font-size:0.9rem;">Mesa vazia...</div>') : ''}
-        </div>
+       <div class="mesa-itens-lista" style="flex-grow: 1;">
+    ${m.aberta ? (Array.isArray(m.itens) && m.itens.length > 0 ? m.itens.map((i, index) => `
+        <div class="mesa-item-doc" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; border-bottom: 1px solid #222; padding-bottom: 4px;">
+            <div style="flex: 1;">
+                <b>${i.q}x</b> ${i.n} 
+                <br><small style="color:var(--green)">${i.obs || ''}</small>
+            </div>
+            
+            <button onclick="window.removerItemMesa(${m.n}, ${index})" 
+                style="background: rgba(239, 68, 68, 0.1); border: none; color: #ef4444; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: 5px;">
+                <i class="fas fa-times" style="font-size: 11px;"></i>
+            </button>
+        </div>`).join('') : '<div style="color:#555; font-style:italic; font-size:0.9rem;">Mesa vazia...</div>') : ''}
+</div>
         
         <div style="font-weight:bold; margin: 10px 0; color:var(--gold); font-size: 1.1rem;">
             ${m.aberta ? 'R$ ' + parseFloat(m.total || 0).toFixed(2) : ''}
@@ -1576,6 +1583,52 @@ window.deletarPedido = async (id, nome) => {
 
     // 4. SALVAR ARQUIVO
     doc.save(`balanco_zaplanche_${dataHora.replace(/[/ :]/g, '_')}.pdf`);
+};
+
+window.removerItemMesa = async (numeroMesa, indexItem) => {
+    const { isConfirmed } = await Swal.fire({
+        title: 'Remover Item?',
+        text: "O valor será subtraído do total da mesa.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'Sim, remover',
+        cancelButtonText: 'Manter item',
+        background: '#161618',
+        color: '#fff'
+    });
+
+    if (isConfirmed) {
+        try {
+            const mesaRef = doc(db, "estado_mesas", `mesa_${numeroMesa}`);
+            const snap = await getDoc(mesaRef);
+            
+            if (snap.exists()) {
+                const dados = snap.data();
+                let itensAtualizados = [...dados.itens];
+                
+                // Pega o item para saber o valor a subtrair
+                const item = itensAtualizados[indexItem];
+                const valorSubtrair = parseFloat(item.p) * parseInt(item.q);
+                
+                // Remove o item do array
+                itensAtualizados.splice(indexItem, 1);
+                
+                // Recalcula o total
+                const novoTotal = Math.max(0, (dados.total || 0) - valorSubtrair);
+
+                await updateDoc(mesaRef, {
+                    itens: itensAtualizados,
+                    total: novoTotal
+                });
+
+                Swal.fire({ title: 'Removido!', icon: 'success', timer: 800, showConfirmButton: false });
+            }
+        } catch (error) {
+            console.error("Erro ao remover item da mesa:", error);
+            Swal.fire('Erro', 'Não foi possível remover o item.', 'error');
+        }
+    }
 };
 // Bloqueios de segurança
   document.addEventListener('keydown', function (e) {
