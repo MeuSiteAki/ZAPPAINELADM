@@ -1404,14 +1404,18 @@ onSnapshot(query(collection(db, "pedidos"), orderBy("data", "desc")), (snap) => 
 
     // Ranking
     // Definição dos grupos
-    const artesanais = ["Burguer Mini","Burguer Classic","Burguer Poleguinho","Burguer Pepperoni","Burguer Cheese Bacon","Burguer Double","Porção Batata Frita"];
+    // Ranking
+   const artesanais = ["Burguer Mini","Burguer Classic","Burguer Poleguinho","Burguer Pepperoni","Burguer Cheese Bacon","Burguer Double","Batata Frita"];
     const tradicionais = ["Zap Quente","Zap X-Burguer","Zap Egg","Zap Bacon","Zap Calabresa","Zap Salada Especial","Zap Tudo","Zap Broca","Zap Frango","Zap Filé"];
+    const adicionais = ["Ovo","Carne Hambúrguer","Blend Bovino 160g","Bacon","Salsicha","Presunto","Bacon Defumado","Cebola Caramelizada","Molho Cheddar","Queijo Mussarela","Queijo Polenguinho","Calabresa","Filé Gado","Filé Frango"];
+
+    const pertenceAo = (nome, lista) => lista.some(item => nome.startsWith(item));
 
     const renderGrupo = (elementId, subtotalId, lista) => {
         const cont = document.getElementById(elementId);
         const subtotalEl = document.getElementById(subtotalId);
         if (!cont) return;
-        const itensDoGrupo = Object.entries(vendasProdutos).filter(([nome]) => lista.includes(nome));
+        const itensDoGrupo = Object.entries(vendasProdutos).filter(([nome]) => pertenceAo(nome, lista));
         const subtotal = itensDoGrupo.reduce((acc, [, d]) => acc + d.total, 0);
         cont.innerHTML = itensDoGrupo.sort((a,b) => b[1].qtd - a[1].qtd).map(([nome, dados]) => `
             <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #2a2a2a; font-size: 0.82rem;">
@@ -1425,11 +1429,15 @@ onSnapshot(query(collection(db, "pedidos"), orderBy("data", "desc")), (snap) => 
     renderGrupo('ranking-artesanais', 'subtotal-artesanais', artesanais);
     renderGrupo('ranking-tradicionais', 'subtotal-tradicionais', tradicionais);
 
-    // Bebidas: tudo que não é artesanal nem tradicional
+    // Bebidas: tudo que não é artesanal, tradicional nem adicional
     const bebidasCont = document.getElementById('ranking-bebidas');
     const bebidasSubtotalEl = document.getElementById('subtotal-bebidas');
     if (bebidasCont) {
-        const itensBebidas = Object.entries(vendasProdutos).filter(([nome]) => !artesanais.includes(nome) && !tradicionais.includes(nome));
+        const itensBebidas = Object.entries(vendasProdutos).filter(([nome]) => 
+            !pertenceAo(nome, artesanais) && 
+            !pertenceAo(nome, tradicionais) && 
+            !pertenceAo(nome, adicionais)
+        );
         const subtotalBebidas = itensBebidas.reduce((acc, [, d]) => acc + d.total, 0);
         bebidasCont.innerHTML = itensBebidas.sort((a,b) => b[1].qtd - a[1].qtd).map(([nome, dados]) => `
             <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #2a2a2a; font-size: 0.82rem;">
