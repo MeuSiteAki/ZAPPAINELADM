@@ -531,14 +531,51 @@
     <h3 style="color: var(--gold); border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 15px;">
         <i class="fas fa-chart-line"></i> PRODUTOS VENDIDOS (HOJE)
     </h3>
-    <div id="ranking-produtos" style="color: #eee; font-size: 0.9rem;">
+
+    <!-- DUAS COLUNAS: ARTESANAIS | TRADICIONAIS -->
+    <div style="display: grid; grid-template-columns: 1fr 2px 1fr; gap: 0; margin-bottom: 20px;">
+        
+        <!-- COLUNA ESQUERDA: ARTESANAIS -->
+        <div style="padding-right: 15px;">
+            <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">🥪 Artesanais</h4>
+            <div id="ranking-artesanais" style="color: #eee; font-size: 0.85rem;"></div>
+            <div style="border-top: 1px solid #444; margin-top: 8px; padding-top: 6px; display: flex; justify-content: space-between; font-weight: bold;">
+                <span style="color: #aaa;">Subtotal</span>
+                <span id="subtotal-artesanais" style="color: var(--gold)">R$ 0,00</span>
+            </div>
         </div>
-            <div
-                style="background:var(--card-bg); padding:20px; border-radius:15px; text-align:center; border:2px solid var(--gold);">
-                TOTAL<h2 id="b-total" style="color:var(--gold)">R$ 0,00</h2>
+
+        <!-- LINHA DIVISÓRIA -->
+        <div style="background: #444; width: 2px; margin: 0 10px;"></div>
+
+        <!-- COLUNA DIREITA: TRADICIONAIS -->
+        <div style="padding-left: 15px;">
+            <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">🍔 Tradicionais</h4>
+            <div id="ranking-tradicionais" style="color: #eee; font-size: 0.85rem;"></div>
+            <div style="border-top: 1px solid #444; margin-top: 8px; padding-top: 6px; display: flex; justify-content: space-between; font-weight: bold;">
+                <span style="color: #aaa;">Subtotal</span>
+                <span id="subtotal-tradicionais" style="color: var(--gold)">R$ 0,00</span>
             </div>
         </div>
     </div>
+
+    <!-- BEBIDAS SEPARADAS -->
+    <div style="border-top: 2px solid #333; padding-top: 15px; margin-top: 5px;">
+        <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">🥤 Bebidas & Porções</h4>
+        <div id="ranking-bebidas" style="color: #eee; font-size: 0.85rem;"></div>
+        <div style="border-top: 1px solid #444; margin-top: 8px; padding-top: 6px; display: flex; justify-content: space-between; font-weight: bold;">
+            <span style="color: #aaa;">Subtotal</span>
+            <span id="subtotal-bebidas" style="color: var(--gold)">R$ 0,00</span>
+        </div>
+    </div>
+
+</div>
+
+<!-- TOTAL GERAL -->
+<div style="background:var(--card-bg); padding:20px; border-radius:15px; text-align:center; border:2px solid var(--gold); margin-top: 15px;">
+    TOTAL<h2 id="b-total" style="color:var(--gold)">R$ 0,00</h2>
+</div>
+</div>
 
     <div id="menu-lateral">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
@@ -758,15 +795,32 @@
 
         ${!m.aberta ?
             `<button class="btn-confirm" onclick="abrirMesa(${m.n})">ABRIR MESA</button>` :
-            `<div class="row-btns" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-                <button class="btn-confirm" style="background:#2a2a2a; color: white; font-size: 20px; border: 1px solid #444;" onclick="prepararAdd(${m.n})">+</button>
-                <button class="btn-confirm" style="background:green; color: white; font-size: 25px" onclick="fecharMesa(${m.n})">✔︎</button>
-            </div>`
+            `<div style="display:flex; gap:12px; justify-content:center; margin-bottom:8px; font-size:0.8rem; color:#aaa;">
+    <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
+        <input type="radio" name="retirada_${m.n}" value="local" ${(m.retirada||'local')==='local'?'checked':''} onchange="window.setRetirada(${m.n}, 'local')">
+        🍽️ Local
+    </label>
+    <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
+        <input type="radio" name="retirada_${m.n}" value="viagem" ${m.retirada==='viagem'?'checked':''} onchange="window.setRetirada(${m.n}, 'viagem')">
+        🏡 Viagem
+    </label>
+</div>
+<div class="row-btns" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+    <button class="btn-confirm" style="background:#2a2a2a; color: white; font-size: 20px; border: 1px solid #444;" onclick="prepararAdd(${m.n})">+</button>
+    <button class="btn-confirm" style="background:green; color: white; font-size: 25px" onclick="fecharMesa(${m.n})">✔︎</button>
+</div>`
         }
     </div>`).join('');
 });
 
 let timerVoz; // Variável para controlar o tempo de silêncio
+//retirada
+window.setRetirada = async (n, valor) => {
+    await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { retirada: valor });
+    if (valor === 'viagem') {
+        window.fecharMesa(n);
+    }
+};
 
 window.iniciarEscutaVoz = function() {
     const btn = document.getElementById('btnVozMenu');
@@ -1315,7 +1369,7 @@ onSnapshot(query(collection(db, "pedidos"), orderBy("data", "desc")), (snap) => 
                         <p style="margin:4px 0;"><b><i class="fas fa-phone"></i> Tel:</b> ${p.telefone || 'N/A'}</p>
                         <p style="margin:4px 0;"><b><i class="fas fa-map-marker-alt"></i> End:</b> ${p.endereco || 'Retirada'}</p>
                         <p style="margin:4px 0; color:#00e676;"><b><i class="fas fa-map"></i> Bairro:</b> ${p.bairro || 'Não informado'}</p>
-                    ` : `<p style="margin:4px 0; color: #aaa;"><i class="fas fa-info-circle"></i> CONSUMO LOCAL</p>`}
+                    ` : `<p style="margin:4px 0; color: #aaa;"><i class="fas fa-info-circle"></i> ${p.retirada === 'viagem' ? '🏡 Viagem' : 'CONSUMO LOCAL'}</p>`}
                     
                     <p style="margin:4px 0;"><b><i class="fas fa-wallet"></i> Pagamento:</b> 
                         <span style="${isFunc ? 'color:#9333ea; font-weight:bold;' : ''}">${p.pagamento || 'Pendente'}</span>
@@ -1355,15 +1409,41 @@ onSnapshot(query(collection(db, "pedidos"), orderBy("data", "desc")), (snap) => 
     safeSetText('b-total', `R$ ${(tPix + tCard + tDin).toFixed(2)}`);
 
     // Ranking
-    const rankingCont = document.getElementById('ranking-produtos');
-    if (rankingCont) {
-        const listaOrdenada = Object.entries(vendasProdutos).sort((a, b) => b[1].qtd - a[1].qtd);
-        rankingCont.innerHTML = listaOrdenada.map(([nome, dados]) => `
-            <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #333;">
+    // Definição dos grupos
+    const artesanais = ["Burguer Mini","Burguer Classic","Burguer Poleguinho","Burguer Pepperoni","Burguer Cheese Bacon","Burguer Double","Porção Batata Frita"];
+    const tradicionais = ["Zap Quente","Zap X-Burguer","Zap Egg","Zap Bacon","Zap Calabresa","Zap Salada Especial","Zap Tudo","Zap Broca","Zap Frango","Zap Filé"];
+
+    const renderGrupo = (elementId, subtotalId, lista) => {
+        const cont = document.getElementById(elementId);
+        const subtotalEl = document.getElementById(subtotalId);
+        if (!cont) return;
+        const itensDoGrupo = Object.entries(vendasProdutos).filter(([nome]) => lista.includes(nome));
+        const subtotal = itensDoGrupo.reduce((acc, [, d]) => acc + d.total, 0);
+        cont.innerHTML = itensDoGrupo.sort((a,b) => b[1].qtd - a[1].qtd).map(([nome, dados]) => `
+            <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #2a2a2a; font-size: 0.82rem;">
                 <span><b>${dados.qtd}x</b> ${nome}</span>
                 <span style="color:var(--gold)">R$ ${dados.total.toFixed(2)}</span>
             </div>
-        `).join('') || '<p style="color:#666">Aguardando vendas...</p>';
+        `).join('') || '<p style="color:#555; font-size:0.8rem;">Nenhuma venda</p>';
+        if (subtotalEl) subtotalEl.innerText = `R$ ${subtotal.toFixed(2)}`;
+    };
+
+    renderGrupo('ranking-artesanais', 'subtotal-artesanais', artesanais);
+    renderGrupo('ranking-tradicionais', 'subtotal-tradicionais', tradicionais);
+
+    // Bebidas: tudo que não é artesanal nem tradicional
+    const bebidasCont = document.getElementById('ranking-bebidas');
+    const bebidasSubtotalEl = document.getElementById('subtotal-bebidas');
+    if (bebidasCont) {
+        const itensBebidas = Object.entries(vendasProdutos).filter(([nome]) => !artesanais.includes(nome) && !tradicionais.includes(nome));
+        const subtotalBebidas = itensBebidas.reduce((acc, [, d]) => acc + d.total, 0);
+        bebidasCont.innerHTML = itensBebidas.sort((a,b) => b[1].qtd - a[1].qtd).map(([nome, dados]) => `
+            <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #2a2a2a; font-size: 0.82rem;">
+                <span><b>${dados.qtd}x</b> ${nome}</span>
+                <span style="color:var(--gold)">R$ ${dados.total.toFixed(2)}</span>
+            </div>
+        `).join('') || '<p style="color:#555; font-size:0.8rem;">Nenhuma venda</p>';
+        if (bebidasSubtotalEl) bebidasSubtotalEl.innerText = `R$ ${subtotalBebidas.toFixed(2)}`;
     }
 
     if (typeof inicializado !== 'undefined' && inicializado && snap.docChanges().some(c => c.type === "added") && typeof somAtivo !== 'undefined' && somAtivo) playSom();
@@ -1523,7 +1603,7 @@ window.deletarPedido = async (id, nome) => {
         }
 
         // --- FUNÇÃO PARA GERAR O PDF DO CAIXA ---
-       window.gerarPDFBalanco = () => {
+      window.gerarPDFBalanco = () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
@@ -1533,10 +1613,10 @@ window.deletarPedido = async (id, nome) => {
     const total = document.getElementById('b-total').innerText;
     const dataHora = new Date().toLocaleString('pt-BR');
 
-    // 1. CABEÇALHO ESTILIZADO
+    // 1. CABEÇALHO
     doc.setFillColor(22, 22, 24);
     doc.rect(0, 0, 210, 40, 'F');
-    doc.setTextColor(34, 197, 94); // Verde ZapLanches
+    doc.setTextColor(34, 197, 94);
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
     doc.text("ZAPLANCHE - BALANÇO DE CAIXA", 15, 25);
@@ -1544,7 +1624,7 @@ window.deletarPedido = async (id, nome) => {
     doc.setTextColor(150, 150, 150);
     doc.text(`Relatório gerado em: ${dataHora}`, 15, 33);
 
-    // 2. TABELA FINANCEIRA (RESUMO DE PAGAMENTOS)
+    // 2. TABELA FINANCEIRA
     doc.autoTable({
         startY: 50,
         head: [['Descrição', 'Valor Acumulado']],
@@ -1552,49 +1632,120 @@ window.deletarPedido = async (id, nome) => {
             ['Total em PIX', pix],
             ['Total em CARTÃO', cartao],
             ['Total em DINHEIRO', dinheiro],
-            [{ content: 'TOTAL GERAL', styles: { fontStyle: 'bold', fillColor: [34, 197, 94], textColor: [0, 0, 0] } },
-             { content: total, styles: { fontStyle: 'bold', fillColor: [34, 197, 94], textColor: [0, 0, 0] } }]
+            [
+                { content: 'TOTAL GERAL', styles: { fontStyle: 'bold', fillColor: [34, 197, 94], textColor: [0, 0, 0] } },
+                { content: total, styles: { fontStyle: 'bold', fillColor: [34, 197, 94], textColor: [0, 0, 0] } }
+            ]
         ],
         theme: 'grid',
         headStyles: { fillColor: [33, 33, 36] },
         styles: { fontSize: 12 }
     });
 
-    // 3. TABELA DE PRODUTOS VENDIDOS (RANKING)
-    // Coleta os dados do elemento de ranking que criamos no HTML
-    const rankingCont = document.getElementById('ranking-produtos');
-    if (rankingCont && rankingCont.children.length > 0) {
-        const rowsProdutos = [];
-        // Percorre cada linha do ranking na tela para montar o PDF
-        Array.from(rankingCont.children).forEach(el => {
-            const texto = el.innerText.split('\n'); // Divide nome/qtd e valor
-            if (texto.length >= 2) {
-                rowsProdutos.push([texto[0], texto[1]]);
-            } else {
-                // Caso o innerText venha em linha única (depende do navegador)
-                const partes = el.innerText.split('R$');
-                rowsProdutos.push([partes[0].trim(), `R$ ${partes[1].trim()}`]);
-            }
-        });
+    // 3. HELPER: coleta itens de um elemento de ranking
+    const coletarItens = (elementId) => {
+        const rows = [];
+        let subtotal = 0;
+        const cont = document.getElementById(elementId);
+        if (cont) {
+            cont.querySelectorAll('div').forEach(el => {
+                const texto = el.innerText.trim();
+                if (!texto) return;
+                const partes = texto.split('R$');
+                if (partes.length >= 2) {
+                    rows.push([partes[0].trim(), `R$ ${partes[1].trim()}`]);
+                    subtotal += parseFloat(partes[1].replace(',', '.')) || 0;
+                }
+            });
+        }
+        return { rows, subtotal };
+    };
 
-        doc.setFontSize(14);
-        doc.setTextColor(0, 0, 0);
-        doc.text("DETALHAMENTO DE VENDAS POR PRODUTO", 15, doc.lastAutoTable.finalY + 15);
+    const artesanais  = coletarItens('ranking-artesanais');
+    const tradicionais = coletarItens('ranking-tradicionais');
+    const bebidas     = coletarItens('ranking-bebidas');
 
-        doc.autoTable({
-            startY: doc.lastAutoTable.finalY + 20,
-            head: [['Produto / Quantidade', 'Subtotal']],
-            body: rowsProdutos,
-            theme: 'striped',
-            headStyles: { fillColor: [50, 50, 50] },
-            styles: { fontSize: 10 }
-        });
-    }
+    let posY = doc.lastAutoTable.finalY + 15;
 
-    // 4. SALVAR ARQUIVO
+    // 4. TÍTULO DA SEÇÃO DE LANCHES
+    doc.setFontSize(13);
+    doc.setTextColor(34, 197, 94);
+    doc.setFont("helvetica", "bold");
+    doc.text("DETALHAMENTO DE VENDAS POR PRODUTO", 15, posY);
+    posY += 8;
+
+    // 5. DUAS COLUNAS LADO A LADO (Artesanais | Tradicionais)
+    const colEsq = 14;
+    const colDir = 110;
+    const larguraCol = 85;
+
+    // Coluna Esquerda — Artesanais
+    doc.autoTable({
+        startY: posY,
+        tableWidth: larguraCol,
+        margin: { left: colEsq, right: 0 },
+        head: [[' ARTESANAIS', 'Subtotal']],
+        body: [
+            ...artesanais.rows,
+            [
+                { content: 'SUBTOTAL', styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } },
+                { content: `R$ ${artesanais.subtotal.toFixed(2)}`, styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } }
+            ]
+        ],
+        theme: 'striped',
+        headStyles: { fillColor: [33, 33, 36], textColor: [34, 197, 94] },
+        styles: { fontSize: 9 }
+    });
+
+    const fimEsq = doc.lastAutoTable.finalY;
+
+    // Coluna Direita — Tradicionais (mesma linha de início)
+    doc.autoTable({
+        startY: posY,
+        tableWidth: larguraCol,
+        margin: { left: colDir, right: 0 },
+        head: [[' TRADICIONAIS', 'Subtotal']],
+        body: [
+            ...tradicionais.rows,
+            [
+                { content: 'SUBTOTAL', styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } },
+                { content: `R$ ${tradicionais.subtotal.toFixed(2)}`, styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } }
+            ]
+        ],
+        theme: 'striped',
+        headStyles: { fillColor: [33, 33, 36], textColor: [34, 197, 94] },
+        styles: { fontSize: 9 }
+    });
+
+    const fimDir = doc.lastAutoTable.finalY;
+
+    // Linha divisória vertical entre as colunas
+    const fimMaior = Math.max(fimEsq, fimDir);
+    doc.setDrawColor(80, 80, 80);
+    doc.setLineWidth(0.5);
+    doc.line(colDir - 3, posY, colDir - 3, fimMaior);
+
+    // 6. BEBIDAS & PORÇÕES (linha inteira abaixo)
+    posY = fimMaior + 10;
+
+    doc.autoTable({
+        startY: posY,
+        head: [[' BEBIDAS & PORÇÕES', 'Subtotal']],
+        body: [
+            ...bebidas.rows,
+            [
+                { content: 'SUBTOTAL', styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } },
+                { content: `R$ ${bebidas.subtotal.toFixed(2)}`, styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } }
+            ]
+        ],
+        theme: 'striped',
+        headStyles: { fillColor: [33, 33, 36], textColor: [34, 197, 94] },
+        styles: { fontSize: 9 }
+    });
+
+    // 7. SALVAR
     doc.save(`balanco_zaplanche_${dataHora.replace(/[/ :]/g, '_')}.pdf`);
 };
-
 window.removerItemMesa = async (numeroMesa, indexItem) => {
     const { isConfirmed } = await Swal.fire({
         title: 'Remover Item?',
