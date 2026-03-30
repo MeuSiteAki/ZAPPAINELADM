@@ -797,13 +797,7 @@
             `<button class="btn-confirm" onclick="abrirMesa(${m.n})">ABRIR MESA</button>` :
             `<div style="display:flex; gap:12px; justify-content:center; margin-bottom:8px; font-size:0.8rem; color:#aaa;">
     <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
-        <input type="" name="retirada_${m.n}" value="local" ${(m.retirada||'local')==='local'?'checked':''} onchange="window.setRetirada(${m.n}, 'local')">
-        🍽️ Local
-    </label>
-    <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
-        <input type="" name="retirada_${m.n}" value="viagem" ${m.retirada==='viagem'?'checked':''} onchange="window.setRetirada(${m.n}, 'viagem')">
-        🏡 Viagem
-    </label>
+       
 </div>
 <div class="row-btns" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
     <button class="btn-confirm" style="background:#2a2a2a; color: white; font-size: 20px; border: 1px solid #444;" onclick="prepararAdd(${m.n})">+</button>
@@ -1804,3 +1798,10 @@ window.removerItemMesa = async (numeroMesa, indexItem) => {
 </body>
 
 </html>
+ <!-- <input type="" name="retirada_${m.n}" value="local" ${(m.retirada||'local')==='local'?'checked':''} onchange="window.setRetirada(${m.n}, 'local')">
+        🍽️ Local
+    </label>
+    <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
+        <input type="" name="retirada_${m.n}" value="viagem" ${m.retirada==='viagem'?'checked':''} onchange="window.setRetirada(${m.n}, 'viagem')">
+        🏡 Viagem
+    </label> -->
