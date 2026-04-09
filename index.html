@@ -1182,7 +1182,7 @@ window.cancelarMesa = async (n) => {
     }
 };
 
-  window.fecharMesa = async (n) => {
+ window.fecharMesa = async (n, pedidoIdExistente = null) => {
     try {
         const mesaDoc = doc(db, "estado_mesas", `mesa_${n}`);
         const snapMesa = await getDoc(mesaDoc);
@@ -1235,39 +1235,75 @@ window.cancelarMesa = async (n) => {
 
         if (pgtInfo) {
             const { valor, metodo } = pgtInfo;
-            
-            // --- O SEGREDO ESTÁ AQUI: Enviando origem e status para o servidor imprimir ---
-            await addDoc(collection(db, "pedidos"), {
-                nome: `MESA ${n}${valor < (totalRestante - 0.10) ? ' (PARCIAL)' : ''}`,
-                origem: "MESA",        // Adicionado: Necessário para o Node.js reconhecer
-                status: "finalizado",  // Adicionado: Necessário para o Node.js reconhecer
-                total: valor,
-                pagamento: metodo,
-                itens: m.itens || [],
-                garcom: m.garcom || 'Geral',
-                data: serverTimestamp(),
-                contaImpressa: false   // Adicionado: Para o servidor saber que deve imprimir
-            });
-
             const novoTotalMesa = Math.max(0, totalRestante - valor);
+            const isParcial = novoTotalMesa >= 0.10;
 
-            // Se o que sobrou for menor que 10 centavos, limpa a mesa
-            if (novoTotalMesa < 0.10) {
-                await updateDoc(mesaDoc, { aberta: false, itens: [], total: 0, garcom: '' });
-                Swal.fire({ icon: 'success', title: 'Mesa Finalizada!', timer: 1000, showConfirmButton: false });
+            if (pedidoIdExistente) {
+                // ✅ PARCELA SEGUINTE: apenas ATUALIZA o documento existente,
+                // acumulando o pagamento. Não cria novo card no caixa.
+                const pedidoRef = doc(db, "pedidos", pedidoIdExistente);
+                const snapPedido = await getDoc(pedidoRef);
+                if (snapPedido.exists()) {
+                    const dadosPedido = snapPedido.data();
+                    // Acumula os pagamentos num array para histórico
+                    const pagamentosAnteriores = dadosPedido.pagamentos || [{ metodo: dadosPedido.pagamento, valor: dadosPedido.total }];
+                    pagamentosAnteriores.push({ metodo, valor });
+                    const totalPago = pagamentosAnteriores.reduce((acc, p) => acc + p.valor, 0);
+
+                    await updateDoc(pedidoRef, {
+                        pagamentos: pagamentosAnteriores,
+                        pagamento: pagamentosAnteriores.map(p => `${p.metodo} R$${p.valor.toFixed(2)}`).join(' + '),
+                        total: totalPago
+                    });
+                }
             } else {
+                // ✅ PRIMEIRO PAGAMENTO: cria o documento normalmente
+                const novoPedidoRef = await addDoc(collection(db, "pedidos"), {
+                    nome: `MESA ${n}${isParcial ? ' (PARCIAL)' : ''}`,
+                    origem: "MESA",
+                    status: "finalizado",
+                    total: valor,
+                    pagamento: metodo,
+                    pagamentos: [{ metodo, valor }],
+                    itens: m.itens || [],
+                    garcom: m.garcom || 'Geral',
+                    data: serverTimestamp(),
+                    contaImpressa: false
+                });
+                pedidoIdExistente = novoPedidoRef.id; // Guarda o ID para as próximas parcelas
+            }
+
+            if (isParcial) {
+                // Atualiza o total restante na mesa e pede próximo pagamento
                 await updateDoc(mesaDoc, { total: novoTotalMesa });
-                Swal.fire({ 
+                window._metodo = null;
+                
+                const { isConfirmed } = await Swal.fire({ 
                     icon: 'info', 
                     title: 'Parcial Recebida', 
                     text: `Ainda restam R$ ${novoTotalMesa.toFixed(2)}`,
-                    confirmButtonText: 'Próximo Pagamento'
-                }).then(() => {
-                    window._metodo = null; // Reseta o método para a próxima parcial
-                    window.fecharMesa(n);
+                    confirmButtonText: 'Próximo Pagamento',
+                    showCancelButton: true,
+                    cancelButtonText: 'Fechar depois',
+                    background: '#161618',
+                    color: '#fff'
                 });
+
+                if (isConfirmed) {
+                    // Passa o ID do pedido já criado para não duplicar
+                    window.fecharMesa(n, pedidoIdExistente);
+                }
+            } else {
+                // Mesa quitada completamente
+                await updateDoc(mesaDoc, { aberta: false, itens: [], total: 0, garcom: '' });
+                // Remove o "(PARCIAL)" do nome se havia
+                if (pedidoIdExistente) {
+                    await updateDoc(doc(db, "pedidos", pedidoIdExistente), { nome: `MESA ${n}` });
+                }
+                Swal.fire({ icon: 'success', title: 'Mesa Finalizada!', timer: 1000, showConfirmButton: false });
             }
         }
+        window._metodo = null;
     } catch (error) {
         console.error("Erro completo:", error);
         Swal.fire('Erro Crítico', error.message, 'error');
@@ -1317,28 +1353,38 @@ onSnapshot(query(collection(db, "pedidos"), orderBy("data", "desc")), (snap) => 
             }
         }
 
-        // --- SOMA DO CAIXA ---
-        if (p.pagamento !== "FUNCIONARIO") {
-            if (pgtNormalizado === "PIX") tPix += val;
-            else if (pgtNormalizado === "CARTÃO" || pgtNormalizado === "CARTAO") tCard += val;
-            else if (pgtNormalizado === "DINHEIRO") tDin += val;
-        }
+        
+     if (p.pagamento !== "FUNCIONARIO") {
+    if (Array.isArray(p.pagamentos) && p.pagamentos.length > 0) {
+        p.pagamentos.forEach(parcela => {
+            const metNorm = (parcela.metodo || "").trim().toUpperCase();
+            const valParcela = parseFloat(parcela.valor || 0);
+            if (metNorm === "PIX") tPix += valParcela;
+            else if (metNorm === "CARTÃO" || metNorm === "CARTAO") tCard += valParcela;
+            else if (metNorm === "DINHEIRO") tDin += valParcela;
+        });
+    } else {
+        if (pgtNormalizado === "PIX") tPix += val;
+        else if (pgtNormalizado === "CARTÃO" || pgtNormalizado === "CARTAO") tCard += val;
+        else if (pgtNormalizado === "DINHEIRO") tDin += val;
+    }
+}
 
-        // --- RANKING ---
-        if (Array.isArray(p.itens)) {
-            p.itens.forEach(item => {
-                const nomeProd = item.n;
-                const qtd = parseInt(item.q || 0);
-                const valorTotalItem = parseFloat(item.p || 0) * qtd;
-                if (!vendasProdutos[nomeProd]) vendasProdutos[nomeProd] = { qtd: 0, total: 0 };
-                vendasProdutos[nomeProd].qtd += qtd;
-                vendasProdutos[nomeProd].total += valorTotalItem;
-            });
-        }
+// --- RANKING ---
+if (Array.isArray(p.itens)) {
+    p.itens.forEach(item => {
+        const nomeProd = item.n;
+        const qtd = parseInt(item.q || 0);
+        const valorTotalItem = parseFloat(item.p || 0) * qtd;
+        if (!vendasProdutos[nomeProd]) vendasProdutos[nomeProd] = { qtd: 0, total: 0 };
+        vendasProdutos[nomeProd].qtd += qtd;
+        vendasProdutos[nomeProd].total += valorTotalItem;
+    });
+}
 
-        const isMesa = p.nome && p.nome.toUpperCase().includes("MESA");
-        const isFunc = p.pagamento === "FUNCIONARIO";
-        const statusColor = isFunc ? '#9333ea' : (p.status === 'recebido' ? '#22c55e' : (p.status === 'saiu' ? '#3b82f6' : 'var(--gold)'));
+const isMesa = p.nome && p.nome.toUpperCase().includes("MESA");
+const isFunc = p.pagamento === "FUNCIONARIO";
+const statusColor = isFunc ? '#9333ea' : (p.status === 'recebido' ? '#22c55e' : (p.status === 'saiu' ? '#3b82f6' : 'var(--gold)'));
 
         cont.innerHTML += `
             <div class="order-card" style="position: relative; border-left: 6px solid ${statusColor}; margin-bottom: 15px; padding: 15px; background: #1a1a1a; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
