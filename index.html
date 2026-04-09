@@ -624,6 +624,7 @@
     getDocs,     // (Este você já tem, é para listas)
     setDoc,
     addDoc,
+    where,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"; // Verifique se a versão é essa mesma que você usa
 
@@ -1233,41 +1234,42 @@ window.cancelarMesa = async (n) => {
             }
         });
 
-        if (pgtInfo) {
-            const { valor, metodo } = pgtInfo;
-            
-            // --- O SEGREDO ESTÁ AQUI: Enviando origem e status para o servidor imprimir ---
-            await addDoc(collection(db, "pedidos"), {
-                nome: `MESA ${n}${valor < (totalRestante - 0.10) ? ' (PARCIAL)' : ''}`,
-                origem: "MESA",        // Adicionado: Necessário para o Node.js reconhecer
-                status: "finalizado",  // Adicionado: Necessário para o Node.js reconhecer
-                total: valor,
-                pagamento: metodo,
-                itens: m.itens || [],
-                garcom: m.garcom || 'Geral',
-                data: serverTimestamp(),
-                contaImpressa: false   // Adicionado: Para o servidor saber que deve imprimir
-            });
+       if (pgtInfo) {
+    const { valor, metodo } = pgtInfo;
+    
+    const ehPrimeiroPagamento = !m.primeiroFechamento;
+    const ehParcial = valor < (totalRestante - 0.10);
 
-            const novoTotalMesa = Math.max(0, totalRestante - valor);
+    await addDoc(collection(db, "pedidos"), {
+        nome: `MESA ${n}${ehParcial ? ' (PARCIAL)' : ''}`,
+        origem: "MESA",
+        status: "finalizado",
+        total: valor,
+        pagamento: metodo,
+        itens: ehPrimeiroPagamento ? (m.itens || []) : [],
+        garcom: m.garcom || 'Geral',
+        data: serverTimestamp(),
+        contaImpressa: false
+    });
 
-            // Se o que sobrou for menor que 10 centavos, limpa a mesa
-            if (novoTotalMesa < 0.10) {
-                await updateDoc(mesaDoc, { aberta: false, itens: [], total: 0, garcom: '' });
-                Swal.fire({ icon: 'success', title: 'Mesa Finalizada!', timer: 1000, showConfirmButton: false });
-            } else {
-                await updateDoc(mesaDoc, { total: novoTotalMesa });
-                Swal.fire({ 
-                    icon: 'info', 
-                    title: 'Parcial Recebida', 
-                    text: `Ainda restam R$ ${novoTotalMesa.toFixed(2)}`,
-                    confirmButtonText: 'Próximo Pagamento'
-                }).then(() => {
-                    window._metodo = null; // Reseta o método para a próxima parcial
-                    window.fecharMesa(n);
-                });
-            }
-        }
+    const novoTotalMesa = Math.max(0, totalRestante - valor);
+
+    if (novoTotalMesa < 0.10) {
+        await updateDoc(mesaDoc, { aberta: false, itens: [], total: 0, garcom: '', primeiroFechamento: false });
+        Swal.fire({ icon: 'success', title: 'Mesa Finalizada!', timer: 1000, showConfirmButton: false });
+    } else {
+        await updateDoc(mesaDoc, { total: novoTotalMesa, primeiroFechamento: true });
+        Swal.fire({ 
+            icon: 'info', 
+            title: 'Parcial Recebida', 
+            text: `Ainda restam R$ ${novoTotalMesa.toFixed(2)}`,
+            confirmButtonText: 'Próximo Pagamento'
+        }).then(() => {
+            window._metodo = null;
+            window.fecharMesa(n);
+        });
+    }
+}
     } catch (error) {
         console.error("Erro completo:", error);
         Swal.fire('Erro Crítico', error.message, 'error');
@@ -1325,8 +1327,10 @@ onSnapshot(query(collection(db, "pedidos"), orderBy("data", "desc")), (snap) => 
         }
 
         // --- RANKING ---
-        if (Array.isArray(p.itens)) {
-            p.itens.forEach(item => {
+        // --- RANKING ---
+const ehParcialCaixa = p.nome && p.nome.includes('(PARCIAL)');
+if (Array.isArray(p.itens) && !ehParcialCaixa) {
+    p.itens.forEach(item => {
                 const nomeProd = item.n;
                 const qtd = parseInt(item.q || 0);
                 const valorTotalItem = parseFloat(item.p || 0) * qtd;
