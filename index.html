@@ -679,18 +679,23 @@
             ],
            
         };
-
+        //MESAS
         const garcons = ["Robson", "Sarah", "Vanilza", "Vitória",];
         let mesas = [], mesaAtiva = null, carrinhoTemp = [], somAtivo = false, inicializado = false;
 
         async function initMesas() {
-            const snap = await getDocs(collection(db, "estado_mesas"));
-            if (snap.empty) {
-                for (let i = 1; i <= 10; i++) {
-                    await setDoc(doc(db, "estado_mesas", `mesa_${i}`), { n: i, aberta: false, itens: [], total: 0, garcom: '' });
-                }
-            }
+    const snap = await getDocs(collection(db, "estado_mesas"));
+    const existentes = snap.docs.map(d => d.id);
+
+    for (let i = 1; i <= 20; i++) {
+        const mesaId = `mesa_${i}`;
+        if (!existentes.includes(mesaId)) {
+            await setDoc(doc(db, "estado_mesas", mesaId), { 
+                n: i, aberta: false, itens: [], total: 0, garcom: '' 
+            });
         }
+    }
+}
         initMesas();
 
         window.toggleSom = () => {
