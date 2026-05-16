@@ -1060,7 +1060,7 @@ window.cancelarMesa = async (n) => {
     };
 
     // CASO 1: Hambúrgueres (Abre modal)
-    if (nome.includes("Burguer") || nome.includes("Zap")) {
+    if (nome.includes("Burguer") || nome.includes("Zap") || nome.includes("Porção")) {
         const { value: resultado } = await Swal.fire({
             title: 'ADICIONAIS',
             background: '#161618',
@@ -1856,7 +1856,7 @@ window.removerItemMesa = async (numeroMesa, indexItem) => {
     </script>
 </body>
 
-</html>
+</html>if (nome.includes("Burguer") || nome.includes("Zap"))
  <!-- <input type="" name="retirada_${m.n}" value="local" ${(m.retirada||'local')==='local'?'checked':''} onchange="window.setRetirada(${m.n}, 'local')">
         🍽️ Local
     </label>
