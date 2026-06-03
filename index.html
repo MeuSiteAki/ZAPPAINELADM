@@ -497,17 +497,25 @@
     </nav>
 
     <div class="tab-container">
-        <button class="tab-btn" data-target="tab-delivery" onclick="switchTab(this)">DELIVERY</button>
-        <button class="tab-btn active" data-target="tab-mesas" onclick="switchTab(this)">MESAS</button>
+        <button class="tab-btn active" data-target="tab-delivery" onclick="switchTab(this)">DELIVERY</button>
+        <button class="tab-btn" data-target="tab-mesas" onclick="switchTab(this)">MESAS</button>
         <button class="tab-btn" data-target="tab-balanco" id="tab-caixa-btn">CAIXA</button>
     </div>
 
-    <div id="tab-mesas" class="tab-content active">
+    <!-- ABA DELIVERY (DEFINIDA COMO ATIVA POR PADRÃO DE ACORDO COM A SELEÇÃO INICIAL DOS TABS) -->
+    <div id="tab-delivery" class="tab-content active">
+        <div id="orders-container" class="orders-grid"></div>
+        <div id="btn-mostrar-mais-container" style="display: none; justify-content: center; margin-top: 25px; margin-bottom: 15px;">
+            <button id="btn-mostrar-mais" onclick="window.mostrarMaisPedidos()" style="width: 100%; max-width: 280px; padding: 14px 24px; border: none; border-radius: 12px; background: var(--gold); color: #000; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1rem; transition: 0.2s; box-shadow: 0 4px 12px rgba(44, 219, 0, 0.2);">
+                <i class="fas fa-plus"></i> MOSTRAR MAIS
+            </button>
+        </div>
+    </div>
+
+    <div id="tab-mesas" class="tab-content">
         <div id="container-mesas" class="grid-mesas"></div>
     </div>
-    <div id="tab-delivery" class="tab-content">
-        <div id="orders-container" class="orders-grid"></div>
-    </div>
+
     <div id="tab-balanco" class="tab-content">
         <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
             <button onclick="gerarPDFBalanco()" class="btn-nav"
@@ -525,58 +533,58 @@
             <div style="background:var(--card-bg); padding:20px; border-radius:15px; text-align:center;">DINHEIRO<h2
                     id="b-dinheiro" style="color:var(--gold)">R$ 0,00</h2>
             </div>
-            
-</div>
-<div style="margin-top: 20px; background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px solid #333;">
-    <h3 style="color: var(--gold); border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 15px;">
-        <i class="fas fa-chart-line"></i> PRODUTOS VENDIDOS (HOJE)
-    </h3>
+        </div>
 
-    <!-- DUAS COLUNAS: ARTESANAIS | TRADICIONAIS -->
-    <div style="display: grid; grid-template-columns: 1fr 2px 1fr; gap: 0; margin-bottom: 20px;">
-        
-        <!-- COLUNA ESQUERDA: ARTESANAIS -->
-        <div style="padding-right: 15px;">
-            <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">🥪 Artesanais</h4>
-            <div id="ranking-artesanais" style="color: #eee; font-size: 0.85rem;"></div>
-            <div style="border-top: 1px solid #444; margin-top: 8px; padding-top: 6px; display: flex; justify-content: space-between; font-weight: bold;">
-                <span style="color: #aaa;">Subtotal</span>
-                <span id="subtotal-artesanais" style="color: var(--gold)">R$ 0,00</span>
+        <div style="margin-top: 20px; background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px solid #333;">
+            <h3 style="color: var(--gold); border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 15px;">
+                <i class="fas fa-chart-line"></i> PRODUTOS VENDIDOS (HOJE)
+            </h3>
+
+            <!-- DUAS COLUNAS: ARTESANAIS | TRADICIONAIS -->
+            <div style="display: grid; grid-template-columns: 1fr 2px 1fr; gap: 0; margin-bottom: 20px;">
+                
+                <!-- COLUNA ESQUERDA: ARTESANAIS -->
+                <div style="padding-right: 15px;">
+                    <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">🥪 Artesanais</h4>
+                    <div id="ranking-artesanais" style="color: #eee; font-size: 0.85rem;"></div>
+                    <div style="border-top: 1px solid #444; margin-top: 8px; padding-top: 6px; display: flex; justify-content: space-between; font-weight: bold;">
+                        <span style="color: #aaa;">Subtotal</span>
+                        <span id="subtotal-artesanais" style="color: var(--gold)">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <!-- LINHA DIVISÓRIA -->
+                <div style="background: #444; width: 2px; margin: 0 10px;"></div>
+
+                <!-- COLUNA DIREITA: TRADICIONAIS -->
+                <div style="padding-left: 15px;">
+                    <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">🍔 Tradicionais</h4>
+                    <div id="ranking-tradicionais" style="color: #eee; font-size: 0.85rem;"></div>
+                    <div style="border-top: 1px solid #444; margin-top: 8px; padding-top: 6px; display: flex; justify-content: space-between; font-weight: bold;">
+                        <span style="color: #aaa;">Subtotal</span>
+                        <span id="subtotal-tradicionais" style="color: var(--gold)">R$ 0,00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BEBIDAS SEPARADAS -->
+            <div style="border-top: 2px solid #333; padding-top: 15px; margin-top: 5px;">
+                <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">🥤 Bebidas & Porções</h4>
+                <div id="ranking-bebidas" style="color: #eee; font-size: 0.85rem;"></div>
+                <div style="border-top: 1px solid #444; margin-top: 8px; padding-top: 6px; display: flex; justify-content: space-between; font-weight: bold;">
+                    <span style="color: #aaa;">Subtotal</span>
+                    <span id="subtotal-bebidas" style="color: var(--gold)">R$ 0,00</span>
+                </div>
             </div>
         </div>
 
-        <!-- LINHA DIVISÓRIA -->
-        <div style="background: #444; width: 2px; margin: 0 10px;"></div>
-
-        <!-- COLUNA DIREITA: TRADICIONAIS -->
-        <div style="padding-left: 15px;">
-            <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">🍔 Tradicionais</h4>
-            <div id="ranking-tradicionais" style="color: #eee; font-size: 0.85rem;"></div>
-            <div style="border-top: 1px solid #444; margin-top: 8px; padding-top: 6px; display: flex; justify-content: space-between; font-weight: bold;">
-                <span style="color: #aaa;">Subtotal</span>
-                <span id="subtotal-tradicionais" style="color: var(--gold)">R$ 0,00</span>
-            </div>
+        <!-- TOTAL GERAL -->
+        <div style="background:var(--card-bg); padding:20px; border-radius:15px; text-align:center; border:2px solid var(--gold); margin-top: 15px;">
+            TOTAL<h2 id="b-total" style="color:var(--gold)">R$ 0,00</h2>
         </div>
     </div>
 
-    <!-- BEBIDAS SEPARADAS -->
-    <div style="border-top: 2px solid #333; padding-top: 15px; margin-top: 5px;">
-        <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">🥤 Bebidas & Porções</h4>
-        <div id="ranking-bebidas" style="color: #eee; font-size: 0.85rem;"></div>
-        <div style="border-top: 1px solid #444; margin-top: 8px; padding-top: 6px; display: flex; justify-content: space-between; font-weight: bold;">
-            <span style="color: #aaa;">Subtotal</span>
-            <span id="subtotal-bebidas" style="color: var(--gold)">R$ 0,00</span>
-        </div>
-    </div>
-
-</div>
-
-<!-- TOTAL GERAL -->
-<div style="background:var(--card-bg); padding:20px; border-radius:15px; text-align:center; border:2px solid var(--gold); margin-top: 15px;">
-    TOTAL<h2 id="b-total" style="color:var(--gold)">R$ 0,00</h2>
-</div>
-</div>
-
+    <!-- MENU LATERAL DA MESA -->
     <div id="menu-lateral">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 id="titulo-mesa" style="color:var(--gold);">MESA</h2>
@@ -588,19 +596,9 @@
             <h4>💰CARRINHO:</h4>
             <div id="lista-temp" style="margin:10px 0;"></div>
             <h3 id="total-temp" style="margin:15px 0; color:var(--gold)">R$ 0,00</h3>
-            <!-- <div id="areaVozMenu" style="padding: 15px; background: #1a1a1a; border-radius: 10px; margin-bottom: 10px; border: 1px solid #333;">
-    <p style="font-size: 12px; color: #aaa; margin-bottom: 5px;">🎙️ Pedido Rápido por Voz</p>
-    <div style="display: flex; gap: 10px; align-items: center;">
-        <button id="btnVozMenu" onclick="iniciarEscutaVoz()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #ff4757; color: white; font-weight: bold; cursor: pointer;">
-            CLIQUE PARA FALAR
-        </button>
-        <div id="statusVoz" style="width: 12px; height: 12px; border-radius: 50%; background: #333;"></div>
-    </div> -->
-    <p id="textoCapturado" style="font-size: 13px; color: #2ed573; margin-top: 8px; font-style: italic;"></p>
-</div>
-            <button class="btn-confirm" onclick="enviarCozinha()">ENVIAR PARA COZINHA</button>
+            <p id="textoCapturado" style="font-size: 13px; color: #2ed573; margin-top: 8px; font-style: italic;"></p>
         </div>
-        
+        <button class="btn-confirm" onclick="enviarCozinha()">ENVIAR PARA COZINHA</button>
     </div>
 
     <audio id="audio-bip" preload="auto">
@@ -609,23 +607,23 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import {
-    getFirestore,
-    initializeFirestore,
-    memoryLocalCache,
-    collection,
-    onSnapshot,
-    query,
-    orderBy,
-    doc,
-    getDoc,      // <-- ADICIONE ESTE AQUI (Singular)
-    updateDoc,
-    deleteDoc,
-    getDocs,     // (Este você já tem, é para listas)
-    setDoc,
-    addDoc,
-    serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"; // Verifique se a versão é essa mesma que você usa
+        import {
+            getFirestore,
+            initializeFirestore,
+            memoryLocalCache,
+            collection,
+            onSnapshot,
+            query,
+            orderBy,
+            doc,
+            getDoc,
+            updateDoc,
+            deleteDoc,
+            getDocs,
+            setDoc,
+            addDoc,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDRj1Cj0o1z9u7fS9InPlSlqvmcetMmMUU",
@@ -678,25 +676,28 @@
                 { n: "Água com Gás", p: 3.00 },
                 { n: "H2O", p: 6.00 },
             ],
-           
         };
-        //MESAS
-        const garcons = ["Robson", "Sarah", "Vanilza", "Vitória",];
+
+        const garcons = ["Robson", "Sarah", "Vanilza", "Vitória"];
         let mesas = [], mesaAtiva = null, carrinhoTemp = [], somAtivo = false, inicializado = false;
 
-        async function initMesas() {
-    const snap = await getDocs(collection(db, "estado_mesas"));
-    const existentes = snap.docs.map(d => d.id);
+        // PAGINAÇÃO DE PEDIDOS
+        let limitePedidosExibidos = 6;
+        let ultimoSnapPedidos = null;
 
-    for (let i = 1; i <= 20; i++) {
-        const mesaId = `mesa_${i}`;
-        if (!existentes.includes(mesaId)) {
-            await setDoc(doc(db, "estado_mesas", mesaId), { 
-                n: i, aberta: false, itens: [], total: 0, garcom: '' 
-            });
+        async function initMesas() {
+            const snap = await getDocs(collection(db, "estado_mesas"));
+            const existentes = snap.docs.map(d => d.id);
+
+            for (let i = 1; i <= 20; i++) {
+                const mesaId = `mesa_${i}`;
+                if (!existentes.includes(mesaId)) {
+                    await setDoc(doc(db, "estado_mesas", mesaId), { 
+                        n: i, aberta: false, itens: [], total: 0, garcom: '' 
+                    });
+                }
+            }
         }
-    }
-}
         initMesas();
 
         window.toggleSom = () => {
@@ -716,407 +717,252 @@
             btn.classList.add('active');
         };
 
-       document.getElementById('tab-caixa-btn').onclick = async function() {
-    const { value: pass } = await Swal.fire({
-        title: 'Acesso Restrito',
-        input: 'password',
-        inputPlaceholder: 'Senha do Gerente',
-        inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
-        showCancelButton: true,
-        didOpen: () => {
-            // Cria o ícone do olho
-            const input = Swal.getInput();
-            const icon = document.createElement('i');
-            icon.classList.add('fas', 'fa-eye', 'toggle-password-icon');
-            
-            // Insere o ícone após o input
-            input.parentElement.style.position = 'relative';
-            input.parentElement.appendChild(icon);
+        document.getElementById('tab-caixa-btn').onclick = async function() {
+            const { value: pass } = await Swal.fire({
+                title: 'Acesso Restrito',
+                input: 'password',
+                inputPlaceholder: 'Senha do Gerente',
+                inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
+                showCancelButton: true,
+                didOpen: () => {
+                    const input = Swal.getInput();
+                    const icon = document.createElement('i');
+                    icon.classList.add('fas', 'fa-eye', 'toggle-password-icon');
+                    input.parentElement.style.position = 'relative';
+                    input.parentElement.appendChild(icon);
 
-            // Lógica de clicar no olho
-            icon.onclick = () => {
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    icon.classList.replace('fa-eye', 'fa-eye-slash');
-                } else {
-                    input.type = 'password';
-                    icon.classList.replace('fa-eye-slash', 'fa-eye');
+                    icon.onclick = () => {
+                        if (input.type === 'password') {
+                            input.type = 'text';
+                            icon.classList.replace('fa-eye', 'fa-eye-slash');
+                        } else {
+                            input.type = 'password';
+                            icon.classList.replace('fa-eye-slash', 'fa-eye');
+                        }
+                    };
                 }
-            };
-        }
-    });
+            });
 
-    if (checkPass(pass)) { 
-        switchTab(this); 
-    } else if (pass) { 
-        Swal.fire('Erro', 'Senha Incorreta!', 'error'); 
-    }
-};
+            if (checkPass(pass)) { 
+                switchTab(this); 
+            } else if (pass) { 
+                Swal.fire('Erro', 'Senha Incorreta!', 'error'); 
+            }
+        };
 
         window.toggleMenu = (s) => document.getElementById('menu-lateral').classList.toggle('active', s);
 
         onSnapshot(collection(db, "estado_mesas"), (snap) => {
-    mesas = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.n - b.n);
-    const container = document.getElementById('container-mesas');
-    if (!container) return;
-    
-    container.innerHTML = mesas.map(m => `
-    <div class="mesa-card ${m.aberta ? 'aberta' : ''}" style="position: relative; min-height: 180px; display: flex; flex-direction: column;">
-        
-        ${m.aberta ? `
-            <button onclick="window.cancelarMesa(${m.n})" 
-                style="position:absolute; top:12px; right:12px; background:rgba(239, 68, 68, 0.15); border:none; color:#ef4444; width:30px; height:30px; border-radius:50%; cursor:pointer; z-index:10; display:flex; align-items:center; justify-content:center;">
-                <i class="fas fa-times"></i>
-            </button>
-        ` : ''}
-
-        <div class="mesa-header" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-bottom: 12px;">
-            <span style="font-weight:800; font-size: 1.1rem; color: #fff;">MESA ${m.n}</span>
+            mesas = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.n - b.n);
+            const container = document.getElementById('container-mesas');
+            if (!container) return;
             
-            ${m.aberta ? `
-                <span class="garcom-tag" style="font-size: 0.75rem; padding: 2px 8px; background: #333; border-radius: 4px; color: var(--gold); border: 1px solid rgba(255,215,0,0.2);">
-                    <i class="fas fa-user-edit" style="font-size: 0.7rem; margin-right: 4px;"></i>${m.garcom || 'Geral'}
-                </span>
-            ` : '<span style="font-size: 0.75rem; color: #666;">Disponível</span>'}
-        </div>
-
-       <div class="mesa-itens-lista" style="flex-grow: 1;">
-    ${m.aberta ? (Array.isArray(m.itens) && m.itens.length > 0 ? m.itens.map((i, index) => `
-        <div class="mesa-item-doc" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; border-bottom: 1px solid #222; padding-bottom: 4px;">
-            <div style="flex: 1;">
-                <b>${i.q}x</b> ${i.n} 
-                <br><small style="color:var(--green)">${i.obs || ''}</small>
-            </div>
-            
-            <button onclick="window.removerItemMesa(${m.n}, ${index})" 
-                style="background: rgba(239, 68, 68, 0.1); border: none; color: #ef4444; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: 5px;">
-                <i class="fas fa-times" style="font-size: 11px;"></i>
-            </button>
-        </div>`).join('') : '<div style="color:#555; font-style:italic; font-size:0.9rem;">Mesa vazia...</div>') : ''}
-</div>
-        
-        <div style="font-weight:bold; margin: 10px 0; color:var(--gold); font-size: 1.1rem;">
-            ${m.aberta ? 'R$ ' + parseFloat(m.total || 0).toFixed(2) : ''}
-        </div>
-
-        ${!m.aberta ?
-            `<button class="btn-confirm" onclick="abrirMesa(${m.n})">ABRIR MESA</button>` :
-            `<div style="display:flex; gap:12px; justify-content:center; margin-bottom:8px; font-size:0.8rem; color:#aaa;">
-    <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
-       
-</div>
-<div class="row-btns" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-    <button class="btn-confirm" style="background:#2a2a2a; color: white; font-size: 20px; border: 1px solid #444;" onclick="prepararAdd(${m.n})">+</button>
-    <button class="btn-confirm" style="background:green; color: white; font-size: 25px" onclick="fecharMesa(${m.n})">✔︎</button>
-</div>`
-        }
-    </div>`).join('');
-});
-
-let timerVoz; // Variável para controlar o tempo de silêncio
-//retirada
-window.setRetirada = async (n, valor) => {
-    await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { retirada: valor });
-    if (valor === 'viagem') {
-        window.fecharMesa(n);
-    }
-};
-
-window.iniciarEscutaVoz = function() {
-    const btn = document.getElementById('btnVozMenu');
-    const textoCapturado = document.getElementById('textoCapturado');
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
-    if (!Recognition) return alert("Navegador sem suporte.");
-
-    const rec = new Recognition();
-    rec.lang = 'pt-BR';
-    rec.continuous = true; // Permite falar várias coisas
-    rec.interimResults = true; // Ouve em tempo real, mas vamos filtrar no final
-
-    rec.onstart = () => {
-        btn.innerText = "🛑 OUVINDO... (FALE E PARE)";
-        btn.style.background = "#2ed573";
-        textoCapturado.innerText = "Pode falar o pedido completo...";
-    };
-
-    rec.onresult = (event) => {
-        // 1. Pega tudo o que foi falado até agora na frase atual
-        let falaCompleta = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-            falaCompleta += event.results[i][0].transcript;
-        }
-
-        textoCapturado.innerText = "Processando: " + falaCompleta;
-
-        // 2. REGRAS DE OURO: Limpa o cronômetro toda vez que você fala algo novo
-        clearTimeout(timerVoz);
-
-        // 3. Só processa DE VERDADE após 1.2 segundos de silêncio total
-        timerVoz = setTimeout(() => {
-            processarComandoVozFinal(falaCompleta.toLowerCase());
-            rec.stop(); // Para o microfone após o pedido ser entendido
-        }, 1200);
-    };
-
-    rec.onend = () => {
-        btn.innerText = "CLIQUE PARA FALAR";
-        btn.style.background = "#ff4757";
-    };
-
-    rec.start();
-};
-
-function processarComandoVozFinal(texto) {
-    const fala = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-    let itensDetectadosNestaFrase = new Set(); 
-
-    // Mapa de números por extenso para converter em algarismos
-    const numerosExtenso = { "um": 1, "dois": 2, "tres": 3, "quatro": 4, "cinco": 5 };
-
-    Object.keys(cardapio).forEach(categoria => {
-        cardapio[categoria].forEach(produto => {
-            const nomeProdOriginal = produto.n.toLowerCase();
-            const nomeProdLimpo = nomeProdOriginal.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            
-            if ((fala.includes(nomeProdLimpo) || nomeProdLimpo.includes(fala)) && !itensDetectadosNestaFrase.has(produto.n)) {
+            container.innerHTML = mesas.map(m => `
+            <div class="mesa-card ${m.aberta ? 'aberta' : ''}" style="position: relative; min-height: 180px; display: flex; flex-direction: column;">
                 
-                // --- LÓGICA DE QUANTIDADE ---
-                let quantidade = 1; // Padrão é 1
+                ${m.aberta ? `
+                    <button onclick="window.cancelarMesa(${m.n})" 
+                        style="position:absolute; top:12px; right:12px; background:rgba(239, 68, 68, 0.15); border:none; color:#ef4444; width:30px; height:30px; border-radius:50%; cursor:pointer; z-index:10; display:flex; align-items:center; justify-content:center;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                ` : ''}
+
+                <div class="mesa-header" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-bottom: 12px;">
+                    <span style="font-weight:800; font-size: 1.1rem; color: #fff;">MESA ${m.n}</span>
+                    
+                    ${m.aberta ? `
+                        <span class="garcom-tag" style="font-size: 0.75rem; padding: 2px 8px; background: #333; border-radius: 4px; color: var(--gold); border: 1px solid rgba(255,215,0,0.2);">
+                            <i class="fas fa-user-edit" style="font-size: 0.7rem; margin-right: 4px;"></i>${m.garcom || 'Geral'}
+                        </span>
+                    ` : '<span style="font-size: 0.75rem; color: #666;">Disponível</span>'}
+                </div>
+
+                <div class="mesa-itens-lista" style="flex-grow: 1;">
+                    ${m.aberta ? (Array.isArray(m.itens) && m.itens.length > 0 ? m.itens.map((i, index) => `
+                        <div class="mesa-item-doc" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; border-bottom: 1px solid #222; padding-bottom: 4px;">
+                            <div style="flex: 1;">
+                                <b>${i.q}x</b> ${i.n} 
+                                <br><small style="color:var(--green)">${i.obs || ''}</small>
+                            </div>
+                            
+                            <button onclick="window.removerItemMesa(${m.n}, ${index})" 
+                                style="background: rgba(239, 68, 68, 0.1); border: none; color: #ef4444; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: 5px;">
+                                <i class="fas fa-times" style="font-size: 11px;"></i>
+                            </button>
+                        </div>`).join('') : '<div style="color:#555; font-style:italic; font-size:0.9rem;">Mesa vazia...</div>') : ''}
+                </div>
                 
-                // Tenta encontrar um número encostado no nome do produto (ex: "2 zap" ou "dois zap")
-                const palavras = fala.split(" ");
-                const indexProduto = palavras.findIndex(p => nomeProdLimpo.includes(p));
-                
-                if (indexProduto > 0) {
-                    const termoAnterior = palavras[indexProduto - 1];
-                    // Verifica se é número (2) ou extenso (dois)
-                    if (!isNaN(termoAnterior)) {
-                        quantidade = parseInt(termoAnterior);
-                    } else if (numerosExtenso[termoAnterior]) {
-                        quantidade = numerosExtenso[termoAnterior];
-                    }
+                <div style="font-weight:bold; margin: 10px 0; color:var(--gold); font-size: 1.1rem;">
+                    ${m.aberta ? 'R$ ' + parseFloat(m.total || 0).toFixed(2) : ''}
+                </div>
+
+                ${!m.aberta ?
+                    `<button class="btn-confirm" onclick="abrirMesa(${m.n})">ABRIR MESA</button>` :
+                    `<div class="row-btns" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                        <button class="btn-confirm" style="background:#2a2a2a; color: white; font-size: 20px; border: 1px solid #444;" onclick="prepararAdd(${m.n})">+</button>
+                        <button class="btn-confirm" style="background:green; color: white; font-size: 25px" onclick="fecharMesa(${m.n})">✔︎</button>
+                    </div>`
                 }
-                // ----------------------------
+            </div>`).join('');
+        });
 
-                const preco = parseFloat(produto.p) || 0;
-                const itemNoCarrinho = carrinhoTemp.find(i => i.n === produto.n);
-
-                if (itemNoCarrinho) {
-                    itemNoCarrinho.q += quantidade; // Adiciona a quantidade falada
-                } else {
-                    carrinhoTemp.push({
-                        n: produto.n,
-                        p: preco,
-                        q: quantidade,
-                        obs: ""
-                    });
-                }
-
-                itensDetectadosNestaFrase.add(produto.n);
-                console.log(`✅ Reconhecido: ${quantidade}x ${produto.n}`);
+        window.setRetirada = async (n, valor) => {
+            await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { retirada: valor });
+            if (valor === 'viagem') {
+                window.fecharMesa(n);
             }
-        });
-    });
+        };
 
-    if (itensDetectadosNestaFrase.size > 0) {
-        document.getElementById('audio-bip').play().catch(() => {});
-        document.getElementById('textoCapturado').innerText = "✅ Itens adicionados!";
-        if (typeof atualizarCarrinho === "function") {
-            atualizarCarrinho(); 
-        }
-    } else {
-        document.getElementById('textoCapturado').innerText = "❓ Não achei: '" + texto + "' no menu.";
-    }
-}
-//cancelar mesas
-window.cancelarMesa = async (n) => {
-    const { isConfirmed } = await Swal.fire({
-        title: `LIMPAR MESA ${n}?`,
-        text: "Isso apagará o consumo atual sem enviar para o caixa.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#333',
-        confirmButtonText: 'Sim, limpar mesa',
-        cancelButtonText: 'Cancelar',
-        background: '#161618',
-        color: '#fff'
-    });
+        window.cancelarMesa = async (n) => {
+            const { isConfirmed } = await Swal.fire({
+                title: `LIMPAR MESA ${n}?`,
+                text: "Isso apagará o consumo atual sem enviar para o caixa.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#333',
+                confirmButtonText: 'Sim, limpar mesa',
+                cancelButtonText: 'Cancelar',
+                background: '#161618',
+                color: '#fff'
+            });
 
-    if (isConfirmed) {
-        // Reseta a mesa
-        await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { 
-            aberta: false, itens: [], total: 0, garcom: '' 
-        });
-        
-        // (Opcional) Remove pedidos de cozinha dessa mesa para não poluir
-        const pedidosRef = collection(db, "pedidos");
-        const q = query(pedidosRef, where("nome", "==", `MESA ${n}`), where("tipo", "==", "COZINHA"));
-        const snap = await getDocs(q);
-        snap.forEach(async (d) => await deleteDoc(doc(db, "pedidos", d.id)));
+            if (isConfirmed) {
+                await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { 
+                    aberta: false, itens: [], total: 0, garcom: '' 
+                });
+                
+                Swal.fire({ title: 'Mesa liberada!', icon: 'success', timer: 800, showConfirmButton: false });
+            }
+        };
 
-        Swal.fire({ title: 'Mesa liberada!', icon: 'success', timer: 800, showConfirmButton: false });
-    }
-};
-       window.abrirMesa = async (n) => {
-    // Geramos o HTML dos botões dos atendentes dinamicamente
-    const botoesHtml = garcons.map(g => `
-        <button type="button" class="atendente-btn" onclick="Swal.clickConfirm(); window._tempGarcom='${g}'">
-            <div class="atendente-avatar">${g.charAt(0)}</div>
-            <span>${g}</span>
-        </button>
-    `).join('');
+        window.abrirMesa = async (n) => {
+            const botoesHtml = garcons.map(g => `
+                <button type="button" class="atendente-btn" onclick="Swal.clickConfirm(); window._tempGarcom='${g}'">
+                    <div class="atendente-avatar">${g.charAt(0)}</div>
+                    <span>${g}</span>
+                </button>
+            `).join('');
 
-    const { isConfirmed } = await Swal.fire({
-        title: 'Selecione o Atendente',
-        html: `<div class="atendentes-grid">${botoesHtml}</div>`,
-        showConfirmButton: false, // O fechamento ocorre ao clicar no botão
-        showCancelButton: true,
-        cancelButtonText: 'Cancelar',
-        background: '#161618',
-        color: '#fff',
-        customClass: {
-            container: 'modal-moderno-atendente'
-        },
-        preConfirm: () => {
-            return window._tempGarcom;
-        }
-    });
+            const { isConfirmed } = await Swal.fire({
+                title: 'Selecione o Atendente',
+                html: `<div class="atendentes-grid">${botoesHtml}</div>`,
+                showConfirmButton: false,
+                showCancelButton: true,
+                cancelButtonText: 'Cancelar',
+                background: '#161618',
+                color: '#fff',
+                preConfirm: () => {
+                    return window._tempGarcom;
+                }
+            });
 
-    if (isConfirmed && window._tempGarcom) {
-        const garcomFinal = window._tempGarcom;
-        await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { 
-            aberta: true, 
-            garcom: garcomFinal, 
-            itens: [], 
-            total: 0 
-        });
-        delete window._tempGarcom; // Limpa variável temporária
-    }
-};
+            if (isConfirmed && window._tempGarcom) {
+                const garcomFinal = window._tempGarcom;
+                await updateDoc(doc(db, "estado_mesas", `mesa_${n}`), { 
+                    aberta: true, 
+                    garcom: garcomFinal, 
+                    itens: [], 
+                    total: 0 
+                });
+                delete window._tempGarcom;
+            }
+        };
 
         window.prepararAdd = (n) => {
-            mesaAtiva = n; carrinhoTemp = []; renderTemp();
-            document.getElementById('titulo-mesa').innerText = `MESA ${n}`;
+            mesaAtiva = n;
+            carrinhoTemp = [];
+            renderTemp();
+            document.getElementById('titulo-mesa').innerText = `PEDIDO MESA ${n}`;
             toggleMenu(true);
         };
 
-        // Prepara a mesa e aplica o destaque visual
-       window.prepararAdd = (n) => {
-    mesaAtiva = n;
-    carrinhoTemp = [];
-    renderTemp();
+        window.addItemTemp = async (nome, preco, opcoes, btn) => {
+            let precoBase = preco;
+            const listaAdicionais = [
+                { n: "Ovo", p: 2.00 },
+                { n: "Carne Hambúrguer", p: 6.00 },
+                { n: "Blend Bovino 160g", p: 10.00 },
+                { n: "Bacon", p: 6.00 },
+                { n: "Salsicha", p: 3.00 },
+                { n: "Presunto", p: 4.00 },
+                { n: "Bacon Defumado", p: 6.00 },
+                { n: "Cebola Caramelizada", p: 5.00 },
+                { n: "Molho Cheddar", p: 5.00 },
+                { n: "Queijo Mussarela", p: 4.00 },
+                { n: "Queijo Polenguinho", p: 5.00 },
+                { n: "Calabresa", p: 5.00 },
+                { n: "Filé Gado", p: 10.00 },
+                { n: "Filé Frango", p: 10.00 }
+            ];
 
-    // Apenas atualiza o título e abre o menu
-    document.getElementById('titulo-mesa').innerText = `PEDIDO MESA ${n}`;
-    toggleMenu(true);
-};
+            const mostrarAviso = () => {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 1000,
+                    background: '#1a1a1a',
+                    color: '#fff',
+                    iconColor: '#22c55e'
+                });
+                Toast.fire({ icon: 'success', title: 'Adicionado' });
+            };
 
-        // Gerencia o menu lateral e remove os destaques ao fechar
-        window.toggleMenu = (s) => {
-            const menu = document.getElementById('menu-lateral');
-            if (s) {
-                menu.classList.add('active');
+            if (nome.includes("Burguer") || nome.includes("Zap") || nome.includes("Porção")) {
+                const { value: resultado } = await Swal.fire({
+                    title: 'ADICIONAIS',
+                    background: '#161618',
+                    color: '#fff',
+                    html: `
+                        <div class="modal-scroll-area">
+                            <div class="lista-adicionais-vertical">
+                                ${listaAdicionais.map((add, index) => `
+                                    <div class="linha-add">
+                                        <div class="info-add">
+                                            <span class="nome-add">${add.n}</span>
+                                            <span class="preco-add">R$ ${add.p.toFixed(2)}</span>
+                                        </div>
+                                        <div class="controles-add">
+                                            <button type="button" class="btn-menor" onclick="alterarQtdAdd(${index}, -1)">-</button>
+                                            <span id="qtd-add-${index}" class="qtd-numero">0</span>
+                                            <button type="button" class="btn-maior" onclick="alterarQtdAdd(${index}, 1)">+</button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `,
+                    didOpen: () => {
+                        window._tempSelectedAdds = listaAdicionais.map(a => ({...a, q: 0}));
+                        window.alterarQtdAdd = (idx, delta) => {
+                            const item = window._tempSelectedAdds[idx];
+                            item.q = Math.max(0, item.q + delta);
+                            document.getElementById(`qtd-add-${idx}`).innerText = item.q;
+                        };
+                    },
+                    showCancelButton: true,
+                    confirmButtonText: 'CONFIRMAR',
+                    confirmButtonColor: 'var(--green)',
+                    preConfirm: () => {
+                        return { adds: window._tempSelectedAdds.filter(a => a.q > 0) };
+                    }
+                });
+
+                if (resultado) {
+                    let valorExtra = resultado.adds.reduce((total, a) => total + (a.p * a.q), 0);
+                    let descAdds = resultado.adds.map(a => `+${a.q} ${a.n}`).join(', ');
+                    
+                    carrinhoTemp.push({ n: nome, p: precoBase + valorExtra, q: 1, obs: descAdds.trim() });
+                    renderTemp();
+                    setTimeout(mostrarAviso, 100);
+                }
             } else {
-                menu.classList.remove('active');
-                // Remove o destaque e o fundo escuro quando o menu fecha
-                document.body.classList.remove('mesa-em-foco');
-                document.querySelectorAll('.mesa-card').forEach(c => c.classList.remove('em-destaque'));
+                carrinhoTemp.push({ n: nome, p: preco, q: 1, obs: '' });
+                renderTemp();
+                mostrarAviso();
             }
         };
-
-        // Adiciona itens mantendo o foco na mesa
-     window.addItemTemp = async (nome, preco, opcoes, btn) => {
-    let precoBase = preco;
-    const listaAdicionais = [
-        { n: "Ovo", p: 2.00 },
-        { n: "Carne Hambúrguer", p: 6.00 },
-        { n: "Blend Bovino 160g", p: 10.00 },
-        { n: "Bacon", p: 6.00 },
-        { n: "Salsicha", p: 3.00 },
-        { n: "Presunto", p: 4.00 },
-        { n: "Bacon Defumado", p: 6.00 },
-        { n: "Cebola Caramelizada", p: 5.00 },
-        { n: "Molho Cheddar", p: 5.00 },
-        { n: "Queijo Mussarela", p: 4.00 },
-        { n: "Queijo Polenguinho", p: 5.00 },
-        { n: "Calabresa", p: 5.00 },
-        { n: "Filé Gado", p: 10.00 },
-        { n: "Filé Frango", p: 10.00 }
-    ];
-
-    // Função interna para mostrar o aviso (Toast)
-    const mostrarAviso = () => {
-        const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 1000,
-            background: '#1a1a1a',
-            color: '#fff',
-            iconColor: '#22c55e'
-        });
-        Toast.fire({ icon: 'success', title: 'Adicionado' });
-    };
-
-    // CASO 1: Hambúrgueres (Abre modal)
-    if (nome.includes("Burguer") || nome.includes("Zap") || nome.includes("Porção")) {
-        const { value: resultado } = await Swal.fire({
-            title: 'ADICIONAIS',
-            background: '#161618',
-            color: '#fff',
-            html: `
-                <div class="modal-scroll-area">
-                    <div class="lista-adicionais-vertical">
-                        ${listaAdicionais.map((add, index) => `
-                            <div class="linha-add">
-                                <div class="info-add">
-                                    <span class="nome-add">${add.n}</span>
-                                    <span class="preco-add">R$ ${add.p.toFixed(2)}</span>
-                                </div>
-                                <div class="controles-add">
-                                    <button type="button" class="btn-menor" onclick="alterarQtdAdd(${index}, -1)">-</button>
-                                    <span id="qtd-add-${index}" class="qtd-numero">0</span>
-                                    <button type="button" class="btn-maior" onclick="alterarQtdAdd(${index}, 1)">+</button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `,
-            didOpen: () => {
-                window._tempSelectedAdds = listaAdicionais.map(a => ({...a, q: 0}));
-                window.alterarQtdAdd = (idx, delta) => {
-                    const item = window._tempSelectedAdds[idx];
-                    item.q = Math.max(0, item.q + delta);
-                    document.getElementById(`qtd-add-${idx}`).innerText = item.q;
-                };
-            },
-            showCancelButton: true,
-            confirmButtonText: 'CONFIRMAR',
-            confirmButtonColor: 'var(--green)',
-            preConfirm: () => {
-                return { adds: window._tempSelectedAdds.filter(a => a.q > 0) };
-            }
-        });
-
-        if (resultado) {
-            let valorExtra = resultado.adds.reduce((total, a) => total + (a.p * a.q), 0);
-            let descAdds = resultado.adds.map(a => `+${a.q} ${a.n}`).join(', ');
-            
-            carrinhoTemp.push({ n: nome, p: precoBase + valorExtra, q: 1, obs: descAdds.trim() });
-            renderTemp();
-            setTimeout(mostrarAviso, 100); // Pequeno atraso para o Toast aparecer após o fechamento do modal
-        }
-    } 
-    // CASO 2: Outros itens (Bebidas/Porções - Direto)
-    else {
-        carrinhoTemp.push({ n: nome, p: preco, q: 1, obs: '' });
-        renderTemp();
-        mostrarAviso();
-    }
-};
 
         window.updateObs = (idx, val) => { carrinhoTemp[idx].obs = val; };
         window.removeItemTemp = (idx) => { carrinhoTemp.splice(idx, 1); renderTemp(); };
@@ -1135,412 +981,416 @@ window.cancelarMesa = async (n) => {
             document.getElementById('total-temp').innerText = `R$ ${carrinhoTemp.reduce((a, b) => a + (b.p * b.q), 0).toFixed(2)}`;
         }
 
-    // ✅ CORREÇÃO: enviarCozinha agora usa tipo: "COZINHA" para não aparecer no Delivery
-   window.enviarCozinha = async () => {
-    if (carrinhoTemp.length === 0) return;
-    Swal.showLoading();
+        window.enviarCozinha = async () => {
+            if (carrinhoTemp.length === 0) return;
+            Swal.showLoading();
 
-    try {
-        const m = mesas.find(x => x.n === mesaAtiva);
-        // Garante que pegamos a lista de itens atual da mesa
-        const novosItensMesa = Array.isArray(m.itens) ? [...m.itens] : [];
+            try {
+                const m = mesas.find(x => x.n === mesaAtiva);
+                const novosItensMesa = Array.isArray(m.itens) ? [...m.itens] : [];
 
-        // 1. Atualiza o consumo acumulado da mesa (o que fica salvo no card da mesa)
-        carrinhoTemp.forEach(item => {
-            const existe = novosItensMesa.find(x => x.n === item.n && x.obs === item.obs);
-            if (existe) { 
-                existe.q += item.q; 
-            } else { 
-                novosItensMesa.push({ ...item }); 
+                carrinhoTemp.forEach(item => {
+                    const existe = novosItensMesa.find(x => x.n === item.n && x.obs === item.obs);
+                    if (existe) { 
+                        existe.q += item.q; 
+                    } else { 
+                        novosItensMesa.push({ ...item }); 
+                    }
+                });
+
+                const novoTotal = novosItensMesa.reduce((a, b) => a + (b.p * b.q), 0);
+
+                await updateDoc(doc(db, "estado_mesas", `mesa_${mesaAtiva}`), {
+                    itens: novosItensMesa, 
+                    total: novoTotal,
+                    aberta: true 
+                });
+
+                await addDoc(collection(db, "pedidos"), {
+                    nome: `MESA ${mesaAtiva}`,
+                    origem: "MESA",
+                    tipo: "COZINHA",
+                    itens: carrinhoTemp,
+                    data: serverTimestamp()
+                });
+
+                carrinhoTemp = [];
+                renderTemp();
+                toggleMenu(false);
+                Swal.fire({ title: 'Enviado!', icon: 'success', timer: 1000, showConfirmButton: false });
+                
+                if (typeof playSom === "function") playSom();
+
+            } catch (error) {
+                console.error("Erro ao enviar para cozinha:", error);
+                Swal.fire('Erro', 'Falha ao enviar para cozinha', 'error');
             }
-        });
+        };
 
-        const novoTotal = novosItensMesa.reduce((a, b) => a + (b.p * b.q), 0);
-
-        // 2. Atualiza o documento da mesa no Firestore
-        await updateDoc(doc(db, "estado_mesas", `mesa_${mesaAtiva}`), {
-            itens: novosItensMesa, 
-            total: novoTotal,
-            aberta: true 
-        });
-
-        // 3. ENVIO ÚNICO PARA IMPRESSÃO (Unifica Bebidas e Lanches)
-        // Criamos apenas UM documento no banco com todos os itens do carrinho
-        await addDoc(collection(db, "pedidos"), {
-            nome: `MESA ${mesaAtiva}`,
-            origem: "MESA",
-            tipo: "COZINHA",     // Tag para o servidor imprimir como comanda
-            itens: carrinhoTemp, // Envia o array inteiro (Lanche + Bebida + Batata)
-            data: serverTimestamp()
-        });
-
-        // Limpeza e Sucesso
-        carrinhoTemp = [];
-        renderTemp();
-        toggleMenu(false);
-        Swal.fire({ title: 'Enviado!', icon: 'success', timer: 1000, showConfirmButton: false });
-        
-        if (typeof playSom === "function") playSom();
-
-    } catch (error) {
-        console.error("Erro ao enviar para cozinha:", error);
-        Swal.fire('Erro', 'Falha ao enviar para cozinha', 'error');
-    }
-};
-
- window.fecharMesa = async (n, pedidoIdExistente = null) => {
-    try {
-        const mesaDoc = doc(db, "estado_mesas", `mesa_${n}`);
-        const snapMesa = await getDoc(mesaDoc);
-        
-        if (!snapMesa.exists()) {
-            Swal.fire('Erro', 'Mesa não encontrada no sistema.', 'error');
-            return;
-        }
-
-        const m = snapMesa.data();
-        if (!m || !m.aberta) {
-            Swal.fire('Aviso', 'Esta mesa já consta como fechada.', 'info');
-            return;
-        }
-
-        const totalRestante = parseFloat(m.total || 0);
-
-        const { value: pgtInfo } = await Swal.fire({
-            title: `FECHAR MESA ${n}`,
-            html: `
-                <div style="color:var(--gold); font-size:1.5rem; font-weight:bold; margin-bottom:10px;">
-                    TOTAL: R$ ${totalRestante.toFixed(2)}
-                </div>
-                <input type="number" id="valor-pagar" class="swal2-input" style="text-align:center;" value="${totalRestante.toFixed(2)}">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top:15px;">
-                    <button onclick="window._metodo='PIX'; Swal.clickConfirm()" style="padding:15px; background:#2a2a2a; color:white; border:1px solid #444; border-radius:8px; cursor:pointer; font-weight:bold;">PIX</button>
-                    <button onclick="window._metodo='Cartão'; Swal.clickConfirm()" style="padding:15px; background:#2a2a2a; color:white; border:1px solid #444; border-radius:8px; cursor:pointer; font-weight:bold;">CARTÃO</button>
-                    <button onclick="window._metodo='Dinheiro'; Swal.clickConfirm()" style="padding:15px; background:#2a2a2a; color:white; border:1px solid #444; border-radius:8px; cursor:pointer; font-weight:bold;">DINHEIRO</button>
-                    <button onclick="window._metodo='FUNCIONARIO'; Swal.clickConfirm()" style="padding:15px; background:#4b2185; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">FUNCIONÁRIO</button>
-                </div>
-            `,
-            showConfirmButton: false,
-            showCancelButton: true,
-            cancelButtonText: 'CANCELAR',
-            background: '#161618',
-            color: '#fff',
-            preConfirm: () => {
-                const valorDigitado = parseFloat(document.getElementById('valor-pagar').value);
-                if (isNaN(valorDigitado) || valorDigitado <= 0 || valorDigitado > (totalRestante + 0.10)) {
-                    Swal.showValidationMessage('Valor inválido ou acima do total');
-                    return false;
+        window.fecharMesa = async (n, pedidoIdExistente = null) => {
+            try {
+                const mesaDoc = doc(db, "estado_mesas", `mesa_${n}`);
+                const snapMesa = await getDoc(mesaDoc);
+                
+                if (!snapMesa.exists()) {
+                    Swal.fire('Erro', 'Mesa não encontrada no sistema.', 'error');
+                    return;
                 }
-                if (!window._metodo) {
-                    Swal.showValidationMessage('Escolha uma forma de pagamento');
-                    return false;
+
+                const m = snapMesa.data();
+                if (!m || !m.aberta) {
+                    Swal.fire('Aviso', 'Esta mesa já consta como fechada.', 'info');
+                    return;
                 }
-                return { valor: valorDigitado, metodo: window._metodo };
+
+                const totalRestante = parseFloat(m.total || 0);
+
+                const { value: pgtInfo } = await Swal.fire({
+                    title: `FECHAR MESA ${n}`,
+                    html: `
+                        <div style="color:var(--gold); font-size:1.5rem; font-weight:bold; margin-bottom:10px;">
+                            TOTAL: R$ ${totalRestante.toFixed(2)}
+                        </div>
+                        <input type="number" id="valor-pagar" class="swal2-input" style="text-align:center;" value="${totalRestante.toFixed(2)}">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top:15px;">
+                            <button onclick="window._metodo='PIX'; Swal.clickConfirm()" style="padding:15px; background:#2a2a2a; color:white; border:1px solid #444; border-radius:8px; cursor:pointer; font-weight:bold;">PIX</button>
+                            <button onclick="window._metodo='Cartão'; Swal.clickConfirm()" style="padding:15px; background:#2a2a2a; color:white; border:1px solid #444; border-radius:8px; cursor:pointer; font-weight:bold;">CARTÃO</button>
+                            <button onclick="window._metodo='Dinheiro'; Swal.clickConfirm()" style="padding:15px; background:#2a2a2a; color:white; border:1px solid #444; border-radius:8px; cursor:pointer; font-weight:bold;">DINHEIRO</button>
+                            <button onclick="window._metodo='FUNCIONARIO'; Swal.clickConfirm()" style="padding:15px; background:#4b2185; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">FUNCIONÁRIO</button>
+                        </div>
+                    `,
+                    showConfirmButton: false,
+                    showCancelButton: true,
+                    cancelButtonText: 'CANCELAR',
+                    background: '#161618',
+                    color: '#fff',
+                    preConfirm: () => {
+                        const valorDigitado = parseFloat(document.getElementById('valor-pagar').value);
+                        if (isNaN(valorDigitado) || valorDigitado <= 0 || valorDigitado > (totalRestante + 0.10)) {
+                            Swal.showValidationMessage('Valor inválido ou acima do total');
+                            return false;
+                        }
+                        if (!window._metodo) {
+                            Swal.showValidationMessage('Escolha uma forma de pagamento');
+                            return false;
+                        }
+                        return { valor: valorDigitado, metodo: window._metodo };
+                    }
+                });
+
+                if (pgtInfo) {
+                    const { valor, metodo } = pgtInfo;
+                    const novoTotalMesa = Math.max(0, totalRestante - valor);
+                    const isParcial = novoTotalMesa >= 0.10;
+
+                    if (pedidoIdExistente) {
+                        const pedidoRef = doc(db, "pedidos", pedidoIdExistente);
+                        const snapPedido = await getDoc(pedidoRef);
+                        if (snapPedido.exists()) {
+                            const dadosPedido = snapPedido.data();
+                            const pagamentosAnteriores = dadosPedido.pagamentos || [{ metodo: dadosPedido.pagamento, valor: dadosPedido.total }];
+                            pagamentosAnteriores.push({ metodo, valor });
+                            const totalPago = pagamentosAnteriores.reduce((acc, p) => acc + p.valor, 0);
+
+                            await updateDoc(pedidoRef, {
+                                pagamentos: pagamentosAnteriores,
+                                pagamento: pagamentosAnteriores.map(p => `${p.metodo} R$${p.valor.toFixed(2)}`).join(' + '),
+                                total: totalPago
+                            });
+                        }
+                    } else {
+                        const novoPedidoRef = await addDoc(collection(db, "pedidos"), {
+                            nome: `MESA ${n}${isParcial ? ' (PARCIAL)' : ''}`,
+                            origem: "MESA",
+                            status: "finalizado",
+                            total: valor,
+                            pagamento: metodo,
+                            pagamentos: [{ metodo, valor }],
+                            itens: m.itens || [],
+                            garcom: m.garcom || 'Geral',
+                            data: serverTimestamp(),
+                            contaImpressa: false
+                        });
+                        pedidoIdExistente = novoPedidoRef.id;
+                    }
+
+                    if (isParcial) {
+                        await updateDoc(mesaDoc, { total: novoTotalMesa });
+                        window._metodo = null;
+                        
+                        const { isConfirmed } = await Swal.fire({ 
+                            icon: 'info', 
+                            title: 'Parcial Recebida', 
+                            text: `Ainda restam R$ ${novoTotalMesa.toFixed(2)}`,
+                            confirmButtonText: 'Próximo Pagamento',
+                            showCancelButton: true,
+                            cancelButtonText: 'Fechar depois',
+                            background: '#161618',
+                            color: '#fff'
+                        });
+
+                        if (isConfirmed) {
+                            window.fecharMesa(n, pedidoIdExistente);
+                        }
+                    } else {
+                        await updateDoc(mesaDoc, { aberta: false, itens: [], total: 0, garcom: '' });
+                        if (pedidoIdExistente) {
+                            await updateDoc(doc(db, "pedidos", pedidoIdExistente), { nome: `MESA ${n}` });
+                        }
+                        Swal.fire({ icon: 'success', title: 'Mesa Finalizada!', timer: 1000, showConfirmButton: false });
+                    }
+                }
+                window._metodo = null;
+            } catch (error) {
+                console.error("Erro completo:", error);
+                Swal.fire('Erro Crítico', error.message, 'error');
             }
-        });
+        };
 
-        if (pgtInfo) {
-            const { valor, metodo } = pgtInfo;
-            const novoTotalMesa = Math.max(0, totalRestante - valor);
-            const isParcial = novoTotalMesa >= 0.10;
+        // RENDERIZAÇÃO E PAGINAÇÃO DO DE DELIVERY / CAIXA
+        window.atualizarListagemPedidos = () => {
+            if (!ultimoSnapPedidos) return;
+            const cont = document.getElementById('orders-container');
+            if (!cont) return;
+            
+            let tPix = 0, tCard = 0, tDin = 0;
+            let vendasProdutos = {}; 
+            
+            let pedidosFiltrados = [];
+            const idsRenderizados = new Set();
 
-            if (pedidoIdExistente) {
-                // ✅ PARCELA SEGUINTE: apenas ATUALIZA o documento existente,
-                // acumulando o pagamento. Não cria novo card no caixa.
-                const pedidoRef = doc(db, "pedidos", pedidoIdExistente);
-                const snapPedido = await getDoc(pedidoRef);
-                if (snapPedido.exists()) {
-                    const dadosPedido = snapPedido.data();
-                    // Acumula os pagamentos num array para histórico
-                    const pagamentosAnteriores = dadosPedido.pagamentos || [{ metodo: dadosPedido.pagamento, valor: dadosPedido.total }];
-                    pagamentosAnteriores.push({ metodo, valor });
-                    const totalPago = pagamentosAnteriores.reduce((acc, p) => acc + p.valor, 0);
+            ultimoSnapPedidos.forEach(docSnap => {
+                const p = docSnap.data();
+                const id = docSnap.id;
 
-                    await updateDoc(pedidoRef, {
-                        pagamentos: pagamentosAnteriores,
-                        pagamento: pagamentosAnteriores.map(p => `${p.metodo} R$${p.valor.toFixed(2)}`).join(' + '),
-                        total: totalPago
+                if (idsRenderizados.has(id)) return;
+                idsRenderizados.add(id);
+
+                if (p.origem && p.origem.includes("COZINHA")) return;
+                if (p.tipo === "COZINHA") return;
+
+                const val = parseFloat(p.total || 0);
+                const pgtNormalizado = (p.pagamento || "").trim().toUpperCase();
+
+                if (p.pagamento !== "FUNCIONARIO") {
+                    if (Array.isArray(p.pagamentos) && p.pagamentos.length > 0) {
+                        p.pagamentos.forEach(parcela => {
+                            const metNorm = (parcela.metodo || "").trim().toUpperCase();
+                            const valParcela = parseFloat(parcela.valor || 0);
+                            if (metNorm === "PIX") tPix += valParcela;
+                            else if (metNorm === "CARTÃO" || metNorm === "CARTAO") tCard += valParcela;
+                            else if (metNorm === "DINHEIRO") tDin += valParcela;
+                        });
+                    } else {
+                        if (pgtNormalizado === "PIX") tPix += val;
+                        else if (pgtNormalizado === "CARTÃO" || pgtNormalizado === "CARTAO") tCard += val;
+                        else if (pgtNormalizado === "DINHEIRO") tDin += val;
+                    }
+                }
+
+                if (Array.isArray(p.itens)) {
+                    p.itens.forEach(item => {
+                        const nomeProd = item.n;
+                        const qtd = parseInt(item.q || 0);
+                        const valorTotalItem = parseFloat(item.p || 0) * qtd;
+                        if (!vendasProdutos[nomeProd]) vendasProdutos[nomeProd] = { qtd: 0, total: 0 };
+                        vendasProdutos[nomeProd].qtd += qtd;
+                        vendasProdutos[nomeProd].total += valorTotalItem;
                     });
                 }
-            } else {
-                // ✅ PRIMEIRO PAGAMENTO: cria o documento normalmente
-                const novoPedidoRef = await addDoc(collection(db, "pedidos"), {
-                    nome: `MESA ${n}${isParcial ? ' (PARCIAL)' : ''}`,
-                    origem: "MESA",
-                    status: "finalizado",
-                    total: valor,
-                    pagamento: metodo,
-                    pagamentos: [{ metodo, valor }],
-                    itens: m.itens || [],
-                    garcom: m.garcom || 'Geral',
-                    data: serverTimestamp(),
-                    contaImpressa: false
-                });
-                pedidoIdExistente = novoPedidoRef.id; // Guarda o ID para as próximas parcelas
-            }
 
-            if (isParcial) {
-                // Atualiza o total restante na mesa e pede próximo pagamento
-                await updateDoc(mesaDoc, { total: novoTotalMesa });
-                window._metodo = null;
-                
-                const { isConfirmed } = await Swal.fire({ 
-                    icon: 'info', 
-                    title: 'Parcial Recebida', 
-                    text: `Ainda restam R$ ${novoTotalMesa.toFixed(2)}`,
-                    confirmButtonText: 'Próximo Pagamento',
-                    showCancelButton: true,
-                    cancelButtonText: 'Fechar depois',
-                    background: '#161618',
-                    color: '#fff'
-                });
-
-                if (isConfirmed) {
-                    // Passa o ID do pedido já criado para não duplicar
-                    window.fecharMesa(n, pedidoIdExistente);
-                }
-            } else {
-                // Mesa quitada completamente
-                await updateDoc(mesaDoc, { aberta: false, itens: [], total: 0, garcom: '' });
-                // Remove o "(PARCIAL)" do nome se havia
-                if (pedidoIdExistente) {
-                    await updateDoc(doc(db, "pedidos", pedidoIdExistente), { nome: `MESA ${n}` });
-                }
-                Swal.fire({ icon: 'success', title: 'Mesa Finalizada!', timer: 1000, showConfirmButton: false });
-            }
-        }
-        window._metodo = null;
-    } catch (error) {
-        console.error("Erro completo:", error);
-        Swal.fire('Erro Crítico', error.message, 'error');
-    }
-};
-
-        // Monitoramento do Caixa (Delivery + Mesas Fechadas)
-onSnapshot(query(collection(db, "pedidos"), orderBy("data", "desc")), (snap) => {
-    const cont = document.getElementById('orders-container');
-    if (!cont) return;
-    
-    let tPix = 0, tCard = 0, tDin = 0;
-    let vendasProdutos = {}; 
-    
-    // 1. Limpa o container
-    cont.innerHTML = "";
-    const idsRenderizados = new Set();
-
-    snap.forEach(docSnap => {
-        const p = docSnap.data();
-        const id = docSnap.id;
-
-        if (idsRenderizados.has(id)) return;
-        idsRenderizados.add(id);
-
-        if (p.origem && p.origem.includes("COZINHA")) return;
-        if (p.tipo === "COZINHA") return;
-
-        const val = parseFloat(p.total || 0);
-
-        // --- LÓGICA DE TROCO (AJUSTADA PARA trocoPara) ---
-        let infoTroco = "";
-        const pgtNormalizado = (p.pagamento || "").trim().toUpperCase();
-        
-        if (pgtNormalizado === "DINHEIRO") {
-            // No seu site está: trocoPara: tr > 0 ? tr : 0
-            const valorEntregue = parseFloat(p.trocoPara || 0);
-            
-            if (valorEntregue > val) {
-                const trocoSugerido = valorEntregue - val;
-                infoTroco = `<br><b style="color:#ff4444; background:rgba(255,68,68,0.15); padding:4px 8px; border-radius:4px; display:inline-block; margin-top:5px; border: 1px solid rgba(255,68,68,0.3);">
-                                <i class="fas fa-coins"></i> LEVAR TROCO: R$ ${trocoSugerido.toFixed(2)}
-                             </b>`;
-            } else if (valorEntregue > 0) {
-                infoTroco = `<br><b style="color:#22c55e; margin-top:5px; display:inline-block; background:rgba(34,197,94,0.1); padding:4px 8px; border-radius:4px;">
-                                <i class="fas fa-check-circle"></i> DINHEIRO CONTADO</b>`;
-            }
-        }
-
-        
-     if (p.pagamento !== "FUNCIONARIO") {
-    if (Array.isArray(p.pagamentos) && p.pagamentos.length > 0) {
-        p.pagamentos.forEach(parcela => {
-            const metNorm = (parcela.metodo || "").trim().toUpperCase();
-            const valParcela = parseFloat(parcela.valor || 0);
-            if (metNorm === "PIX") tPix += valParcela;
-            else if (metNorm === "CARTÃO" || metNorm === "CARTAO") tCard += valParcela;
-            else if (metNorm === "DINHEIRO") tDin += valParcela;
-        });
-    } else {
-        if (pgtNormalizado === "PIX") tPix += val;
-        else if (pgtNormalizado === "CARTÃO" || pgtNormalizado === "CARTAO") tCard += val;
-        else if (pgtNormalizado === "DINHEIRO") tDin += val;
-    }
-}
-
-// --- RANKING ---
-if (Array.isArray(p.itens)) {
-    p.itens.forEach(item => {
-        const nomeProd = item.n;
-        const qtd = parseInt(item.q || 0);
-        const valorTotalItem = parseFloat(item.p || 0) * qtd;
-        if (!vendasProdutos[nomeProd]) vendasProdutos[nomeProd] = { qtd: 0, total: 0 };
-        vendasProdutos[nomeProd].qtd += qtd;
-        vendasProdutos[nomeProd].total += valorTotalItem;
-    });
-}
-
-const isMesa = p.nome && p.nome.toUpperCase().includes("MESA");
-const isFunc = p.pagamento === "FUNCIONARIO";
-const statusColor = isFunc ? '#9333ea' : (p.status === 'recebido' ? '#22c55e' : (p.status === 'saiu' ? '#3b82f6' : 'var(--gold)'));
-
-        cont.innerHTML += `
-            <div class="order-card" style="position: relative; border-left: 6px solid ${statusColor}; margin-bottom: 15px; padding: 15px; background: #1a1a1a; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-                
-                <button onclick="deletarPedido('${id}', '${p.nome}')" 
-                    style="position:absolute; top:10px; right:10px; background:rgba(239, 68, 68, 0.15); border:none; color:#ef4444; width:28px; height:28px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;">
-                    <i class="fas fa-times"></i>
-                </button>
-
-                <div style="display:flex; justify-content:space-between; align-items: flex-start; padding-right: 30px;">
-                    <div>
-                        <b style="font-size:1.2rem; color:var(--gold)">${p.nome ? p.nome.toUpperCase() : "SEM NOME"} ${isFunc ? '<span style="color:#9333ea; font-size:0.8rem;">[INTERNO]</span>' : ''}</b><br>
-                        <small style="color:#aaa"><i class="far fa-clock"></i> ${p.data ? new Date(p.data.toDate()).toLocaleTimeString() : 'Agora'}</small>
-                    </div>
-                    <span class="garcom-tag" style="background:${isFunc ? '#9333ea' : (isMesa ? '#444' : '#25D366')}; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">
-                        ${isFunc ? 'FUNCIONÁRIO' : (isMesa ? `<i class="fas fa-utensils"></i> ${p.garcom || 'Mesa'}` : `<i class="fab fa-whatsapp"></i> DELIVERY`)}
-                    </span>
-                </div>
-
-                <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; font-size: 0.9rem; border: 1px solid #333;">
-                    ${!isMesa ? `
-                        <p style="margin:4px 0;"><b><i class="fas fa-phone"></i> Tel:</b> ${p.telefone || 'N/A'}</p>
-                        <p style="margin:4px 0;"><b><i class="fas fa-map-marker-alt"></i> End:</b> ${p.endereco || 'Retirada'}</p>
-                        <p style="margin:4px 0; color:#00e676;"><b><i class="fas fa-map"></i> Bairro:</b> ${p.bairro || 'Não informado'}</p>
-                    ` : `<p style="margin:4px 0; color: #aaa;"><i class="fas fa-info-circle"></i> ${p.retirada === 'viagem' ? '🏡 Viagem' : 'CONSUMO LOCAL'}</p>`}
-                    
-                    <p style="margin:4px 0;"><b><i class="fas fa-wallet"></i> Pagamento:</b> 
-                        <span style="${isFunc ? 'color:#9333ea; font-weight:bold;' : ''}">${p.pagamento || 'Pendente'}</span>
-                        ${infoTroco}
-                    </p>
-                </div>
-
-                <div class="mesa-itens-lista" style="border-top: 1px dashed #444; padding-top:10px; color:#eee;">
-                    ${Array.isArray(p.itens) ? p.itens.map((i, index) => `
-                        <div style="margin-bottom:8px; border-bottom: 1px solid #222; padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
-                            <div style="flex: 1;">
-                                <span style="font-size: 1rem;"><b>${i.q}x</b> ${i.n}</span><br>
-                                <small style="color: #888;">R$ ${(parseFloat(i.p) * parseInt(i.q)).toFixed(2)}</small>
-                            </div>
-                            <button onclick="window.removerItemEspecifico('${id}', ${index})" 
-                                style="background: #ef4444; color: white; border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; margin-left: 10px;">
-                                X
-                            </button>
-                        </div>`).join('') : `<p>Sem itens no pedido</p>`}
-                </div>
-
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; border-top: 1px solid #333; padding-top:10px;">
-                    <b style="font-size:1.2rem; color:var(--gold)">TOTAL: R$ ${val.toFixed(2)}</b>
-                    <div style="display:flex; gap:8px;">
-                        <button onclick="marcarRecebido('${id}', '${p.telefone}', '${p.nome}')" style="background:var(--green); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;"><i class="fas fa-check"></i></button>
-                        <button onclick="despacharPedido('${id}', '${p.telefone}', '${p.nome}')" style="background:var(--blue); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;"><i class="fas fa-motorcycle"></i></button>
-                    </div>
-                </div>
-            </div>`;
-    });
-
-    // Atualiza Totais
-    const safeSetText = (id, text) => { if(document.getElementById(id)) document.getElementById(id).innerText = text; };
-    safeSetText('b-pix', `R$ ${tPix.toFixed(2)}`);
-    safeSetText('b-cartao', `R$ ${tCard.toFixed(2)}`);
-    safeSetText('b-dinheiro', `R$ ${tDin.toFixed(2)}`);
-    safeSetText('b-total', `R$ ${(tPix + tCard + tDin).toFixed(2)}`);
-
-    // Ranking
-    // Definição dos grupos
-    // Ranking
-   const artesanais = ["Burguer Mini","Burguer Classic","Burguer Poleguinho","Burguer Pepperoni","Burguer Cheese Bacon","Burguer Double","Batata Frita","Combo Casal"];
-    const tradicionais = ["Zap Quente","Zap X-Burguer","Zap Egg","Zap Bacon","Zap Calabresa","Zap Salada Especial","Zap Tudo","Zap Broca","Zap Frango","Zap Filé"];
-    const adicionais = ["Ovo","Carne Hambúrguer","Blend Bovino 160g","Bacon","Salsicha","Presunto","Bacon Defumado","Cebola Caramelizada","Molho Cheddar","Queijo Mussarela","Queijo Polenguinho","Calabresa","Filé Gado","Filé Frango"];
-
-    const pertenceAo = (nome, lista) => lista.some(item => nome.startsWith(item));
-
-    const renderGrupo = (elementId, subtotalId, lista) => {
-        const cont = document.getElementById(elementId);
-        const subtotalEl = document.getElementById(subtotalId);
-        if (!cont) return;
-        const itensDoGrupo = Object.entries(vendasProdutos).filter(([nome]) => pertenceAo(nome, lista));
-        const subtotal = itensDoGrupo.reduce((acc, [, d]) => acc + d.total, 0);
-        cont.innerHTML = itensDoGrupo.sort((a,b) => b[1].qtd - a[1].qtd).map(([nome, dados]) => `
-            <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #2a2a2a; font-size: 0.82rem;">
-                <span><b>${dados.qtd}x</b> ${nome}</span>
-                <span style="color:var(--gold)">R$ ${dados.total.toFixed(2)}</span>
-            </div>
-        `).join('') || '<p style="color:#555; font-size:0.8rem;">Nenhuma venda</p>';
-        if (subtotalEl) subtotalEl.innerText = `R$ ${subtotal.toFixed(2)}`;
-    };
-
-    renderGrupo('ranking-artesanais', 'subtotal-artesanais', artesanais);
-    renderGrupo('ranking-tradicionais', 'subtotal-tradicionais', tradicionais);
-
-    // Bebidas: tudo que não é artesanal, tradicional nem adicional
-    const bebidasCont = document.getElementById('ranking-bebidas');
-    const bebidasSubtotalEl = document.getElementById('subtotal-bebidas');
-    if (bebidasCont) {
-        const itensBebidas = Object.entries(vendasProdutos).filter(([nome]) => 
-            !pertenceAo(nome, artesanais) && 
-            !pertenceAo(nome, tradicionais) && 
-            !pertenceAo(nome, adicionais)
-        );
-        const subtotalBebidas = itensBebidas.reduce((acc, [, d]) => acc + d.total, 0);
-        bebidasCont.innerHTML = itensBebidas.sort((a,b) => b[1].qtd - a[1].qtd).map(([nome, dados]) => `
-            <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #2a2a2a; font-size: 0.82rem;">
-                <span><b>${dados.qtd}x</b> ${nome}</span>
-                <span style="color:var(--gold)">R$ ${dados.total.toFixed(2)}</span>
-            </div>
-        `).join('') || '<p style="color:#555; font-size:0.8rem;">Nenhuma venda</p>';
-        if (bebidasSubtotalEl) bebidasSubtotalEl.innerText = `R$ ${subtotalBebidas.toFixed(2)}`;
-    }
-
-    if (typeof inicializado !== 'undefined' && inicializado && snap.docChanges().some(c => c.type === "added") && typeof somAtivo !== 'undefined' && somAtivo) playSom();
-    inicializado = true;
-});
-
-// x do cards
-window.removerItemEspecifico = async (pedidoId, indexItem) => {
-    if (!confirm("Deseja remover este item e atualizar o total?")) return;
-
-    try {
-        const pedidoRef = doc(db, "pedidos", pedidoId);
-        const snapshot = await getDoc(pedidoRef);
-        
-        if (snapshot.exists()) {
-            const dados = snapshot.data();
-            let itensAtualizados = [...dados.itens];
-            
-            // Pega o item para calcular quanto subtrair do total
-            const item = itensAtualizados[indexItem];
-            const valorSubtrair = parseFloat(item.p || 0) * parseInt(item.q || 0);
-            
-            // Remove o item do array
-            itensAtualizados.splice(indexItem, 1);
-            
-            // Recalcula o total (evitando números negativos)
-            const novoTotal = Math.max(0, parseFloat(dados.total || 0) - valorSubtrair).toFixed(2);
-
-            // Se não sobrar nenhum item, talvez você queira deletar o pedido, 
-            // mas aqui apenas atualizaremos para lista vazia:
-            await updateDoc(pedidoRef, {
-                itens: itensAtualizados,
-                total: novoTotal
+                pedidosFiltrados.push({ id, ...p });
             });
-            
-            console.log("Item removido com sucesso!");
-        }
-    } catch (error) {
-        console.error("Erro:", error);
-        alert("Erro ao remover item: " + error.message);
-    }
-};
-        // marcar recebido
+
+            // MOSTRAR APENAS N PEDIDOS NO DELIVERY TAB
+            const pedidosParaExibir = pedidosFiltrados.slice(0, limitePedidosExibidos);
+            cont.innerHTML = "";
+
+            pedidosParaExibir.forEach(p => {
+                const id = p.id;
+                const val = parseFloat(p.total || 0);
+                let infoTroco = "";
+                const pgtNormalizado = (p.pagamento || "").trim().toUpperCase();
+                
+                if (pgtNormalizado === "DINHEIRO") {
+                    const valorEntregue = parseFloat(p.trocoPara || 0);
+                    
+                    if (valorEntregue > val) {
+                        const trocoSugerido = valorEntregue - val;
+                        infoTroco = `<br><b style="color:#ff4444; background:rgba(255,68,68,0.15); padding:4px 8px; border-radius:4px; display:inline-block; margin-top:5px; border: 1px solid rgba(255,68,68,0.3);">
+                                        <i class="fas fa-coins"></i> LEVAR TROCO: R$ ${trocoSugerido.toFixed(2)}
+                                     </b>`;
+                    } else if (valorEntregue > 0) {
+                        infoTroco = `<br><b style="color:#22c55e; margin-top:5px; display:inline-block; background:rgba(34,197,94,0.1); padding:4px 8px; border-radius:4px;">
+                                        <i class="fas fa-check-circle"></i> DINHEIRO CONTADO</b>`;
+                    }
+                }
+
+                const isMesa = p.nome && p.nome.toUpperCase().includes("MESA");
+                const isFunc = p.pagamento === "FUNCIONARIO";
+                const statusColor = isFunc ? '#9333ea' : (p.status === 'recebido' ? '#22c55e' : (p.status === 'saiu' ? '#3b82f6' : 'var(--gold)'));
+
+                cont.innerHTML += `
+                    <div class="order-card" style="position: relative; border-left: 6px solid ${statusColor}; margin-bottom: 15px; padding: 15px; background: #1a1a1a; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                        
+                        <button onclick="deletarPedido('${id}', '${p.nome}')" 
+                            style="position:absolute; top:10px; right:10px; background:rgba(239, 68, 68, 0.15); border:none; color:#ef4444; width:28px; height:28px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;">
+                            <i class="fas fa-times"></i>
+                        </button>
+
+                        <div style="display:flex; justify-content:space-between; align-items: flex-start; padding-right: 30px;">
+                            <div>
+                                <b style="font-size:1.2rem; color:var(--gold)">${p.nome ? p.nome.toUpperCase() : "SEM NOME"} ${isFunc ? '<span style="color:#9333ea; font-size:0.8rem;">[INTERNO]</span>' : ''}</b><br>
+                                <small style="color:#aaa"><i class="far fa-clock"></i> ${p.data ? new Date(p.data.toDate()).toLocaleTimeString() : 'Agora'}</small>
+                            </div>
+                            <span class="garcom-tag" style="background:${isFunc ? '#9333ea' : (isMesa ? '#444' : '#25D366')}; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">
+                                ${isFunc ? 'FUNCIONÁRIO' : (isMesa ? `<i class="fas fa-utensils"></i> ${p.garcom || 'Mesa'}` : `<i class="fab fa-whatsapp"></i> DELIVERY`)}
+                            </span>
+                        </div>
+
+                        <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; font-size: 0.9rem; border: 1px solid #333;">
+                            ${!isMesa ? `
+                                <p style="margin:4px 0;"><b><i class="fas fa-phone"></i> Tel:</b> ${p.telefone || 'N/A'}</p>
+                                <p style="margin:4px 0;"><b><i class="fas fa-map-marker-alt"></i> End:</b> ${p.endereco || 'Retirada'}</p>
+                                <p style="margin:4px 0; color:#00e676;"><b><i class="fas fa-map"></i> Bairro:</b> ${p.bairro || 'Não informado'}</p>
+                            ` : `<p style="margin:4px 0; color: #aaa;"><i class="fas fa-info-circle"></i> ${p.retirada === 'viagem' ? '🏡 Viagem' : 'CONSUMO LOCAL'}</p>`}
+                            
+                            <p style="margin:4px 0;"><b><i class="fas fa-wallet"></i> Pagamento:</b> 
+                                <span style="${isFunc ? 'color:#9333ea; font-weight:bold;' : ''}">${p.pagamento || 'Pendente'}</span>
+                                ${infoTroco}
+                            </p>
+                        </div>
+
+                        <div class="mesa-itens-lista" style="border-top: 1px dashed #444; padding-top:10px; color:#eee;">
+                            ${Array.isArray(p.itens) ? p.itens.map((i, index) => `
+                                <div style="margin-bottom:8px; border-bottom: 1px solid #222; padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="flex: 1;">
+                                        <span style="font-size: 1rem;"><b>${i.q}x</b> ${i.n}</span><br>
+                                        <small style="color: #888;">R$ ${(parseFloat(i.p) * parseInt(i.q)).toFixed(2)}</small>
+                                    </div>
+                                    <button onclick="window.removerItemEspecifico('${id}', ${index})" 
+                                        style="background: #ef4444; color: white; border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; margin-left: 10px;">
+                                        X
+                                    </button>
+                                </div>`).join('') : `<p>Sem itens no pedido</p>`}
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; border-top: 1px solid #333; padding-top:10px;">
+                            <b style="font-size:1.2rem; color:var(--gold)">TOTAL: R$ ${val.toFixed(2)}</b>
+                            <div style="display:flex; gap:8px;">
+                                <button onclick="marcarRecebido('${id}', '${p.telefone}', '${p.nome}')" style="background:var(--green); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;"><i class="fas fa-check"></i></button>
+                                <button onclick="despacharPedido('${id}', '${p.telefone}', '${p.nome}')" style="background:var(--blue); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;"><i class="fas fa-motorcycle"></i></button>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+
+            // EXIBE OU OCULTA O BOTÃO VER MAIS
+            const btnContainer = document.getElementById('btn-mostrar-mais-container');
+            if (btnContainer) {
+                if (pedidosFiltrados.length > limitePedidosExibidos) {
+                    btnContainer.style.display = 'flex';
+                } else {
+                    btnContainer.style.display = 'none';
+                }
+            }
+
+            // Atualiza Totais Gerais
+            const safeSetText = (id, text) => { if(document.getElementById(id)) document.getElementById(id).innerText = text; };
+            safeSetText('b-pix', `R$ ${tPix.toFixed(2)}`);
+            safeSetText('b-cartao', `R$ ${tCard.toFixed(2)}`);
+            safeSetText('b-dinheiro', `R$ ${tDin.toFixed(2)}`);
+            safeSetText('b-total', `R$ ${(tPix + tCard + tDin).toFixed(2)}`);
+
+            // Ranking
+            const artesanais  = ["Burguer Mini","Burguer Classic","Burguer Poleguinho","Burguer Pepperoni","Burguer Cheese Bacon","Burguer Double","Batata Frita","Combo Casal"];
+            const tradicionais = ["Zap Quente","Zap X-Burguer","Zap Egg","Zap Bacon","Zap Calabresa","Zap Salada Especial","Zap Tudo","Zap Broca","Zap Frango","Zap Filé"];
+            const adicionais = ["Ovo","Carne Hambúrguer","Blend Bovino 160g","Bacon","Salsicha","Presunto","Bacon Defumado","Cebola Caramelizada","Molho Cheddar","Queijo Mussarela","Queijo Polenguinho","Calabresa","Filé Gado","Filé Frango"];
+
+            const pertenceAo = (nome, paraBuscar) => paraBuscar.some(item => nome.startsWith(item));
+
+            const renderGrupo = (elementId, subtotalId, lista) => {
+                const contGd = document.getElementById(elementId);
+                const subtotalEl = document.getElementById(subtotalId);
+                if (!contGd) return;
+                const itensDoGrupo = Object.entries(vendasProdutos).filter(([nome]) => pertenceAo(nome, lista));
+                const subtotalGrupo = itensDoGrupo.reduce((acc, [, d]) => acc + d.total, 0);
+                contGd.innerHTML = itensDoGrupo.sort((a,b) => b[1].qtd - a[1].qtd).map(([nome, dados]) => `
+                    <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #2a2a2a; font-size: 0.82rem;">
+                        <span><b>${dados.qtd}x</b> ${nome}</span>
+                        <span style="color:var(--gold)">R$ ${dados.total.toFixed(2)}</span>
+                    </div>
+                `).join('') || '<p style="color:#555; font-size:0.8rem;">Nenhuma venda</p>';
+                if (subtotalEl) subtotalEl.innerText = `R$ ${subtotalGrupo.toFixed(2)}`;
+            };
+
+            renderGrupo('ranking-artesanais', 'subtotal-artesanais', artesanais);
+            renderGrupo('ranking-tradicionais', 'subtotal-tradicionais', tradicionais);
+
+            // Bebidas: tudo que não é artesanal, tradicional nem adicional
+            const bebidasCont = document.getElementById('ranking-bebidas');
+            const bebidasSubtotalEl = document.getElementById('subtotal-bebidas');
+            if (bebidasCont) {
+                const itensBebidas = Object.entries(vendasProdutos).filter(([nome]) => 
+                    !pertenceAo(nome, artesanais) && 
+                    !pertenceAo(nome, tradicionais) && 
+                    !pertenceAo(nome, adicionais)
+                );
+                const subtotalBebidas = itensBebidas.reduce((acc, [, d]) => acc + d.total, 0);
+                bebidasCont.innerHTML = itensBebidas.sort((a,b) => b[1].qtd - a[1].qtd).map(([nome, dados]) => `
+                    <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #2a2a2a; font-size: 0.82rem;">
+                        <span><b>${dados.qtd}x</b> ${nome}</span>
+                        <span style="color:var(--gold)">R$ ${dados.total.toFixed(2)}</span>
+                    </div>
+                `).join('') || '<p style="color:#555; font-size:0.8rem;">Nenhuma venda</p>';
+                if (bebidasSubtotalEl) bebidasSubtotalEl.innerText = `R$ ${subtotalBebidas.toFixed(2)}`;
+            }
+        };
+
+        window.mostrarMaisPedidos = () => {
+            limitePedidosExibidos += 6;
+            window.atualizarListagemPedidos();
+        };
+
+        // Escuta reativa do banco de dados
+        onSnapshot(query(collection(db, "pedidos"), orderBy("data", "desc")), (snap) => {
+            ultimoSnapPedidos = snap;
+            window.atualizarListagemPedidos();
+
+            if (typeof inicializado !== 'undefined' && inicializado && snap.docChanges().some(c => c.type === "added") && typeof somAtivo !== 'undefined' && somAtivo) playSom();
+            inicializado = true;
+        });
+
+        window.removerItemEspecifico = async (pedidoId, indexItem) => {
+            if (!confirm("Deseja remover este item e atualizar o total?")) return;
+
+            try {
+                const pedidoRef = doc(db, "pedidos", pedidoId);
+                const snapshot = await getDoc(pedidoRef);
+                
+                if (snapshot.exists()) {
+                    const dados = snapshot.data();
+                    let itensAtualizados = [...dados.itens];
+                    
+                    const item = itensAtualizados[indexItem];
+                    const valorSubtrair = parseFloat(item.p || 0) * parseInt(item.q || 0);
+                    
+                    itensAtualizados.splice(indexItem, 1);
+                    const novoTotal = Math.max(0, parseFloat(dados.total || 0) - valorSubtrair).toFixed(2);
+
+                    await updateDoc(pedidoRef, {
+                        itens: itensAtualizados,
+                        total: novoTotal
+                    });
+                    
+                    console.log("Item removido com sucesso!");
+                }
+            } catch (error) {
+                console.error("Erro:", error);
+                alert("Erro ao remover item: " + error.message);
+            }
+        };
+
         window.marcarRecebido = async (id, tel, nome) => {
             await updateDoc(doc(db, "pedidos", id), { status: 'recebido' });
             if (tel && tel !== '' && tel !== 'undefined') window.open(`https://wa.me/55${tel.replace(/\D/g, '')}?text=Boa noite, seu pedido já esta da fila de produção, por favor aguarde...`);
@@ -1551,84 +1401,79 @@ window.removerItemEspecifico = async (pedidoId, indexItem) => {
             if (tel && tel !== '' && tel !== 'undefined') window.open(`https://wa.me/55${tel.replace(/\D/g, '')}?text=Olá, seu pedido ja saiu para entrega, aproveite bem e volte sempre. ZAPLANCHES agradece!`);
         };
 
-// Função para excluir um pedido específico do Delivery/Caixa
-window.deletarPedido = async (id, nome) => {
-    const { isConfirmed } = await Swal.fire({
-        title: `EXCLUIR PEDIDO?`,
-        text: `Deseja apagar o pedido de "${nome}"? O valor será removido do caixa imediatamente.`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#333',
-        confirmButtonText: 'Sim, excluir',
-        cancelButtonText: 'Cancelar',
-        background: '#161618',
-        color: '#fff'
-    });
+        window.deletarPedido = async (id, nome) => {
+            const { isConfirmed } = await Swal.fire({
+                title: `EXCLUIR PEDIDO?`,
+                text: `Deseja apagar o pedido de "${nome}"? O valor será removido do caixa imediatamente.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#333',
+                confirmButtonText: 'Sim, excluir',
+                cancelButtonText: 'Cancelar',
+                background: '#161618',
+                color: '#fff'
+            });
 
-    if (isConfirmed) {
-        try {
-            await deleteDoc(doc(db, "pedidos", id));
-            // O onSnapshot cuidará de atualizar os totais e remover o card da tela
-            Swal.fire({ title: 'Pedido removido!', icon: 'success', timer: 800, showConfirmButton: false });
-        } catch (error) {
-            console.error("Erro ao deletar:", error);
-            Swal.fire('Erro', 'Não foi possível excluir o pedido.', 'error');
-        }
-    }
-};
-       document.getElementById('btn-limpar-tudo').onclick = async () => {
-    const { value: pass } = await Swal.fire({ 
-        title: 'Limpeza Geral', 
-    
-        input: 'password', 
-        inputPlaceholder: 'Senha do Gerente',
-  
-        showCancelButton: true, 
-        confirmButtonColor: '#d33', 
-        confirmButtonText: 'SIM, LIMPAR TUDO!',
-        cancelButtonText: 'Cancelar',
-        didOpen: () => {
-            const input = Swal.getInput();
-            const icon = document.createElement('i');
-            icon.classList.add('fas', 'fa-eye', 'toggle-password-icon');
-            
-            // Estilização direta para garantir o posicionamento no modal de aviso
-            input.parentElement.style.position = 'relative';
-            input.parentElement.appendChild(icon);
-
-            icon.onclick = () => {
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    icon.classList.replace('fa-eye', 'fa-eye-slash');
-                } else {
-                    input.type = 'password';
-                    icon.classList.replace('fa-eye-slash', 'fa-eye');
+            if (isConfirmed) {
+                try {
+                    await deleteDoc(doc(db, "pedidos", id));
+                    Swal.fire({ title: 'Pedido removido!', icon: 'success', timer: 800, showConfirmButton: false });
+                } catch (error) {
+                    console.error("Erro ao deletar:", error);
+                    Swal.fire('Erro', 'Não foi possível excluir o pedido.', 'error');
                 }
-            };
-        }
-    });
+            }
+        };
 
-    if (checkPass(pass)) {
-        Swal.fire({ 
-            title: 'Limpando...', 
-            html: 'Aguarde enquanto os registros são apagados',
-            allowOutsideClick: false, 
-            didOpen: () => Swal.showLoading() 
-        });
-        
-        try {
-            const snap = await getDocs(collection(db, "pedidos"));
-            const promessas = snap.docs.map(d => deleteDoc(doc(db, "pedidos", d.id)));
-            await Promise.all(promessas);
-            Swal.fire('Limpo!', 'O histórico foi zerado com sucesso.', 'success');
-        } catch (error) {
-            Swal.fire('Erro', 'Não foi possível limpar os dados.', 'error');
-        }
-    } else if (pass) { 
-        Swal.fire('Erro', 'Senha incorreta!', 'error'); 
-    }
-};
+        document.getElementById('btn-limpar-tudo').onclick = async () => {
+            const { value: pass } = await Swal.fire({ 
+                title: 'Limpeza Geral', 
+                input: 'password', 
+                inputPlaceholder: 'Senha do Gerente',
+                showCancelButton: true, 
+                confirmButtonColor: '#d33', 
+                confirmButtonText: 'SIM, LIMPAR TUDO!',
+                cancelButtonText: 'Cancelar',
+                didOpen: () => {
+                    const input = Swal.getInput();
+                    const icon = document.createElement('i');
+                    icon.classList.add('fas', 'fa-eye', 'toggle-password-icon');
+                    input.parentElement.style.position = 'relative';
+                    input.parentElement.appendChild(icon);
+
+                    icon.onclick = () => {
+                        if (input.type === 'password') {
+                            input.type = 'text';
+                            icon.classList.replace('fa-eye', 'fa-eye-slash');
+                        } else {
+                            input.type = 'password';
+                            icon.classList.replace('fa-eye-slash', 'fa-eye');
+                        }
+                    };
+                }
+            });
+
+            if (checkPass(pass)) {
+                Swal.fire({ 
+                    title: 'Limpando...', 
+                    html: 'Aguarde enquanto os registros são apagados',
+                    allowOutsideClick: false, 
+                    didOpen: () => Swal.showLoading() 
+                });
+                
+                try {
+                    const snap = await getDocs(collection(db, "pedidos"));
+                    const promessas = snap.docs.map(d => deleteDoc(doc(db, "pedidos", d.id)));
+                    await Promise.all(promessas);
+                    Swal.fire('Limpo!', 'O histórico foi zerado com sucesso.', 'success');
+                } catch (error) {
+                    Swal.fire('Erro', 'Não foi possível limpar os dados.', 'error');
+                }
+            } else if (pass) { 
+                Swal.fire('Erro', 'Senha incorreta!', 'error'); 
+            }
+        };
 
         const menuCont = document.getElementById('sanfona-menu');
         if (menuCont) {
@@ -1640,7 +1485,6 @@ window.deletarPedido = async (id, nome) => {
                     <div class="cat-content hidden" style="background:#1a1a1a; padding:10px;">`;
 
                 cardapio[cat].forEach(i => {
-                    // Prepara as opções para o JavaScript não quebrar
                     const opcoesJSON = i.opcoes ? JSON.stringify(i.opcoes).replace(/"/g, '&quot;') : '[]';
 
                     html += `<div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center; border-bottom:1px solid #333; padding-bottom:5px;">
@@ -1656,212 +1500,191 @@ window.deletarPedido = async (id, nome) => {
             });
         }
 
-        // --- FUNÇÃO PARA GERAR O PDF DO CAIXA ---
-      window.gerarPDFBalanco = () => {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+        window.gerarPDFBalanco = () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
 
-    const pix = document.getElementById('b-pix').innerText;
-    const cartao = document.getElementById('b-cartao').innerText;
-    const dinheiro = document.getElementById('b-dinheiro').innerText;
-    const total = document.getElementById('b-total').innerText;
-    const dataHora = new Date().toLocaleString('pt-BR');
+            const pix = document.getElementById('b-pix').innerText;
+            const cartao = document.getElementById('b-cartao').innerText;
+            const dinheiro = document.getElementById('b-dinheiro').innerText;
+            const total = document.getElementById('b-total').innerText;
+            const dataHora = new Date().toLocaleString('pt-BR');
 
-    // 1. CABEÇALHO
-    doc.setFillColor(22, 22, 24);
-    doc.rect(0, 0, 210, 40, 'F');
-    doc.setTextColor(34, 197, 94);
-    doc.setFontSize(22);
-    doc.setFont("helvetica", "bold");
-    doc.text("ZAPLANCHE - BALANÇO DE CAIXA", 15, 25);
-    doc.setFontSize(10);
-    doc.setTextColor(150, 150, 150);
-    doc.text(`Relatório gerado em: ${dataHora}`, 15, 33);
+            doc.setFillColor(22, 22, 24);
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(34, 197, 94);
+            doc.setFontSize(22);
+            doc.setFont("helvetica", "bold");
+            doc.text("ZAPLANCHE - BALANÇO DE CAIXA", 15, 25);
+            doc.setFontSize(10);
+            doc.setTextColor(150, 150, 150);
+            doc.text(`Relatório gerado em: ${dataHora}`, 15, 33);
 
-    // 2. TABELA FINANCEIRA
-    doc.autoTable({
-        startY: 50,
-        head: [['Descrição', 'Valor Acumulado']],
-        body: [
-            ['Total em PIX', pix],
-            ['Total em CARTÃO', cartao],
-            ['Total em DINHEIRO', dinheiro],
-            [
-                { content: 'TOTAL GERAL', styles: { fontStyle: 'bold', fillColor: [34, 197, 94], textColor: [0, 0, 0] } },
-                { content: total, styles: { fontStyle: 'bold', fillColor: [34, 197, 94], textColor: [0, 0, 0] } }
-            ]
-        ],
-        theme: 'grid',
-        headStyles: { fillColor: [33, 33, 36] },
-        styles: { fontSize: 12 }
-    });
-
-    // 3. HELPER: coleta itens de um elemento de ranking
-    const coletarItens = (elementId) => {
-        const rows = [];
-        let subtotal = 0;
-        const cont = document.getElementById(elementId);
-        if (cont) {
-            cont.querySelectorAll('div').forEach(el => {
-                const texto = el.innerText.trim();
-                if (!texto) return;
-                const partes = texto.split('R$');
-                if (partes.length >= 2) {
-                    rows.push([partes[0].trim(), `R$ ${partes[1].trim()}`]);
-                    subtotal += parseFloat(partes[1].replace(',', '.')) || 0;
-                }
+            doc.autoTable({
+                startY: 50,
+                head: [['Descrição', 'Valor Acumulado']],
+                body: [
+                    ['Total em PIX', pix],
+                    ['Total em CARTÃO', cartao],
+                    ['Total em DINHEIRO', dinheiro],
+                    [
+                        { content: 'TOTAL GERAL', styles: { fontStyle: 'bold', fillColor: [34, 197, 94], textColor: [0, 0, 0] } },
+                        { content: total, styles: { fontStyle: 'bold', fillColor: [34, 197, 94], textColor: [0, 0, 0] } }
+                    ]
+                ],
+                theme: 'grid',
+                headStyles: { fillColor: [33, 33, 36] },
+                styles: { fontSize: 12 }
             });
-        }
-        return { rows, subtotal };
-    };
 
-    const artesanais  = coletarItens('ranking-artesanais');
-    const tradicionais = coletarItens('ranking-tradicionais');
-    const bebidas     = coletarItens('ranking-bebidas');
+            const coletarItens = (elementId) => {
+                const rows = [];
+                let subtotal = 0;
+                const contGd = document.getElementById(elementId);
+                if (contGd) {
+                    contGd.querySelectorAll('div').forEach(el => {
+                        const texto = el.innerText.trim();
+                        if (!texto) return;
+                        const partes = texto.split('R$');
+                        if (partes.length >= 2) {
+                            rows.push([partes[0].trim(), `R$ ${partes[1].trim()}`]);
+                            subtotal += parseFloat(partes[1].replace(',', '.')) || 0;
+                        }
+                    });
+                }
+                return { rows, subtotal };
+            };
 
-    let posY = doc.lastAutoTable.finalY + 15;
+            const artesanais  = coletarItens('ranking-artesanais');
+            const tradicionais = coletarItens('ranking-tradicionais');
+            const bebidas     = coletarItens('ranking-bebidas');
 
-    // 4. TÍTULO DA SEÇÃO DE LANCHES
-    doc.setFontSize(13);
-    doc.setTextColor(34, 197, 94);
-    doc.setFont("helvetica", "bold");
-    doc.text("DETALHAMENTO DE VENDAS POR PRODUTO", 15, posY);
-    posY += 8;
+            let posY = doc.lastAutoTable.finalY + 15;
 
-    // 5. DUAS COLUNAS LADO A LADO (Artesanais | Tradicionais)
-    const colEsq = 14;
-    const colDir = 110;
-    const larguraCol = 85;
+            doc.setFontSize(13);
+            doc.setTextColor(34, 197, 94);
+            doc.setFont("helvetica", "bold");
+            doc.text("DETALHAMENTO DE VENDAS POR PRODUTO", 15, posY);
+            posY += 8;
 
-    // Coluna Esquerda — Artesanais
-    doc.autoTable({
-        startY: posY,
-        tableWidth: larguraCol,
-        margin: { left: colEsq, right: 0 },
-        head: [[' ARTESANAIS', 'Subtotal']],
-        body: [
-            ...artesanais.rows,
-            [
-                { content: 'SUBTOTAL', styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } },
-                { content: `R$ ${artesanais.subtotal.toFixed(2)}`, styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } }
-            ]
-        ],
-        theme: 'striped',
-        headStyles: { fillColor: [33, 33, 36], textColor: [34, 197, 94] },
-        styles: { fontSize: 9 }
-    });
+            const colEsq = 14;
+            const colDir = 110;
+            const larguraCol = 85;
 
-    const fimEsq = doc.lastAutoTable.finalY;
+            doc.autoTable({
+                startY: posY,
+                tableWidth: larguraCol,
+                margin: { left: colEsq, right: 0 },
+                head: [[' ARTESANAIS', 'Subtotal']],
+                body: [
+                    ...artesanais.rows,
+                    [
+                        { content: 'SUBTOTAL', styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } },
+                        { content: `R$ ${artesanais.subtotal.toFixed(2)}`, styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } }
+                    ]
+                ],
+                theme: 'striped',
+                headStyles: { fillColor: [33, 33, 36], textColor: [34, 197, 94] },
+                styles: { fontSize: 9 }
+            });
 
-    // Coluna Direita — Tradicionais (mesma linha de início)
-    doc.autoTable({
-        startY: posY,
-        tableWidth: larguraCol,
-        margin: { left: colDir, right: 0 },
-        head: [[' TRADICIONAIS', 'Subtotal']],
-        body: [
-            ...tradicionais.rows,
-            [
-                { content: 'SUBTOTAL', styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } },
-                { content: `R$ ${tradicionais.subtotal.toFixed(2)}`, styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } }
-            ]
-        ],
-        theme: 'striped',
-        headStyles: { fillColor: [33, 33, 36], textColor: [34, 197, 94] },
-        styles: { fontSize: 9 }
-    });
+            const fimEsq = doc.lastAutoTable.finalY;
 
-    const fimDir = doc.lastAutoTable.finalY;
+            doc.autoTable({
+                startY: posY,
+                tableWidth: larguraCol,
+                margin: { left: colDir, right: 0 },
+                head: [[' TRADICIONAIS', 'Subtotal']],
+                body: [
+                    ...tradicionais.rows,
+                    [
+                        { content: 'SUBTOTAL', styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } },
+                        { content: `R$ ${tradicionais.subtotal.toFixed(2)}`, styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } }
+                    ]
+                ],
+                theme: 'striped',
+                headStyles: { fillColor: [33, 33, 36], textColor: [34, 197, 94] },
+                styles: { fontSize: 9 }
+            });
 
-    // Linha divisória vertical entre as colunas
-    const fimMaior = Math.max(fimEsq, fimDir);
-    doc.setDrawColor(80, 80, 80);
-    doc.setLineWidth(0.5);
-    doc.line(colDir - 3, posY, colDir - 3, fimMaior);
+            const fimDir = doc.lastAutoTable.finalY;
 
-    // 6. BEBIDAS & PORÇÕES (linha inteira abaixo)
-    posY = fimMaior + 10;
+            const fimMaior = Math.max(fimEsq, fimDir);
+            doc.setDrawColor(80, 80, 80);
+            doc.setLineWidth(0.5);
+            doc.line(colDir - 3, posY, colDir - 3, fimMaior);
 
-    doc.autoTable({
-        startY: posY,
-        head: [[' BEBIDAS & PORÇÕES', 'Subtotal']],
-        body: [
-            ...bebidas.rows,
-            [
-                { content: 'SUBTOTAL', styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } },
-                { content: `R$ ${bebidas.subtotal.toFixed(2)}`, styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } }
-            ]
-        ],
-        theme: 'striped',
-        headStyles: { fillColor: [33, 33, 36], textColor: [34, 197, 94] },
-        styles: { fontSize: 9 }
-    });
+            posY = fimMaior + 10;
 
-    // 7. SALVAR
-    doc.save(`balanco_zaplanche_${dataHora.replace(/[/ :]/g, '_')}.pdf`);
-};
-window.removerItemMesa = async (numeroMesa, indexItem) => {
-    const { isConfirmed } = await Swal.fire({
-        title: 'Remover Item?',
-        text: "O valor será subtraído do total da mesa.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        confirmButtonText: 'Sim, remover',
-        cancelButtonText: 'Manter item',
-        background: '#161618',
-        color: '#fff'
-    });
+            doc.autoTable({
+                startY: posY,
+                head: [[' BEBIDAS & PORÇÕES', 'Subtotal']],
+                body: [
+                    ...bebidas.rows,
+                    [
+                        { content: 'SUBTOTAL', styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } },
+                        { content: `R$ ${bebidas.subtotal.toFixed(2)}`, styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } }
+                    ]
+                ],
+                theme: 'striped',
+                headStyles: { fillColor: [33, 33, 36], textColor: [34, 197, 94] },
+                styles: { fontSize: 9 }
+            });
 
-    if (isConfirmed) {
-        try {
-            const mesaRef = doc(db, "estado_mesas", `mesa_${numeroMesa}`);
-            const snap = await getDoc(mesaRef);
-            
-            if (snap.exists()) {
-                const dados = snap.data();
-                let itensAtualizados = [...dados.itens];
-                
-                // Pega o item para saber o valor a subtrair
-                const item = itensAtualizados[indexItem];
-                const valorSubtrair = parseFloat(item.p) * parseInt(item.q);
-                
-                // Remove o item do array
-                itensAtualizados.splice(indexItem, 1);
-                
-                // Recalcula o total
-                const novoTotal = Math.max(0, (dados.total || 0) - valorSubtrair);
+            doc.save(`balanco_zaplanche_${dataHora.replace(/[/ :]/g, '_')}.pdf`);
+        };
 
-                await updateDoc(mesaRef, {
-                    itens: itensAtualizados,
-                    total: novoTotal
-                });
+        window.removerItemMesa = async (numeroMesa, indexItem) => {
+            const { isConfirmed } = await Swal.fire({
+                title: 'Remover Item?',
+                text: "O valor será subtraído do total da mesa.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Sim, remover',
+                cancelButtonText: 'Manter item',
+                background: '#161618',
+                color: '#fff'
+            });
 
-                Swal.fire({ title: 'Removido!', icon: 'success', timer: 800, showConfirmButton: false });
+            if (isConfirmed) {
+                try {
+                    const mesaRef = doc(db, "estado_mesas", `mesa_${numeroMesa}`);
+                    const snap = await getDoc(mesaRef);
+                    
+                    if (snap.exists()) {
+                        const dados = snap.data();
+                        let itensAtualizados = [...dados.itens];
+                        
+                        const item = itensAtualizados[indexItem];
+                        const valorSubtrair = parseFloat(item.p) * parseInt(item.q);
+                        
+                        itensAtualizados.splice(indexItem, 1);
+                        const novoTotal = Math.max(0, (dados.total || 0) - valorSubtrair);
+
+                        await updateDoc(mesaRef, {
+                            itens: itensAtualizados,
+                            total: novoTotal
+                        });
+
+                        Swal.fire({ title: 'Removido!', icon: 'success', timer: 800, showConfirmButton: false });
+                    }
+                } catch (error) {
+                    console.error("Erro ao remover item da mesa:", error);
+                    Swal.fire('Erro', 'Não foi possível remover o item.', 'error');
+                }
             }
-        } catch (error) {
-            console.error("Erro ao remover item da mesa:", error);
-            Swal.fire('Erro', 'Não foi possível remover o item.', 'error');
-        }
-    }
-};
-// Bloqueios de segurança
-  document.addEventListener('keydown', function (e) {
-    if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) { e.preventDefault(); }
-    if (e.key === 'F12') { e.preventDefault(); }
-  });
-  document.addEventListener('keydown', function (event) {
-    if (event.ctrlKey && event.shiftKey && event.key === 'I') { event.preventDefault(); }
-  });
-  document.addEventListener('contextmenu', function (event) { event.preventDefault(); });
+        };
+
+        // Bloqueios de segurança
+        document.addEventListener('keydown', function (e) {
+            if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) { e.preventDefault(); }
+            if (e.key === 'F12') { e.preventDefault(); }
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.ctrlKey && event.shiftKey && event.key === 'I') { event.preventDefault(); }
+        });
+        document.addEventListener('contextmenu', function (event) { event.preventDefault(); });
     </script>
 </body>
-
 </html>
- <!-- <input type="" name="retirada_${m.n}" value="local" ${(m.retirada||'local')==='local'?'checked':''} onchange="window.setRetirada(${m.n}, 'local')">
-        🍽️ Local
-    </label>
-    <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
-        <input type="" name="retirada_${m.n}" value="viagem" ${m.retirada==='viagem'?'checked':''} onchange="window.setRetirada(${m.n}, 'viagem')">
-        🏡 Viagem
-    </label> -->
