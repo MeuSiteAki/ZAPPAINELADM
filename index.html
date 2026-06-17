@@ -493,12 +493,16 @@
                     id="som-icon"></i></button>
             <button class="btn-nav" id="btn-limpar-tudo" style="color:var(--danger)"><i
                     class="fas fa-trash"></i></button>
+                    <button class="btn-nav" id="btn-toggle-loja" onclick="toggleLoja()" style="font-weight:800;">
+    <i class="fas fa-store" id="icon-loja"></i> <span id="label-loja">...</span>
+</button>
         </div>
     </nav>
 
     <div class="tab-container">
         <button class="tab-btn active" data-target="tab-delivery" onclick="switchTab(this)">DELIVERY</button>
         <button class="tab-btn" data-target="tab-mesas" onclick="switchTab(this)">MESAS</button>
+        <button class="tab-btn" data-target="tab-estoque" id="tab-estoque-btn"><i class="fas fa-boxes"></i> ESTOQUE</button>
         <button class="tab-btn" data-target="tab-balanco" id="tab-caixa-btn">CAIXA</button>
     </div>
 
@@ -516,8 +520,37 @@
         <div id="container-mesas" class="grid-mesas"></div>
     </div>
 
+    <!-- ABA ESTOQUE -->
+    <div id="tab-estoque" class="tab-content">
+        <div style="background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid #2d2d30; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; border-bottom: 1px solid #222; padding-bottom: 15px;">
+                <div>
+                    <h2 style="color: var(--gold); font-size: 1.5rem; font-weight: 800; margin-bottom: 5px;">
+                        <i class="fas fa-boxes" style="color: var(--gold);"></i> CONTROLE DE ESTOQUE
+                    </h2>
+                    <p style="color: #888; font-size: 0.85rem;">Marque os itens como <strong>Esgotado</strong> e eles ficarão transparentes e bloqueados no site do cliente na mesma hora.</p>
+                </div>
+                <button onclick="window.limparEsgotadosTodos()" class="btn-nav" style="border: 1px dashed var(--danger); background: rgba(239, 68, 68, 0.05); color: #ef4444; font-weight: bold; padding: 10px 16px; border-radius: 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.2s;">
+                    <i class="fas fa-undo"></i> DISPONIBILIZAR TODOS
+                </button>
+            </div>
+            
+            <!-- Grid de Categorias -->
+            <div id="estoque-categorias-container" style="display: flex; flex-direction: column; gap: 25px;">
+                <div style="text-align: center; color: #888; padding: 30px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; color: var(--gold); margin-bottom: 10px;"></i>
+                    <p>Carregando lista de itens...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="tab-balanco" class="tab-content">
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+            <button onclick="window.alterarSenhaAdmin()" class="btn-nav"
+                style="background: rgba(239, 68, 68, 0.05); color: #ef4444; border: 1px dashed #ef4444; font-weight: 800; cursor: pointer; padding: 10px 16px; border-radius: 10px;">
+                <i class="fas fa-key"></i> ALTERAR SENHA DO GERENTE
+            </button>
             <button onclick="gerarPDFBalanco()" class="btn-nav"
                 style="background: var(--gold); color: #000; border: none; font-weight: 800; cursor: pointer;">
                 <i class="fas fa-file-pdf"></i> BAIXAR BALANÇO PDF
@@ -637,8 +670,28 @@
         const app = initializeApp(firebaseConfig);
         const db = initializeFirestore(app, { localCache: memoryLocalCache() });
 
-        const _0x4f22 = "emFwMjAyNkA=";
-        const checkPass = (p) => btoa(p) === _0x4f22;
+        // --- SENHA DE GERENTE EM TEMPO REAL ---
+        let senhaAdmin = "1234"; // Senha padrão de teste
+        const checkPass = (p) => p === senhaAdmin;
+
+        function carregarSenhaAdmin() {
+            try {
+                onSnapshot(doc(db, "config", "senha"), (snap) => {
+                    if (snap.exists() && snap.data().valor !== undefined) {
+                        senhaAdmin = String(snap.data().valor);
+                    } else {
+                        senhaAdmin = "1234";
+                    }
+                }, (error) => {
+                    console.warn("Erro ao obter a senha do Firestore, usando fallback 1234:", error);
+                    senhaAdmin = "1234";
+                });
+            } catch (e) {
+                console.warn("Erro ao configurar listener de senha:", e);
+                senhaAdmin = "1234";
+            }
+        }
+        carregarSenhaAdmin();
 
         const cardapio = {
             "🥪 ARTESANAIS": [
@@ -648,7 +701,7 @@
                 { n: "Burguer Pepperoni", p: 25.00 },
                 { n: "Burguer Cheese Bacon", p: 26.00 },
                 { n: "Burguer Double", p: 32.00 },
-                { n: "Combo Casal", p: 50.00 }
+                { n: "Combo da Quarta", p: 44.00 }
             ],
             "🍔 TRADICIONAIS": [
                 { n: "Zap Quente", p: 6.00 },
@@ -717,13 +770,17 @@
             btn.classList.add('active');
         };
 
-        document.getElementById('tab-caixa-btn').onclick = async function() {
+        async function solicitarSenhaGerente(titulo = 'Acesso Restrito') {
             const { value: pass } = await Swal.fire({
-                title: 'Acesso Restrito',
+                title: titulo,
                 input: 'password',
                 inputPlaceholder: 'Senha do Gerente',
                 inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
                 showCancelButton: true,
+                cancelButtonText: 'Cancelar',
+                background: '#161618',
+                color: '#fff',
+                confirmButtonColor: '#eab308',
                 didOpen: () => {
                     const input = Swal.getInput();
                     const icon = document.createElement('i');
@@ -744,9 +801,106 @@
             });
 
             if (checkPass(pass)) { 
-                switchTab(this); 
-            } else if (pass) { 
-                Swal.fire('Erro', 'Senha Incorreta!', 'error'); 
+                return true;
+            } else {
+                if (pass) { 
+                    Swal.fire({
+                        title: 'Erro',
+                        text: 'Senha Incorreta!',
+                        icon: 'error',
+                        background: '#161618',
+                        color: '#fff'
+                    });
+                }
+                return false;
+            }
+        }
+
+        document.getElementById('tab-caixa-btn').onclick = async function() {
+            const autorizado = await solicitarSenhaGerente('Acesso ao Caixa');
+            if (autorizado) {
+                switchTab(this);
+            }
+        };
+
+        const tabEstoqueBtn = document.getElementById('tab-estoque-btn');
+        if (tabEstoqueBtn) {
+            tabEstoqueBtn.onclick = async function() {
+                const autorizado = await solicitarSenhaGerente('Acesso ao Estoque');
+                if (autorizado) {
+                    switchTab(this);
+                }
+            };
+        }
+
+        window.alterarSenhaAdmin = async () => {
+            const autorizado = await solicitarSenhaGerente('Confirmar Senha Atual');
+            if (!autorizado) return;
+
+            const { value: novaSenha } = await Swal.fire({
+                title: 'Nova Senha',
+                text: 'Digite a nova senha do gerente:',
+                input: 'password',
+                inputPlaceholder: 'Nova Senha do Gerente',
+                inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
+                showCancelButton: true,
+                cancelButtonText: 'Cancelar',
+                background: '#161618',
+                color: '#fff',
+                confirmButtonColor: '#eab308',
+                didOpen: () => {
+                    const input = Swal.getInput();
+                    const icon = document.createElement('i');
+                    icon.classList.add('fas', 'fa-eye', 'toggle-password-icon');
+                    input.parentElement.style.position = 'relative';
+                    input.parentElement.appendChild(icon);
+
+                    icon.onclick = () => {
+                        if (input.type === 'password') {
+                            input.type = 'text';
+                            icon.classList.replace('fa-eye', 'fa-eye-slash');
+                        } else {
+                            input.type = 'password';
+                            icon.classList.replace('fa-eye-slash', 'fa-eye');
+                        }
+                    };
+                }
+            });
+
+            if (novaSenha !== undefined) {
+                if (novaSenha.trim() === '') {
+                    Swal.fire({
+                        title: 'Erro',
+                        text: 'A senha não pode ser vazia!',
+                        icon: 'error',
+                        background: '#161618',
+                        color: '#fff'
+                    });
+                    return;
+                }
+
+                try {
+                    const ref = doc(db, "config", "senha");
+                    await setDoc(ref, { valor: novaSenha });
+                    Swal.fire({
+                        title: 'Senha Atualizada!',
+                        text: 'Nova senha do gerente salva no banco de dados.',
+                        icon: 'success',
+                        background: '#161618',
+                        color: '#fff',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                } catch (e) {
+                    console.error("Erro ao alterar senha:", e);
+                    Swal.fire({
+                        title: 'Erro',
+                        text: 'Não foi possível atualizar a senha no banco de dados.',
+                        icon: 'error',
+                        background: '#161618',
+                        color: '#fff'
+                    });
+                }
             }
         };
 
@@ -877,7 +1031,7 @@
             toggleMenu(true);
         };
 
-        window.addItemTemp = async (nome, preco, opcoes, btn) => {
+        window.addItemTemp = async (nome, preco, _opcoes, _btn) => {
             let precoBase = preco;
             const listaAdicionais = [
                 { n: "Ovo", p: 2.00 },
@@ -1391,12 +1545,12 @@
             }
         };
 
-        window.marcarRecebido = async (id, tel, nome) => {
+        window.marcarRecebido = async (id, tel, _nome) => {
             await updateDoc(doc(db, "pedidos", id), { status: 'recebido' });
             if (tel && tel !== '' && tel !== 'undefined') window.open(`https://wa.me/55${tel.replace(/\D/g, '')}?text=Boa noite, seu pedido já esta da fila de produção, por favor aguarde...`);
         };
 
-        window.despacharPedido = async (id, tel, nome) => {
+        window.despacharPedido = async (id, tel, _nome) => {
             await updateDoc(doc(db, "pedidos", id), { status: 'saiu' });
             if (tel && tel !== '' && tel !== 'undefined') window.open(`https://wa.me/55${tel.replace(/\D/g, '')}?text=Olá, seu pedido ja saiu para entrega, aproveite bem e volte sempre. ZAPLANCHES agradece!`);
         };
@@ -1485,12 +1639,12 @@
                     <div class="cat-content hidden" style="background:#1a1a1a; padding:10px;">`;
 
                 cardapio[cat].forEach(i => {
-                    const opcoesJSON = i.opcoes ? JSON.stringify(i.opcoes).replace(/"/g, '&quot;') : '[]';
+                    const statusJSON = i.opcoes ? JSON.stringify(i.opcoes).replace(/"/g, '&quot;') : '[]';
 
                     html += `<div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center; border-bottom:1px solid #333; padding-bottom:5px;">
                         <span style="color:white">${i.n} <br><small style="color:var(--gold)">R$ ${i.p.toFixed(2)}</small></span> 
                         
-                        <button onclick="window.addItemTemp('${i.n}', ${i.p}, ${opcoesJSON}, this)" 
+                        <button onclick="window.addItemTemp('${i.n}', ${i.p}, ${statusJSON}, this)" 
                                 style="background:var(--gold); border:none; border-radius:4px; padding:8px 15px; font-weight:bold; cursor:pointer; transition: 0.2s;">
                             +
                         </button>
@@ -1676,15 +1830,236 @@
             }
         };
 
-        // Bloqueios de segurança
-        document.addEventListener('keydown', function (e) {
-            if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) { e.preventDefault(); }
-            if (e.key === 'F12') { e.preventDefault(); }
+        // --- CONTROLE DE LOJA ABERTA/FECHADA EM TEMPO REAL ---
+        function carregarStatusLoja() {
+            const ref = doc(db, "config", "loja");
+            onSnapshot(ref, (snap) => {
+                const aberto = snap.exists() ? snap.data().aberto : true;
+                atualizarBtnLoja(aberto);
+            }, (error) => {
+                console.warn("Erro ao ler status da loja no admin:", error);
+            });
+        }
+        carregarStatusLoja();
+
+        // --- CONTROLE DE ESTOQUE (PRODUTOS ESGOTADOS) EM TEMPO REAL ---
+        const estoqueProdutos = [
+            // --- BURGERS GOURMET ---
+            { id: 1, nome: "Burguer Mini", cat: "art" },
+            { id: 2, nome: "Burguer Classic", cat: "art" },
+            { id: 3, nome: "Burguer Poleguinho", cat: "art" },
+            { id: 4, nome: "Burguer Pepperoni", cat: "art" },
+            { id: 5, nome: "Burguer Cheese Bacon", cat: "art" },
+            { id: 6, nome: "Burguer Double", cat: "art" },
+
+            // --- BURGERS TRADICIONAIS ---
+            { id: 7, nome: "Zap Quente", cat: "burgers" },
+            { id: 8, nome: "Zap X-Burguer", cat: "burgers" },
+            { id: 9, nome: "Zap Egg", cat: "burgers" },
+            { id: 10, nome: "Zap Bacon", cat: "burgers" },
+            { id: 11, nome: "Zap Calabresa", cat: "burgers" },
+            { id: 12, nome: "Zap Salada Especial", cat: "burgers" },
+            { id: 13, nome: "Zap Tudo", cat: "burgers" },
+            { id: 14, nome: "Zap Broca", cat: "burgers" },
+            { id: 15, nome: "Zap Frango", cat: "burgers" },
+            { id: 16, nome: "Zap Filé", cat: "burgers" },
+
+            // --- PORÇÕES ---
+            { id: 17, nome: "Batata Frita", cat: "art" },
+
+            // --- SUCOS E BEBIDAS ---
+            { id: 600, nome: "Água Mineral", cat: "bebidas" },
+            { id: 500, nome: "H2O", cat: "bebidas" },
+            { id: 200, nome: "Refrigerante Lata", cat: "bebidas" },
+            { id: 300, nome: "Refrigerante 1 Litro", cat: "bebidas" },
+            { id: 400, nome: "Refrigerante 2 Litros", cat: "bebidas" },
+            { id: 100, nome: "Sucos", cat: "bebidas" }
+        ];
+
+        window.produtosEsgotados = [];
+
+        function carregarEstoqueProds() {
+            const ref = doc(db, "config", "produtos_esgotados");
+            onSnapshot(ref, (snap) => {
+                if (snap.exists()) {
+                    window.produtosEsgotados = snap.data().ids || [];
+                } else {
+                    window.produtosEsgotados = [];
+                }
+                renderEstoque();
+            }, (error) => {
+                console.warn("Erro ao ler produtos esgotados no admin:", error);
+            });
+        }
+        carregarEstoqueProds();
+
+        function renderEstoque() {
+            const container = document.getElementById('estoque-categorias-container');
+            if (!container) return;
+
+            // Agrupa por categoria
+            const categorias = {
+                "art": { nome: "🥪 ARTESANAIS & PORÇÕES", itens: [] },
+                "burgers": { nome: "🍔 TRADICIONAIS", itens: [] },
+                "bebidas": { nome: "🥤 BEBIDAS & SUCOS", itens: [] }
+            };
+
+            estoqueProdutos.forEach(p => {
+                if (categorias[p.cat]) {
+                    categorias[p.cat].itens.push(p);
+                }
+            });
+
+            let html = '';
+
+            for (const key in categorias) {
+                const cat = categorias[key];
+                
+                const itensHtml = cat.itens.map(p => {
+                    const isEsgotado = window.produtosEsgotados.includes(p.id) || window.produtosEsgotados.includes(String(p.id));
+                    return `
+                    <div style="background: #18181b; padding: 14px; border-radius: 10px; border: 1px solid ${isEsgotado ? '#ef4444' : '#27272a'}; display: flex; align-items: center; justify-content: space-between; gap: 10px; transition: 0.2s;">
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-weight: 700; color: ${isEsgotado ? '#a1a1aa' : '#fff'}; text-decoration: ${isEsgotado ? 'line-through' : 'none'}; font-size: 0.9rem;">
+                                ${p.nome}
+                            </span>
+                            <span style="font-size: 0.75rem; font-weight: 800; color: ${isEsgotado ? '#ef4444' : '#22c55e'}; margin-top: 3px;">
+                                ${isEsgotado ? '🚫 ESGOTADO' : '✅ EM ESTOQUE'}
+                            </span>
+                        </div>
+                        <button onclick="window.toggleStatusEstoque(${p.id})" style="border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 0.75rem; cursor: pointer; background: ${isEsgotado ? '#22c55e' : '#dc2626'}; color: white; display: flex; align-items: center; gap: 4px; transition: 0.2s;">
+                            ${isEsgotado ? '<i class="fas fa-check"></i> DISPONIBILIZAR' : '<i class="fas fa-ban"></i> ESGOTAR'}
+                        </button>
+                    </div>
+                    `;
+                }).join('');
+
+                html += `
+                <div style="background: rgba(0, 0, 0, 0.2); border-radius: 12px; padding: 18px; border: 1px solid #27272a;">
+                    <h3 style="color: var(--gold); border-bottom: 1px solid #333; padding-bottom: 8px; margin-bottom: 15px; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        ${cat.nome}
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px;">
+                        ${itensHtml}
+                    </div>
+                </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        window.toggleStatusEstoque = async (id) => {
+            let novosIds = [...window.produtosEsgotados];
+            const idx = novosIds.findIndex(x => Number(x) === Number(id));
+            if (idx > -1) {
+                novosIds.splice(idx, 1);
+            } else {
+                novosIds.push(id);
+            }
+
+            try {
+                const ref = doc(db, "config", "produtos_esgotados");
+                await setDoc(ref, { ids: novosIds });
+            } catch (error) {
+                console.error("Erro ao atualizar estoque:", error);
+                Swal.fire('Erro', 'Não foi possível atualizar o estoque do item.', 'error');
+            }
+        };
+
+        window.limparEsgotadosTodos = async () => {
+            const { isConfirmed } = await Swal.fire({
+                title: 'Disponibilizar todos os itens?',
+                text: "Todos os produtos voltarão a ficar disponíveis no site instantaneamente.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, ativar todos',
+                cancelButtonText: 'Cancelar',
+                background: '#161618',
+                color: '#fff'
+            });
+
+            if (isConfirmed) {
+                try {
+                    const ref = doc(db, "config", "produtos_esgotados");
+                    await setDoc(ref, { ids: [] });
+                    Swal.fire({
+                        title: 'Tudo Disponibilizado!',
+                        timer: 1000,
+                        icon: 'success',
+                        showConfirmButton: false,
+                        background: '#161618',
+                        color: '#fff'
+                    });
+                } catch (error) {
+                    console.error("Erro ao limpar estoque:", error);
+                    Swal.fire('Erro', 'Não foi possível atualizar o estoque.', 'error');
+                }
+            }
+        };
+
+function atualizarBtnLoja(aberto) {
+    const btn = document.getElementById('btn-toggle-loja');
+    const icon = document.getElementById('icon-loja');
+    const label = document.getElementById('label-loja');
+    if (!btn) return;
+    if (aberto) {
+        btn.style.background = '#16a34a';
+        btn.style.color = 'white';
+        btn.style.border = 'none';
+        icon.className = 'fas fa-store';
+        label.innerText = 'ABERTA';
+    } else {
+        btn.style.background = '#dc2626';
+        btn.style.color = 'white';
+        btn.style.border = 'none';
+        icon.className = 'fas fa-store-slash';
+        label.innerText = 'FECHADA';
+    }
+    btn._statusAtual = aberto;
+}
+
+// FECHAR E ABRIR
+window.toggleLoja = async () => {
+    const btnToggle = document.getElementById('btn-toggle-loja');
+    if (!btnToggle) return;
+    const statusAtual = btnToggle._statusAtual;
+    const novoStatus = !statusAtual;
+    const texto = novoStatus ? 'ABRIR a loja agora?' : 'FECHAR a loja agora?';
+
+    const { isConfirmed } = await Swal.fire({
+        title: texto,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sim',
+        cancelButtonText: 'Cancelar',
+        background: '#161618',
+        color: '#fff'
+    });
+
+    if (isConfirmed) {
+        await setDoc(doc(db, "config", "loja"), { aberto: novoStatus });
+        atualizarBtnLoja(novoStatus);
+        Swal.fire({
+            title: novoStatus ? '✅ Loja Aberta!' : '🔒 Loja Fechada!',
+            timer: 1000,
+            showConfirmButton: false,
+            background: '#161618',
+            color: '#fff'
         });
-        document.addEventListener('keydown', function (event) {
-            if (event.ctrlKey && event.shiftKey && event.key === 'I') { event.preventDefault(); }
-        });
-        document.addEventListener('contextmenu', function (event) { event.preventDefault(); });
+    }
+};
+
+
+// Bloqueios de segurança
+  document.addEventListener('keydown', function (e) {
+    if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) { e.preventDefault(); }
+    if (e.key === 'F12') { e.preventDefault(); }
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.ctrlKey && event.shiftKey && event.key === 'I') { event.preventDefault(); }
+  });
+  document.addEventListener('contextmenu', function (event) { event.preventDefault(); });
     </script>
 </body>
 </html>
