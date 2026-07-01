@@ -528,7 +528,7 @@
                     <h2 style="color: var(--gold); font-size: 1.5rem; font-weight: 800; margin-bottom: 5px;">
                         <i class="fas fa-boxes" style="color: var(--gold);"></i> CONTROLE DE ESTOQUE
                     </h2>
-                    <p style="color: #888; font-size: 0.85rem;">Marque os itens como <strong>Esgotado</strong> e eles ficarão transparentes e bloqueados no site do cliente na mesma hora.</p>
+                    <p style="color: #888; font-size: 0.85rem;">Marque os itens como <strong>Esgotado</strong> e eles ficarão transparentes and bloqueados no site do cliente na mesma hora.</p>
                 </div>
                 <button onclick="window.limparEsgotadosTodos()" class="btn-nav" style="border: 1px dashed var(--danger); background: rgba(239, 68, 68, 0.05); color: #ef4444; font-weight: bold; padding: 10px 16px; border-radius: 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.2s;">
                     <i class="fas fa-undo"></i> DISPONIBILIZAR TODOS
@@ -623,6 +623,13 @@
             <h2 id="titulo-mesa" style="color:var(--gold);">MESA</h2>
             <button onclick="toggleMenu(false)"
                 style="background:none; border:none; color:white; font-size:1.5rem;">&times;</button>
+        </div>
+        <!-- INPUT DE BUSCA DE ITENS -->
+        <div style="margin-bottom: 15px; position: relative;">
+            <input type="text" id="busca-cardapio" placeholder="🔍 Buscar item (ex: 'quente', 'burguer')..." 
+                style="width: 100%; padding: 12px 14px 12px 36px; border-radius: 10px; border: 1px solid #333; background: #1a1a1c; color: white; font-size: 0.9rem; outline: none; transition: 0.2s;"
+                oninput="window.filtrarCardapio(this.value)">
+            <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #666; font-size: 0.9rem;"></i>
         </div>
         <div id="sanfona-menu"></div>
         <div style="margin-top:20px; border-top:1px solid #333; padding-top:15px;">
@@ -756,6 +763,177 @@
         window.toggleSom = () => {
             somAtivo = !somAtivo;
             document.getElementById('som-icon').className = somAtivo ? "fas fa-bell" : "fas fa-bell-slash";
+        };
+
+        // --- SISTEMA DE REIMPRESSÃO DE CUPOM (TÉRMICA 80MM/58MM) ---
+        window.imprimirCupom = (id) => {
+            let order = null;
+            if (ultimoSnapPedidos) {
+                ultimoSnapPedidos.forEach(docSnap => {
+                    if (docSnap.id === id) {
+                        order = { id: docSnap.id, ...docSnap.data() };
+                    }
+                });
+            }
+            if (!order) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: 'Pedido não encontrado!',
+                    background: '#161618',
+                    color: '#fff'
+                });
+                return;
+            }
+
+            let dataFormatada = 'Agora';
+            if (order.data) {
+                try {
+                    const d = order.data.toDate();
+                    dataFormatada = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR');
+                } catch (e) {
+                    dataFormatada = 'Agora';
+                }
+            }
+
+            const isMesa = order.nome && order.nome.toUpperCase().includes("MESA");
+            const isFunc = order.pagamento === "FUNCIONARIO";
+
+            let itensHtml = "";
+            if (Array.isArray(order.itens)) {
+                order.itens.forEach(i => {
+                    const sub = (parseFloat(i.p || 0) * parseInt(i.q || 1)).toFixed(2);
+                    itensHtml += `
+                        <div class="item-row">
+                            <span class="item-name">${i.q}x ${i.n}</span>
+                            <span class="bold">R$ ${sub}</span>
+                        </div>
+                    `;
+                    if (i.obs && i.obs.trim() !== "") {
+                        itensHtml += `<div class="item-obs">+ ${i.obs}</div>`;
+                    }
+                });
+            } else {
+                itensHtml = "<div>Sem itens no pedido</div>";
+            }
+
+            let trocoHtml = "";
+            if (order.pagamento && order.pagamento.toUpperCase() === "DINHEIRO") {
+                const totalVal = parseFloat(order.total || 0);
+                const trocoParaVal = parseFloat(order.trocoPara || 0);
+                if (trocoParaVal > totalVal) {
+                    trocoHtml = `
+                        <div class="item-row" style="margin-top: 4px;">
+                            <span>Troco Para:</span>
+                            <span>R$ ${trocoParaVal.toFixed(2)}</span>
+                        </div>
+                        <div class="item-row bold">
+                            <span>Levar de Troco:</span>
+                            <span>R$ ${(trocoParaVal - totalVal).toFixed(2)}</span>
+                        </div>
+                    `;
+                }
+            }
+
+            const cupomHTML = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Cupom - ${order.nome}</title>
+                <style>
+                    @page {
+                        margin: 0;
+                    }
+                    body {
+                        font-family: 'Courier New', Courier, monospace;
+                        font-size: 13px;
+                        color: #000;
+                        background: #fff;
+                        margin: 0;
+                        padding: 10px;
+                        width: 76mm;
+                        box-sizing: border-box;
+                    }
+                    .text-center { text-align: center; }
+                    .bold { font-weight: bold; }
+                    .header { font-size: 18px; margin-bottom: 2px; }
+                    .subheader { font-size: 11px; margin-bottom: 8px; }
+                    .divider { border-top: 1px dashed #000; margin: 8px 0; }
+                    .item-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
+                    .item-name { flex: 1; padding-right: 5px; }
+                    .item-obs { font-size: 11px; padding-left: 12px; font-style: italic; margin-bottom: 6px; color: #555; }
+                    .totals { margin-top: 8px; }
+                    @media print {
+                        body { padding: 4px; }
+                    }
+                </style>
+            </head>
+            <body onload="window.print(); setTimeout(() => { window.close(); }, 500);">
+                <div class="text-center bold header">ZAPLANCHES</div>
+                <div class="text-center subheader">PAINEL DE PEDIDOS - REIMPRESSÃO</div>
+                <div class="divider"></div>
+                
+                <div class="bold">CLIENTE: ${order.nome ? order.nome.toUpperCase() : 'N/A'}</div>
+                <div>DATA: ${dataFormatada}</div>
+                <div>ORIGEM: ${isFunc ? 'FUNCIONÁRIO (INTERNO)' : (isMesa ? 'MESA' : 'DELIVERY')}</div>
+                ${order.garcom ? `<div>ATENDENTE: ${order.garcom}</div>` : ''}
+                
+                ${!isMesa ? `
+                    <div class="divider"></div>
+                    <div><b>TELEFONE:</b> ${order.telefone || 'N/A'}</div>
+                    <div><b>ENDEREÇO:</b> ${order.endereco || 'Retirada'}</div>
+                    <div><b>BAIRRO:</b> ${order.bairro || 'N/A'}</div>
+                ` : `
+                    <div class="divider"></div>
+                    <div><b>TIPO:</b> ${order.retirada === 'viagem' ? '🏡 Viagem (Para Levar)' : 'Consumo Local'}</div>
+                `}
+                
+                <div class="divider"></div>
+                <div class="bold text-center" style="margin-bottom: 5px;">ITENS DO PEDIDO</div>
+                <div class="divider"></div>
+                
+                ${itensHtml}
+                
+                <div class="divider"></div>
+                
+                <div class="totals">
+                    <div class="item-row bold" style="font-size: 15px;">
+                        <span>TOTAL GERAL:</span>
+                        <span>R$ ${parseFloat(order.total || 0).toFixed(2)}</span>
+                    </div>
+                    <div style="margin-top: 6px;">
+                        <b>FORMA DE PAGAMENTO:</b> ${order.pagamento || 'Pendente'}
+                    </div>
+                    ${trocoHtml}
+                </div>
+                
+                <div class="divider"></div>
+                <div class="text-center bold" style="margin-top: 10px; font-size: 11px;">
+                    * REIMPRESSÃO DE CUPOM *<br>
+                    ZAPLANCHES AGRADECE!
+                </div>
+            </body>
+            </html>
+            `;
+
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            document.body.appendChild(iframe);
+
+            const doc = iframe.contentWindow.document || iframe.contentDocument;
+            doc.open();
+            doc.write(cupomHTML);
+            doc.close();
+
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+            }, 6000);
         };
 
         function playSom() {
@@ -1028,6 +1206,14 @@
             carrinhoTemp = [];
             renderTemp();
             document.getElementById('titulo-mesa').innerText = `PEDIDO MESA ${n}`;
+            
+            // Limpa o campo de busca de itens
+            const buscaInput = document.getElementById('busca-cardapio');
+            if (buscaInput) {
+                buscaInput.value = '';
+            }
+            window.renderSanfonaMenu('');
+            
             toggleMenu(true);
         };
 
@@ -1432,6 +1618,7 @@
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; border-top: 1px solid #333; padding-top:10px;">
                             <b style="font-size:1.2rem; color:var(--gold)">TOTAL: R$ ${val.toFixed(2)}</b>
                             <div style="display:flex; gap:8px;">
+                                <button onclick="window.imprimirCupom('${id}')" style="background:#555; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;" title="Reimprimir Cupom"><i class="fas fa-print"></i> REIMPRIMIR</button>
                                 <button onclick="marcarRecebido('${id}', '${p.telefone}', '${p.nome}')" style="background:var(--green); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;"><i class="fas fa-check"></i></button>
                                 <button onclick="despacharPedido('${id}', '${p.telefone}', '${p.nome}')" style="background:var(--blue); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;"><i class="fas fa-motorcycle"></i></button>
                             </div>
@@ -1629,16 +1816,39 @@
             }
         };
 
-        const menuCont = document.getElementById('sanfona-menu');
-        if (menuCont) {
-            menuCont.innerHTML = "";
-            Object.keys(cardapio).forEach(cat => {
-                let html = `<button class="cat-head" onclick="this.nextElementSibling.classList.toggle('hidden')">
-                        ${cat} <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <div class="cat-content hidden" style="background:#1a1a1a; padding:10px;">`;
+        // Normaliza texto para busca sem acentos e case-insensitive
+        const normalizarBusca = (texto) => {
+            return (texto || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+        };
 
-                cardapio[cat].forEach(i => {
+        window.renderSanfonaMenu = (filtro = '') => {
+            const menuCont = document.getElementById('sanfona-menu');
+            if (!menuCont) return;
+            
+            menuCont.innerHTML = "";
+            const queryNorm = normalizarBusca(filtro);
+            let totalItensExibidos = 0;
+
+            Object.keys(cardapio).forEach(cat => {
+                const itensFiltrados = cardapio[cat].filter(i => {
+                    if (!queryNorm) return true;
+                    return normalizarBusca(i.n).includes(queryNorm);
+                });
+
+                if (itensFiltrados.length === 0) return; // Oculta categorias vazias sob o filtro
+
+                totalItensExibidos += itensFiltrados.length;
+
+                // Se houver busca ativa, expande a categoria automaticamente para exibir itens sem clique
+                const isHidden = queryNorm ? "" : "hidden";
+                const iconClass = queryNorm ? "fa-chevron-up" : "fa-chevron-down";
+
+                let html = `<button class="cat-head" onclick="const content = this.nextElementSibling; content.classList.toggle('hidden'); const icon = this.querySelector('.chevron-icon'); if (content.classList.contains('hidden')) { icon.className = 'fas fa-chevron-down chevron-icon'; } else { icon.className = 'fas fa-chevron-up chevron-icon'; }">
+                        ${cat} <i class="fas ${iconClass} chevron-icon"></i>
+                    </button>
+                    <div class="cat-content ${isHidden}" style="background:#1a1a1a; padding:10px;">`;
+
+                itensFiltrados.forEach(i => {
                     const statusJSON = i.opcoes ? JSON.stringify(i.opcoes).replace(/"/g, '&quot;') : '[]';
 
                     html += `<div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center; border-bottom:1px solid #333; padding-bottom:5px;">
@@ -1652,7 +1862,21 @@
                 });
                 menuCont.innerHTML += html + `</div>`;
             });
-        }
+
+            if (totalItensExibidos === 0 && queryNorm) {
+                menuCont.innerHTML = `<div style="color: #888; text-align: center; padding: 30px 10px; font-style: italic;">
+                    <i class="fas fa-search-minus" style="font-size: 1.5rem; margin-bottom: 8px; display: block; color: #555;"></i>
+                    Nenhum item encontrado para "${filtro}"
+                </div>`;
+            }
+        };
+
+        window.filtrarCardapio = (texto) => {
+            window.renderSanfonaMenu(texto);
+        };
+
+        // Renderização inicial do cardápio
+        window.renderSanfonaMenu();
 
         window.gerarPDFBalanco = () => {
             const { jsPDF } = window.jspdf;
@@ -1785,7 +2009,7 @@
                 styles: { fontSize: 9 }
             });
 
-            doc.save(`balanco_zaplanche_${dataHora.replace(/[/ :]/g, '_')}.pdf`);
+            doc.save(`balanco_zaplanche_${dataFormatada.replace(/[/ :]/g, '_')}.pdf`);
         };
 
         window.removerItemMesa = async (numeroMesa, indexItem) => {
