@@ -766,7 +766,7 @@
         };
 
         // --- SISTEMA DE REIMPRESSÃO DE CUPOM (TÉRMICA 80MM/58MM) ---
-        window.imprimirCupom = (id) => {
+        window.imprimirCupom = async (id) => {
             let order = null;
             if (ultimoSnapPedidos) {
                 ultimoSnapPedidos.forEach(docSnap => {
@@ -786,6 +786,37 @@
                 return;
             }
 
+            let itensParaImprimir = order.itens;
+            let tituloExtra = '';
+            let totalParaImprimir = parseFloat(order.total || 0);
+
+            if (Array.isArray(order.itensAdicionados) && order.itensAdicionados.length > 0) {
+                const { value: escolha } = await Swal.fire({
+                    title: 'O que deseja imprimir?',
+                    input: 'radio',
+                    inputOptions: {
+                        'tudo': 'Cupom completo',
+                        'novos': 'Somente adicionados '
+                    },
+                    inputValue: 'tudo',
+                    showCancelButton: true,
+                    confirmButtonText: 'IMPRIMIR',
+                    cancelButtonText: 'Cancelar',
+                    background: 'white',
+                    color: 'black',
+                    confirmButtonColor: '#eab308',
+                    inputValidator: (value) => !value && 'Escolha uma opção'
+                });
+
+                if (!escolha) return;
+
+                if (escolha === 'novos') {
+                    itensParaImprimir = order.itensAdicionados;
+                    tituloExtra = ' - ITENS ADICIONADOS';
+                    totalParaImprimir = itensParaImprimir.reduce((a, i) => a + (parseFloat(i.p || 0) * parseInt(i.q || 1)), 0);
+                }
+            }
+
             let dataFormatada = 'Agora';
             if (order.data) {
                 try {
@@ -800,8 +831,8 @@
             const isFunc = order.pagamento === "FUNCIONARIO";
 
             let itensHtml = "";
-            if (Array.isArray(order.itens)) {
-                order.itens.forEach(i => {
+            if (Array.isArray(itensParaImprimir)) {
+                itensParaImprimir.forEach(i => {
                     const sub = (parseFloat(i.p || 0) * parseInt(i.q || 1)).toFixed(2);
                     itensHtml += `
                         <div class="item-row">
@@ -818,7 +849,7 @@
             }
 
             let trocoHtml = "";
-            if (order.pagamento && order.pagamento.toUpperCase() === "DINHEIRO") {
+            if (!tituloExtra && order.pagamento && order.pagamento.toUpperCase() === "DINHEIRO") {
                 const totalVal = parseFloat(order.total || 0);
                 const trocoParaVal = parseFloat(order.trocoPara || 0);
                 if (trocoParaVal > totalVal) {
@@ -871,7 +902,7 @@
             </head>
             <body onload="window.print(); setTimeout(() => { window.close(); }, 500);">
                 <div class="text-center bold header">ZAPLANCHES</div>
-                <div class="text-center subheader">PAINEL DE PEDIDOS - REIMPRESSÃO</div>
+                <div class="text-center subheader">PAINEL DE PEDIDOS - REIMPRESSÃO${tituloExtra}</div>
                 <div class="divider"></div>
                 
                 <div class="bold">CLIENTE: ${order.nome ? order.nome.toUpperCase() : 'N/A'}</div>
@@ -890,7 +921,7 @@
                 `}
                 
                 <div class="divider"></div>
-                <div class="bold text-center" style="margin-bottom: 5px;">ITENS DO PEDIDO</div>
+                <div class="bold text-center" style="margin-bottom: 5px;">ITENS DO PEDIDO${tituloExtra}</div>
                 <div class="divider"></div>
                 
                 ${itensHtml}
@@ -899,13 +930,14 @@
                 
                 <div class="totals">
                     <div class="item-row bold" style="font-size: 15px;">
-                        <span>TOTAL GERAL:</span>
-                        <span>R$ ${parseFloat(order.total || 0).toFixed(2)}</span>
+                        <span>${tituloExtra ? 'SUBTOTAL ADICIONADO:' : 'TOTAL GERAL:'}</span>
+                        <span>R$ ${totalParaImprimir.toFixed(2)}</span>
                     </div>
+                    ${!tituloExtra ? `
                     <div style="margin-top: 6px;">
                         <b>FORMA DE PAGAMENTO:</b> ${order.pagamento || 'Pendente'}
                     </div>
-                    ${trocoHtml}
+                    ${trocoHtml}` : ''}
                 </div>
                 
                 <div class="divider"></div>
@@ -926,10 +958,10 @@
             iframe.style.border = '0';
             document.body.appendChild(iframe);
 
-            const doc = iframe.contentWindow.document || iframe.contentDocument;
-            doc.open();
-            doc.write(cupomHTML);
-            doc.close();
+            const doc2 = iframe.contentWindow.document || iframe.contentDocument;
+            doc2.open();
+            doc2.write(cupomHTML);
+            doc2.close();
 
             setTimeout(() => {
                 document.body.removeChild(iframe);
@@ -1618,10 +1650,14 @@
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; border-top: 1px solid #333; padding-top:10px;">
                             <b style="font-size:1.2rem; color:var(--gold)">TOTAL: R$ ${val.toFixed(2)}</b>
                             <div style="display:flex; gap:8px;">
-                                <button onclick="window.imprimirCupom('${id}')" style="background:#555; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;" title="Reimprimir Cupom"><i class="fas fa-print"></i> REIMPRIMIR</button>
+                                <button onclick="window.imprimirCupom('${id}')" style="background:#555; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;" title="Reimprimir Cupom"><i class="fas fa-print"></i> </button>
                                 <button onclick="marcarRecebido('${id}', '${p.telefone}', '${p.nome}')" style="background:var(--green); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;"><i class="fas fa-check"></i></button>
                                 <button onclick="despacharPedido('${id}', '${p.telefone}', '${p.nome}')" style="background:var(--blue); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;"><i class="fas fa-motorcycle"></i></button>
                             </div>
+                        </div>
+                        <div style="display:flex; gap:8px; margin-top:10px;">
+                            <button onclick="window.adicionarItemPedido('${id}')" style="flex:1; background:#f59e0b; color:#000; border:none; padding:10px; border-radius:6px; cursor:pointer; font-weight:800;"><i class="fas fa-plus-circle"></i> ADICIONAR </button>
+                            <button onclick="window.alterarPagamentoPedido('${id}')" style="flex:1; background:#8b5cf6; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; font-weight:800;"><i class="fas fa-exchange-alt"></i> PAGAMENTO </button>
                         </div>
                     </div>`;
             });
@@ -1763,6 +1799,150 @@
                 } catch (error) {
                     console.error("Erro ao deletar:", error);
                     Swal.fire('Erro', 'Não foi possível excluir o pedido.', 'error');
+                }
+            }
+        };
+
+        // --- ADICIONAR ITEM EM PEDIDO JÁ FECHADO ---
+        window.adicionarItemPedido = async (pedidoId) => {
+            window._carrinhoAddPedido = [];
+
+            const renderCarrinhoAdd = () => {
+                const cont = document.getElementById('lista-add-pedido');
+                if (!cont) return;
+                cont.innerHTML = window._carrinhoAddPedido.map((i, idx) => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#1a1a1a; padding:8px; border-radius:6px; margin-bottom:6px;">
+                        <span>${i.q}x ${i.n} <b style="color:var(--gold)">R$ ${(i.p * i.q).toFixed(2)}</b></span>
+                        <button type="button" onclick="window._removerItemAddPedido(${idx})" style="background:none; border:none; color:#ef4444;"><i class="fas fa-times"></i></button>
+                    </div>
+                `).join('') || '<p style="color:#666; font-size:0.85rem;">Nenhum item selecionado</p>';
+                const totalEl = document.getElementById('total-add-pedido');
+                if (totalEl) totalEl.innerText = `R$ ${window._carrinhoAddPedido.reduce((a, b) => a + (b.p * b.q), 0).toFixed(2)}`;
+            };
+
+            window._removerItemAddPedido = (idx) => {
+                window._carrinhoAddPedido.splice(idx, 1);
+                renderCarrinhoAdd();
+            };
+
+            window._addItemAoCarrinhoPedido = (nome, preco) => {
+                const existente = window._carrinhoAddPedido.find(x => x.n === nome);
+                if (existente) existente.q += 1;
+                else window._carrinhoAddPedido.push({ n: nome, p: preco, q: 1, obs: '' });
+                renderCarrinhoAdd();
+            };
+
+            let itensHtml = '';
+            Object.keys(cardapio).forEach(cat => {
+                itensHtml += `<div style="color:var(--gold); font-weight:800; margin:10px 0 5px; font-size:0.8rem;">${cat}</div>`;
+                cardapio[cat].forEach(i => {
+                    itensHtml += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding:6px 0;">
+                            <span style="font-size:0.85rem;">${i.n} <br><small style="color:#888;">R$ ${i.p.toFixed(2)}</small></span>
+                            <button type="button" onclick="window._addItemAoCarrinhoPedido('${i.n}', ${i.p})" style="background:var(--gold); border:none; border-radius:4px; padding:6px 12px; font-weight:bold; cursor:pointer;">+</button>
+                        </div>`;
+                });
+            });
+
+            const { isConfirmed } = await Swal.fire({
+                title: 'ADICIONAR ITEM AO PEDIDO',
+                html: `
+                    <div class="modal-scroll-area" style="text-align:left; max-height:35vh;">${itensHtml}</div>
+                    <div style="margin-top:15px; border-top:1px solid #333; padding-top:10px; text-align:left;">
+                        <div id="lista-add-pedido"></div>
+                        <h3 id="total-add-pedido" style="color:var(--gold); margin-top:10px;">R$ 0,00</h3>
+                    </div>
+                `,
+                background: '#161618',
+                color: '#fff',
+                showCancelButton: true,
+                confirmButtonText: 'CONFIRMAR E ADICIONAR',
+                confirmButtonColor: 'var(--green)',
+                cancelButtonText: 'Cancelar',
+                didOpen: renderCarrinhoAdd,
+                preConfirm: () => {
+                    if (window._carrinhoAddPedido.length === 0) {
+                        Swal.showValidationMessage('Selecione ao menos um item');
+                        return false;
+                    }
+                    return true;
+                }
+            });
+
+            if (isConfirmed) {
+                try {
+                    const pedidoRef = doc(db, "pedidos", pedidoId);
+                    const snap = await getDoc(pedidoRef);
+                    if (!snap.exists()) return;
+                    const dados = snap.data();
+
+                    let itensAtualizados = Array.isArray(dados.itens) ? [...dados.itens] : [];
+                    window._carrinhoAddPedido.forEach(novo => {
+                        const existente = itensAtualizados.find(x => x.n === novo.n && (x.obs || '') === (novo.obs || ''));
+                        if (existente) existente.q += novo.q;
+                        else itensAtualizados.push({ ...novo });
+                    });
+
+                    const itensAdicionadosAtuais = Array.isArray(dados.itensAdicionados) ? [...dados.itensAdicionados] : [];
+                    const novosParaHistorico = window._carrinhoAddPedido.map(i => ({ ...i }));
+
+                    const novoTotal = itensAtualizados.reduce((a, b) => a + (b.p * b.q), 0);
+
+                    await updateDoc(pedidoRef, {
+                        itens: itensAtualizados,
+                        total: novoTotal,
+                        itensAdicionados: [...itensAdicionadosAtuais, ...novosParaHistorico],
+                        ultimaEdicao: serverTimestamp()
+                    });
+
+                    Swal.fire({ title: 'Item(ns) adicionado(s)!', text: 'O total do pedido foi atualizado no caixa.', icon: 'success', timer: 1200, showConfirmButton: false, background: '#161618', color: '#fff' });
+                    if (typeof playSom === "function") playSom();
+                } catch (error) {
+                    console.error("Erro ao adicionar item ao pedido:", error);
+                    Swal.fire('Erro', 'Não foi possível adicionar o item.', 'error');
+                }
+            }
+
+            window._carrinhoAddPedido = [];
+        };
+
+        // --- TROCAR FORMA DE PAGAMENTO DE UM PEDIDO JÁ FECHADO ---
+        window.alterarPagamentoPedido = async (pedidoId) => {
+            const { value: novoMetodo } = await Swal.fire({
+                title: 'TROCAR FORMA DE PAGAMENTO',
+                html: `
+                    <div class="pagamento-grid" style="grid-template-columns:1fr 1fr 1fr;">
+                        <button type="button" onclick="window._novoMetodoPgto='PIX'; Swal.clickConfirm()" class="pgt-btn">PIX</button>
+                        <button type="button" onclick="window._novoMetodoPgto='Cartão'; Swal.clickConfirm()" class="pgt-btn">CARTÃO</button>
+                        <button type="button" onclick="window._novoMetodoPgto='Dinheiro'; Swal.clickConfirm()" class="pgt-btn">DINHEIRO</button>
+                    </div>
+                `,
+                showConfirmButton: false,
+                showCancelButton: true,
+                cancelButtonText: 'Cancelar',
+                background: '#161618',
+                color: '#fff',
+                preConfirm: () => window._novoMetodoPgto
+            });
+
+            if (novoMetodo) {
+                try {
+                    const pedidoRef = doc(db, "pedidos", pedidoId);
+                    const snap = await getDoc(pedidoRef);
+                    if (!snap.exists()) return;
+                    const totalAtual = parseFloat(snap.data().total || 0);
+
+                    await updateDoc(pedidoRef, {
+                        pagamento: novoMetodo,
+                        pagamentos: [{ metodo: novoMetodo, valor: totalAtual }]
+                    });
+
+                    Swal.fire({ title: 'Pagamento atualizado!', text: `Agora consta como ${novoMetodo}.`, icon: 'success', timer: 1200, showConfirmButton: false, background: '#161618', color: '#fff' });
+                } catch (error) {
+                    console.error("Erro ao alterar pagamento:", error);
+                    Swal.fire('Erro', 'Não foi possível atualizar o pagamento.', 'error');
+                } finally {
+                    window._novoMetodoPgto = null;
                 }
             }
         };
@@ -2287,3 +2467,5 @@ window.toggleLoja = async () => {
     </script>
 </body>
 </html>
+
+
