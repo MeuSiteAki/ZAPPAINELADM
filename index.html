@@ -499,9 +499,10 @@
         </div>
     </nav>
 
-    <div class="tab-container">
+        <div class="tab-container">
         <button class="tab-btn active" data-target="tab-delivery" onclick="switchTab(this)">DELIVERY</button>
         <button class="tab-btn" data-target="tab-mesas" onclick="switchTab(this)">MESAS</button>
+        <button class="tab-btn" data-target="tab-fidelidade" onclick="switchTab(this)"><i class="fas fa-star"></i> FIDELIDADE</button>
         <button class="tab-btn" data-target="tab-estoque" id="tab-estoque-btn"><i class="fas fa-boxes"></i> ESTOQUE</button>
         <button class="tab-btn" data-target="tab-balanco" id="tab-caixa-btn">CAIXA</button>
     </div>
@@ -516,8 +517,12 @@
         </div>
     </div>
 
-    <div id="tab-mesas" class="tab-content">
+      <div id="tab-mesas" class="tab-content">
         <div id="container-mesas" class="grid-mesas"></div>
+    </div>
+
+    <div id="tab-fidelidade" class="tab-content">
+        <div id="fidelidade-conteudo"></div>
     </div>
 
     <!-- ABA ESTOQUE -->
@@ -978,6 +983,10 @@
             document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(btn.getAttribute('data-target')).classList.add('active');
             btn.classList.add('active');
+            if (btn.getAttribute('data-target') === 'tab-fidelidade') {
+                iniciarFidelidade();
+                renderFidelidadeConteudo();
+            }
         };
 
         async function solicitarSenhaGerente(titulo = 'Acesso Restrito') {
@@ -1598,9 +1607,21 @@
                     }
                 }
 
-                const isMesa = p.nome && p.nome.toUpperCase().includes("MESA");
+                            const isMesa = p.nome && p.nome.toUpperCase().includes("MESA");
                 const isFunc = p.pagamento === "FUNCIONARIO";
                 const statusColor = isFunc ? '#9333ea' : (p.status === 'recebido' ? '#22c55e' : (p.status === 'saiu' ? '#3b82f6' : 'var(--gold)'));
+                const telClienteFid = (p.telefone || '').replace(/\D/g, '');
+                const chaveFid = telClienteFid || (p.nome || '').trim().toLowerCase().replace(/\s+/g, '_');
+                const dadosFid = clientesFidelidade[chaveFid];
+                const contagemFid = dadosFid ? (dadosFid.contagem || 0) : 0;
+                const temPremioFid = dadosFid && (dadosFid.premiosGanhos || 0) > 0;
+                const corFid = contagemFid >= 8 ? 'var(--gold)' : contagemFid >= 5 ? '#3b82f6' : 'rgba(255,255,255,0.3)';
+                const fidBadgeHtml = dadosFid ? `
+                    <span style="display:inline-flex;align-items:center;gap:4px;background:rgba(44,219,0,0.08);
+                        border:1px solid rgba(44,219,0,0.25);border-radius:20px;padding:2px 10px;
+                        font-size:0.68rem;font-weight:700;color:${corFid};margin-left:6px;">
+                        ⭐ ${contagemFid}/10${temPremioFid ? ' 🎁' : ''}
+                    </span>` : '';
 
                 cont.innerHTML += `
                     <div class="order-card" style="position: relative; border-left: 6px solid ${statusColor}; margin-bottom: 15px; padding: 15px; background: #1a1a1a; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
@@ -1612,7 +1633,7 @@
 
                         <div style="display:flex; justify-content:space-between; align-items: flex-start; padding-right: 30px;">
                             <div>
-                                <b style="font-size:1.2rem; color:var(--gold)">${p.nome ? p.nome.toUpperCase() : "SEM NOME"} ${isFunc ? '<span style="color:#9333ea; font-size:0.8rem;">[INTERNO]</span>' : ''}</b><br>
+                                <b style="font-size:1.2rem; color:var(--gold)">${p.nome ? p.nome.toUpperCase() : "SEM NOME"} ${isFunc ? '<span style="color:#9333ea; font-size:0.8rem;">[INTERNO]</span>' : ''}</b>${fidBadgeHtml}<br>
                                 <small style="color:#aaa"><i class="far fa-clock"></i> ${p.data ? new Date(p.data.toDate()).toLocaleTimeString() : 'Agora'}</small>
                             </div>
                             <span class="garcom-tag" style="background:${isFunc ? '#9333ea' : (isMesa ? '#444' : '#25D366')}; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">
@@ -1655,9 +1676,15 @@
                                 <button onclick="despacharPedido('${id}', '${p.telefone}', '${p.nome}')" style="background:var(--blue); color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;"><i class="fas fa-motorcycle"></i></button>
                             </div>
                         </div>
-                        <div style="display:flex; gap:8px; margin-top:10px;">
+                                       <div style="display:flex; gap:8px; margin-top:10px;">
                             <button onclick="window.adicionarItemPedido('${id}')" style="flex:1; background:#f59e0b; color:#000; border:none; padding:10px; border-radius:6px; cursor:pointer; font-weight:800;"><i class="fas fa-plus-circle"></i> ADICIONAR </button>
                             <button onclick="window.alterarPagamentoPedido('${id}')" style="flex:1; background:#8b5cf6; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; font-weight:800;"><i class="fas fa-exchange-alt"></i> PAGAMENTO </button>
+                        </div>
+                        <div style="display:flex; gap:8px; margin-top:10px;">
+                            ${isMesa
+                                ? `<button onclick="window.abrirFidelidadeGenerico('${id}')" style="flex:1; background:rgba(44,219,0,0.12); color:var(--gold); border:1px solid rgba(44,219,0,0.35); padding:10px; border-radius:6px; cursor:pointer; font-weight:800;"><i class="fas fa-star"></i> +1 FIDELIDADE</button>`
+                                : `<button onclick="window.adicionarPontoFidelidade('${(p.nome || '').replace(/'/g, "\\'")}','${id}','${(p.telefone || '').replace(/\D/g, '')}')" style="flex:1; background:rgba(44,219,0,0.12); color:var(--gold); border:1px solid rgba(44,219,0,0.35); padding:10px; border-radius:6px; cursor:pointer; font-weight:800;"><i class="fas fa-star"></i> +1 FIDELIDADE <span style="margin-left:4px;background:rgba(44,219,0,0.2);padding:2px 6px;border-radius:10px;font-size:0.7rem;">${contagemFid}/10</span></button>`
+                            }
                         </div>
                     </div>`;
             });
@@ -2454,6 +2481,228 @@ window.toggleLoja = async () => {
     }
 };
 
+// ── FIDELIDADE ─────────────────────────────────────────────────────────────────
+let clientesFidelidade = {};
+let fidelidadeIniciado = false;
+
+function mostrarToastFid(msg) {
+    const Toast = Swal.mixin({
+        toast: true, position: 'top-end', showConfirmButton: false, timer: 2200,
+        background: '#1a1a1a', color: '#fff', iconColor: '#22c55e'
+    });
+    Toast.fire({ icon: 'success', title: msg });
+}
+
+function iniciarFidelidade() {
+    if (fidelidadeIniciado) return;
+    fidelidadeIniciado = true;
+    onSnapshot(collection(db, 'fidelidade'), snap => {
+        clientesFidelidade = {};
+        snap.docs.forEach(d => { clientesFidelidade[d.id] = { id: d.id, ...d.data() }; });
+        renderFidelidadeConteudo();
+        if (typeof window.atualizarListagemPedidos === 'function') window.atualizarListagemPedidos();
+    });
+}
+
+window.adicionarPontoFidelidade = async (nomeCliente, pedidoId, telefone = '') => {
+    if (!nomeCliente || nomeCliente.trim() === '') {
+        Swal.fire({ icon: 'warning', title: 'Nome inválido!', background: '#161618', color: '#fff' });
+        return;
+    }
+    const telLimpo = (telefone || '').replace(/\D/g, '');
+    if (!telLimpo) {
+        const { isConfirmed } = await Swal.fire({
+            icon: 'warning', title: 'Sem telefone!',
+            text: 'Este pedido não tem número de celular. Deseja continuar usando o nome como chave?',
+            showCancelButton: true, confirmButtonText: 'Sim, usar nome', confirmButtonColor: '#2cdb00',
+            cancelButtonText: 'Cancelar', background: '#161618', color: '#fff'
+        });
+        if (!isConfirmed) return;
+    }
+    const chave = telLimpo || nomeCliente.trim().toLowerCase().replace(/\s+/g, '_');
+    const ref = doc(db, 'fidelidade', chave);
+    const snap = await getDoc(ref);
+    let dados = snap.exists()
+        ? snap.data()
+        : { nome: nomeCliente.trim(), telefone: telLimpo, contagem: 0, totalPedidos: 0, premiosGanhos: 0 };
+    dados.nome = nomeCliente.trim();
+    if (telLimpo) dados.telefone = telLimpo;
+    const pedidosContados = dados.pedidosContados || [];
+    if (pedidoId && pedidosContados.includes(pedidoId)) {
+        Swal.fire({ icon: 'info', title: 'Já contado!', text: 'Este pedido já foi registrado na fidelidade.', background: '#161618', color: '#fff', timer: 2000, showConfirmButton: false });
+        return;
+    }
+    dados.contagem = (dados.contagem || 0) + 1;
+    dados.totalPedidos = (dados.totalPedidos || 0) + 1;
+    dados.ultimoPedido = new Date();
+    if (pedidoId) dados.pedidosContados = [...pedidosContados, pedidoId];
+    const ganhouPremio = dados.contagem >= 10;
+    if (ganhouPremio) { dados.contagem = 0; dados.premiosGanhos = (dados.premiosGanhos || 0) + 1; }
+    await setDoc(ref, dados);
+    if (ganhouPremio) {
+        await Swal.fire({
+            icon: 'success', title: '🎉 PRÊMIO DESBLOQUEADO!',
+            html: `<b style="color:#2cdb00;font-size:1.2rem;">${nomeCliente.trim()}</b><br>
+                   <span style="font-size:0.95rem;">completou 10 pedidos e ganhou um <b>lanche grátis!</b></span><br><br>
+                   <span style="font-size:0.8rem;opacity:0.6;">O prêmio foi registrado na aba Fidelidade.</span>`,
+            background: '#161618', color: '#fff', confirmButtonColor: '#2cdb00', confirmButtonText: 'Incrível! 🍔'
+        });
+        if (telLimpo) {
+            const msg = `🎉 Parabéns, ${nomeCliente.trim()}! Você completou 10 pedidos e ganhou um LANCHE GRÁTIS! 🍔\n\nVenha resgatar no seu próximo pedido. Obrigado pela preferência! — ZAPLANCHES`;
+            window.open(`https://wa.me/55${telLimpo}?text=${encodeURIComponent(msg)}`);
+        }
+    } else {
+        mostrarToastFid(`+1 ponto para ${nomeCliente.trim()}! (${dados.contagem}/10)`);
+        if (telLimpo) {
+            const faltam = 10 - dados.contagem;
+            const msg = `⭐ Olá, ${nomeCliente.trim()}! Você acaba de ganhar +1 ponto no nosso programa de fidelidade!\n\n🍔 Pontos: ${dados.contagem}/10\n📍 Faltam apenas ${faltam} pedido${faltam !== 1 ? 's' : ''} para ganhar um lanche grátis!\n\nObrigado pela preferência! — ZAPLANCHES`;
+            window.open(`https://wa.me/55${telLimpo}?text=${encodeURIComponent(msg)}`);
+        }
+    }
+};
+
+window.abrirFidelidadeGenerico = async (pedidoId) => {
+    const { value: dados } = await Swal.fire({
+        title: '⭐ Fidelidade',
+        html: `
+            <input id="swal-nome-fid" class="swal2-input" placeholder="Nome do cliente">
+            <input id="swal-tel-fid" class="swal2-input" placeholder="Celular (ex: 94999999999)">
+        `,
+        showCancelButton: true, confirmButtonText: 'Adicionar ponto', confirmButtonColor: '#2cdb00',
+        cancelButtonText: 'Cancelar', background: '#161618', color: '#fff',
+        preConfirm: () => {
+            const nome = document.getElementById('swal-nome-fid').value.trim();
+            const tel = document.getElementById('swal-tel-fid').value.replace(/\D/g, '');
+            if (!nome) { Swal.showValidationMessage('Digite o nome do cliente!'); return false; }
+            return { nome, tel };
+        }
+    });
+    if (dados) window.adicionarPontoFidelidade(dados.nome, pedidoId, dados.tel);
+};
+
+window.resgatarPremio = async (chave) => {
+    const cliente = clientesFidelidade[chave];
+    if (!cliente) return;
+    const { isConfirmed } = await Swal.fire({
+        title: '🍔 Resgatar Prêmio?',
+        html: `Confirmar que <b style="color:#2cdb00;">${cliente.nome}</b> retirou o lanche grátis?`,
+        icon: 'question', showCancelButton: true, confirmButtonText: 'Sim, resgatado!',
+        confirmButtonColor: '#22c55e', cancelButtonText: 'Cancelar', background: '#161618', color: '#fff'
+    });
+    if (!isConfirmed) return;
+    await updateDoc(doc(db, 'fidelidade', chave), {
+        premiosGanhos: Math.max(0, (cliente.premiosGanhos || 1) - 1),
+        premioResgatadoEm: new Date()
+    });
+    mostrarToastFid('Prêmio resgatado com sucesso!');
+};
+
+window.removerClienteFidelidade = async (chave) => {
+    const autorizado = await solicitarSenhaGerente('Confirmar exclusão');
+    if (!autorizado) return;
+    await deleteDoc(doc(db, 'fidelidade', chave));
+    mostrarToastFid('Cliente removido!');
+};
+
+function renderFidelidadeConteudo() {
+    const el = document.getElementById('fidelidade-conteudo');
+    if (!el) return;
+    const clientes = Object.values(clientesFidelidade).sort((a, b) => (b.contagem || 0) - (a.contagem || 0));
+    const comPremio = clientes.filter(c => (c.premiosGanhos || 0) > 0);
+    const semPremio = clientes.filter(c => (c.premiosGanhos || 0) === 0);
+
+    const renderCard = (c) => {
+        const chave = c.id;
+        const cnt = c.contagem || 0;
+        const pct = (cnt / 10) * 100;
+        const temPremio = (c.premiosGanhos || 0) > 0;
+        const corBarra = cnt >= 8 ? 'var(--gold)' : cnt >= 5 ? '#3b82f6' : '#22c55e';
+        const bolinhas = Array.from({ length: 10 }, (_, i) =>
+            `<div style="width:22px;height:22px;border-radius:50%;background:${i < cnt ? corBarra : 'rgba(255,255,255,0.08)'};
+             border:2px solid ${i < cnt ? corBarra : 'rgba(255,255,255,0.12)'};
+             display:flex;align-items:center;justify-content:center;font-size:0.6rem;
+             ${i < cnt ? 'box-shadow:0 0 6px ' + corBarra + '55;' : ''}">
+             ${i < cnt ? '★' : ''}</div>`
+        ).join('');
+        return `
+        <div style="background:var(--card-bg);border:1px solid ${temPremio ? 'rgba(44,219,0,0.5)' : '#2d2d30'};
+             border-radius:14px;padding:16px;position:relative;
+             ${temPremio ? 'box-shadow:0 0 20px rgba(44,219,0,0.15);' : ''}">
+            ${temPremio ? `<div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+                background:var(--gold);color:#000;font-size:0.68rem;font-weight:800;letter-spacing:1px;
+                padding:3px 12px;border-radius:20px;white-space:nowrap;">
+                🎁 ${c.premiosGanhos}x PRÊMIO DISPONÍVEL
+            </div>` : ''}
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;${temPremio ? 'margin-top:8px;' : ''}">
+                <div>
+                    <div style="font-weight:700;font-size:1rem;">${c.nome}</div>
+                    <div style="font-size:0.72rem;opacity:0.4;margin-top:2px;">
+                        ${c.totalPedidos || 0} pedidos no total${c.telefone ? ` · 📱 ${c.telefone}` : ''}
+                    </div>
+                </div>
+                <div style="display:flex;gap:6px;align-items:center;">
+                    <span style="font-weight:800;font-size:1.4rem;color:${corBarra};">${cnt}/10</span>
+                    <button onclick="removerClienteFidelidade('${chave}')"
+                        style="background:none;border:none;color:#ef4444;font-size:1.1rem;cursor:pointer;opacity:0.5;padding:4px;">×</button>
+                </div>
+            </div>
+            <div style="display:flex;gap:5px;justify-content:center;margin-bottom:12px;flex-wrap:wrap;">
+                ${bolinhas}
+            </div>
+            <div style="background:rgba(255,255,255,0.05);border-radius:20px;height:6px;margin-bottom:12px;overflow:hidden;">
+                <div style="height:100%;width:${pct}%;background:${corBarra};border-radius:20px;transition:width 0.5s;"></div>
+            </div>
+            ${temPremio ? `
+            <button onclick="resgatarPremio('${chave}')"
+                style="width:100%;padding:12px;background:rgba(44,219,0,0.15);color:var(--gold);
+                border:1px solid rgba(44,219,0,0.4);border-radius:10px;font-weight:800;
+                cursor:pointer;font-size:0.85rem;letter-spacing:1px;margin-bottom:6px;transition:0.2s;"
+                onmouseover="this.style.background='rgba(44,219,0,0.3)'"
+                onmouseout="this.style.background='rgba(44,219,0,0.15)'">
+                🍔 RESGATAR LANCHE GRÁTIS
+            </button>` : ''}
+        </div>`;
+    };
+
+    el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+        <h2 style="color:var(--gold);margin:0;font-size:1.6rem;font-weight:800;">
+            <i class="fas fa-star"></i> FIDELIDADE
+        </h2>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <div style="background:var(--card-bg);border:1px solid rgba(44,219,0,0.3);border-radius:20px;padding:6px 16px;font-size:0.78rem;font-weight:700;color:var(--gold);">
+                ${clientes.length} clientes
+            </div>
+            <div style="background:var(--card-bg);border:1px solid rgba(34,197,94,0.3);border-radius:20px;padding:6px 16px;font-size:0.78rem;font-weight:700;color:#22c55e;">
+                ${comPremio.length} prêmios pendentes
+            </div>
+        </div>
+    </div>
+
+    ${comPremio.length > 0 ? `
+    <div style="font-size:0.72rem;letter-spacing:2px;opacity:0.4;font-weight:700;margin-bottom:10px;padding-left:4px;border-left:3px solid var(--gold);">
+        🎁 PRÊMIOS DISPONÍVEIS
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin-bottom:24px;">
+        ${comPremio.map(renderCard).join('')}
+    </div>` : ''}
+
+    ${semPremio.length > 0 ? `
+    <div style="font-size:0.72rem;letter-spacing:2px;opacity:0.4;font-weight:700;margin-bottom:10px;padding-left:4px;border-left:3px solid rgba(255,255,255,0.2);">
+        📋 TODOS OS CLIENTES
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+        ${semPremio.map(renderCard).join('')}
+    </div>` : ''}
+
+    ${clientes.length === 0 ? `
+    <div style="text-align:center;padding:60px 20px;opacity:0.3;">
+        <div style="font-size:3rem;margin-bottom:12px;">⭐</div>
+        <div style="font-size:0.9rem;">Nenhum cliente cadastrado ainda.<br>
+        Use o botão +1 FIDELIDADE nos pedidos para começar.</div>
+    </div>` : ''}`;
+}
+
 
 // Bloqueios de segurança
   document.addEventListener('keydown', function (e) {
@@ -2467,5 +2716,4 @@ window.toggleLoja = async () => {
     </script>
 </body>
 </html>
-
 
