@@ -481,6 +481,106 @@
     background: var(--gold);
     color: black;
 }
+/* ===== AJUSTES PARA CELULAR ===== */
+@media (max-width: 600px) {
+
+    /* Barra superior */
+    nav {
+        padding: 0.6rem 0.8rem;
+        gap: 8px;
+    }
+    .logo { font-size: 1.1rem; }
+    nav .btn-nav {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+    }
+    #label-loja { font-size: 0.72rem; }
+
+    /* Abas: rolam para o lado, sem estourar a tela */
+    .tab-container {
+        overflow-x: auto;
+        justify-content: flex-start;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .tab-container::-webkit-scrollbar { display: none; }
+    .tab-btn {
+        flex: 0 0 auto;
+        padding: 12px 14px;
+        font-size: 0.78rem;
+        white-space: nowrap;
+    }
+
+    .tab-content { padding: 12px 10px; }
+
+    /* Pedidos: 1 coluna (o minmax de 350px era o que estourava) */
+    .orders-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .order-card b { word-break: break-word; }
+
+    /* Rodapé do pedido: TOTAL em cima, botões embaixo */
+    .order-card > div:nth-of-type(4) {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px;
+    }
+    .order-card > div:nth-of-type(4) > div {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px !important;
+    }
+    .order-card > div:nth-of-type(4) button {
+        width: 100%;
+        padding: 12px 0 !important;
+        font-size: 1rem;
+    }
+
+    /* ADICIONAR / PAGAMENTO / FIDELIDADE */
+    .order-card > div:nth-of-type(5) button,
+    .order-card > div:nth-of-type(6) button {
+        font-size: 0.72rem !important;
+        padding: 10px 6px !important;
+    }
+
+    /* Menu lateral da mesa ocupa a tela toda */
+    #menu-lateral {
+        width: 100%;
+        max-width: 100%;
+        right: -110%;
+        padding: 15px;
+    }
+    #menu-lateral.active { right: 0; }
+
+    /* Caixa: Artesanais / Tradicionais empilhados */
+    #tab-balanco div[style*="1fr 2px 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+    #tab-balanco div[style*="1fr 2px 1fr"] > div {
+        padding: 0 !important;
+        margin: 0 0 15px 0 !important;
+    }
+    #tab-balanco div[style*="width: 2px"] { display: none !important; }
+
+    /* Botões do topo do Caixa em largura total */
+    #tab-balanco > div:first-child .btn-nav {
+        flex: 1 1 100%;
+        font-size: 0.8rem;
+    }
+
+    /* Pop-ups (SweetAlert) não passam da tela */
+    .swal2-popup {
+        width: 94% !important;
+        padding: 1rem !important;
+    }
+    .pagamento-grid { gap: 8px !important; }
+    .pgt-btn {
+        padding: 12px 4px !important;
+        font-size: 0.75rem !important;
+    }
+    .modal-scroll-area { max-height: 50vh; }
+}
     </style>
 </head>
 <body>
