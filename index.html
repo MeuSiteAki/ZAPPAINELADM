@@ -705,6 +705,29 @@
                 </div>
             </div>
 
+                        <!-- BATATA | SACO DE PÃO -->
+            <div style="display: grid; grid-template-columns: 1fr 2px 1fr; gap: 0; margin-bottom: 20px; border-top: 2px solid #333; padding-top: 15px;">
+                <div style="padding-right: 15px;">
+                    <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">🍟 Batata Frita</h4>
+                    <div id="ranking-batata" style="color: #eee; font-size: 0.85rem;"></div>
+                    <div style="border-top: 1px solid #444; margin-top: 8px; padding-top: 6px; display: flex; justify-content: space-between; font-weight: bold;">
+                        <span style="color: #aaa;">Subtotal</span>
+                        <span id="subtotal-batata" style="color: var(--gold)">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <div style="background: #444; width: 2px; margin: 0 10px;"></div>
+
+                <div style="padding-left: 15px;">
+                    <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">🍞 Saco de Pão</h4>
+                    <div id="ranking-saco" style="color: #eee; font-size: 0.85rem;"></div>
+                    <div style="border-top: 1px solid #444; margin-top: 8px; padding-top: 6px; display: flex; justify-content: space-between; font-weight: bold;">
+                        <span style="color: #aaa;">Subtotal</span>
+                        <span id="subtotal-saco" style="color: var(--gold)">R$ 0,00</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- BEBIDAS SEPARADAS -->
             <div style="border-top: 2px solid #333; padding-top: 15px; margin-top: 5px;">
                 <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">🥤 Bebidas & Porções</h4>
@@ -813,7 +836,7 @@
                 { n: "Burguer Pepperoni", p: 25.00 },
                 { n: "Burguer Cheese Bacon", p: 26.00 },
                 { n: "Burguer Double", p: 32.00 },
-                { n: "Carne", p: 10.00 }
+                { n: "Combo Casal", p: 40.00 }
             ],
             "🍔 TRADICIONAIS": [
                 { n: "Zap Quente", p: 6.00 },
@@ -840,6 +863,9 @@
                 { n: "Água Mineral", p: 3.00 },
                 { n: "Água com Gás", p: 3.00 },
                 { n: "H2O", p: 6.00 },
+            ],
+            " PÃO": [
+                { n: "Saco de Pão", p: 20.00 }
             ],
         };
 
@@ -1807,8 +1833,11 @@
             safeSetText('b-total', `R$ ${(tPix + tCard + tDin).toFixed(2)}`);
 
             // Ranking
-            const artesanais  = ["Burguer Mini","Burguer Classic","Burguer Poleguinho","Burguer Pepperoni","Burguer Cheese Bacon","Burguer Double","Batata Frita","Combo Casal"];
+                   // Ranking
+            const artesanais  = ["Burguer Mini","Burguer Classic","Burguer Poleguinho","Burguer Pepperoni","Burguer Cheese Bacon","Burguer Double","Combo Casal"];
             const tradicionais = ["Zap Quente","Zap X-Burguer","Zap Egg","Zap Bacon","Zap Calabresa","Zap Salada Especial","Zap Tudo","Zap Broca","Zap Frango","Zap Filé"];
+            const batata = ["Porção Batata Frita","Batata Frita"];
+            const sacoPao = ["Saco de Pão"];
             const adicionais = ["Ovo","Carne Hambúrguer","Blend Bovino 160g","Bacon","Salsicha","Presunto","Bacon Defumado","Cebola Caramelizada","Molho Cheddar","Queijo Mussarela","Queijo Polenguinho","Calabresa","Filé Gado","Filé Frango"];
 
             const pertenceAo = (nome, paraBuscar) => paraBuscar.some(item => nome.startsWith(item));
@@ -1830,14 +1859,18 @@
 
             renderGrupo('ranking-artesanais', 'subtotal-artesanais', artesanais);
             renderGrupo('ranking-tradicionais', 'subtotal-tradicionais', tradicionais);
+            renderGrupo('ranking-batata', 'subtotal-batata', batata);
+            renderGrupo('ranking-saco', 'subtotal-saco', sacoPao);
 
-            // Bebidas: tudo que não é artesanal, tradicional nem adicional
+            // Bebidas: tudo que não é artesanal, tradicional, batata, saco de pão nem adicional
             const bebidasCont = document.getElementById('ranking-bebidas');
             const bebidasSubtotalEl = document.getElementById('subtotal-bebidas');
             if (bebidasCont) {
                 const itensBebidas = Object.entries(vendasProdutos).filter(([nome]) => 
                     !pertenceAo(nome, artesanais) && 
                     !pertenceAo(nome, tradicionais) && 
+                    !pertenceAo(nome, batata) && 
+                    !pertenceAo(nome, sacoPao) && 
                     !pertenceAo(nome, adicionais)
                 );
                 const subtotalBebidas = itensBebidas.reduce((acc, [, d]) => acc + d.total, 0);
@@ -1849,7 +1882,7 @@
                 `).join('') || '<p style="color:#555; font-size:0.8rem;">Nenhuma venda</p>';
                 if (bebidasSubtotalEl) bebidasSubtotalEl.innerText = `R$ ${subtotalBebidas.toFixed(2)}`;
             }
-        };
+        }
 
         window.mostrarMaisPedidos = () => {
             limitePedidosExibidos += 6;
@@ -2243,6 +2276,8 @@
             const artesanais  = coletarItens('ranking-artesanais');
             const tradicionais = coletarItens('ranking-tradicionais');
             const bebidas     = coletarItens('ranking-bebidas');
+            const batataPdf   = coletarItens('ranking-batata');
+            const sacoPdf     = coletarItens('ranking-saco');
 
             let posY = doc.lastAutoTable.finalY + 15;
 
@@ -2299,7 +2334,46 @@
             doc.setLineWidth(0.5);
             doc.line(colDir - 3, posY, colDir - 3, fimMaior);
 
-            posY = fimMaior + 10;
+                        posY = fimMaior + 10;
+
+            // BATATA | SACO DE PÃO
+            doc.autoTable({
+                startY: posY,
+                tableWidth: larguraCol,
+                margin: { left: colEsq, right: 0 },
+                head: [[' BATATA FRITA', 'Subtotal']],
+                body: [
+                    ...batataPdf.rows,
+                    [
+                        { content: 'SUBTOTAL', styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } },
+                        { content: `R$ ${batataPdf.subtotal.toFixed(2)}`, styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } }
+                    ]
+                ],
+                theme: 'striped',
+                headStyles: { fillColor: [33, 33, 36], textColor: [34, 197, 94] },
+                styles: { fontSize: 9 }
+            });
+            const fimBatata = doc.lastAutoTable.finalY;
+
+            doc.autoTable({
+                startY: posY,
+                tableWidth: larguraCol,
+                margin: { left: colDir, right: 0 },
+                head: [[' SACO DE PÃO', 'Subtotal']],
+                body: [
+                    ...sacoPdf.rows,
+                    [
+                        { content: 'SUBTOTAL', styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } },
+                        { content: `R$ ${sacoPdf.subtotal.toFixed(2)}`, styles: { fontStyle: 'bold', fillColor: [40, 40, 40], textColor: [255, 215, 0] } }
+                    ]
+                ],
+                theme: 'striped',
+                headStyles: { fillColor: [33, 33, 36], textColor: [34, 197, 94] },
+                styles: { fontSize: 9 }
+            });
+            const fimSaco = doc.lastAutoTable.finalY;
+
+            posY = Math.max(fimBatata, fimSaco) + 10;
 
             doc.autoTable({
                 startY: posY,
@@ -2817,3 +2891,4 @@ function renderFidelidadeConteudo() {
 </body>
 </html>
 
+c posY = fimMaior + 10;
