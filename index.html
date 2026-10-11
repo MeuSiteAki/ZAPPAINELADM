@@ -1916,9 +1916,12 @@
                     const novoTotal = Math.max(0, parseFloat(dados.total || 0) - valorSubtrair).toFixed(2);
 
                     await updateDoc(pedidoRef, {
-                        itens: itensAtualizados,
-                        total: novoTotal
-                    });
+    itens: itensAtualizados,
+    total: novoTotal,
+    pagamentos: (Array.isArray(dados.pagamentos) && dados.pagamentos.length > 1)
+        ? dados.pagamentos
+        : [{ metodo: dados.pagamento, valor: parseFloat(novoTotal) }]
+});
                     
                     console.log("Item removido com sucesso!");
                 }
@@ -2046,15 +2049,17 @@
                     const itensAdicionadosAtuais = Array.isArray(dados.itensAdicionados) ? [...dados.itensAdicionados] : [];
                     const novosParaHistorico = window._carrinhoAddPedido.map(i => ({ ...i }));
 
-                    const novoTotal = itensAtualizados.reduce((a, b) => a + (b.p * b.q), 0);
-
+                    const freteDoPedido = parseFloat(dados.frete || 0);
+                    const novoTotal = itensAtualizados.reduce((a, b) => a + (parseFloat(b.p) * parseInt(b.q)), 0) + freteDoPedido;
                     await updateDoc(pedidoRef, {
-                        itens: itensAtualizados,
-                        total: novoTotal,
-                        itensAdicionados: [...itensAdicionadosAtuais, ...novosParaHistorico],
-                        ultimaEdicao: serverTimestamp()
-                    });
-
+    itens: itensAtualizados,
+    total: novoTotal,
+    pagamentos: (Array.isArray(dados.pagamentos) && dados.pagamentos.length > 1)
+        ? dados.pagamentos
+        : [{ metodo: dados.pagamento, valor: novoTotal }],
+    itensAdicionados: [...itensAdicionadosAtuais, ...novosParaHistorico],
+    ultimaEdicao: serverTimestamp()
+});
                     Swal.fire({ title: 'Item(ns) adicionado(s)!', text: 'O total do pedido foi atualizado no caixa.', icon: 'success', timer: 1200, showConfirmButton: false, background: '#161618', color: '#fff' });
                     if (typeof playSom === "function") playSom();
                 } catch (error) {
