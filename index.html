@@ -581,6 +581,24 @@
     }
     .modal-scroll-area { max-height: 50vh; }
 }
+/* ===== CLIENTES WHATSAPP / PEDIDO MANUAL ===== */
+.cli-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px; }
+.cli-card { background:var(--card-bg); border:1px solid #2d2d30; border-radius:14px; padding:14px; cursor:pointer; transition:.2s; position:relative; }
+.cli-card:hover { border-color:var(--gold); transform:translateY(-2px); }
+.wa-input { width:100%; padding:10px 12px; border-radius:8px; border:1px solid #333; background:#1a1a1c; color:#fff; margin-bottom:8px; font-size:.9rem; outline:none; }
+.wa-input:focus { border-color:var(--gold); }
+.wa-input:disabled { opacity:.4; }
+#wa-overlay { display:none; position:fixed; inset:0; background:var(--dark-bg); z-index:2500; flex-direction:column; }
+.wa-top { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--card-bg); border-bottom:1px solid #2d2d30; }
+.wa-body { flex:1; display:grid; grid-template-columns:1fr 1fr; overflow:hidden; }
+.wa-col { overflow-y:auto; padding:14px; }
+.wa-col + .wa-col { border-left:1px solid #2d2d30; }
+.wa-foot { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 16px; background:var(--card-bg); border-top:1px solid #2d2d30; padding-bottom:max(12px, env(safe-area-inset-bottom)); }
+@media (max-width:700px) {
+    .wa-body { grid-template-columns:1fr; overflow-y:auto; }
+    .wa-col { overflow:visible; }
+    .wa-col + .wa-col { border-left:none; border-top:1px solid #2d2d30; }
+}
     </style>
 </head>
 <body>
@@ -602,6 +620,7 @@
         <div class="tab-container">
         <button class="tab-btn active" data-target="tab-delivery" onclick="switchTab(this)">DELIVERY</button>
         <button class="tab-btn" data-target="tab-mesas" onclick="switchTab(this)">MESAS</button>
+        <button class="tab-btn" data-target="tab-clientes" onclick="switchTab(this); window.carregarClientesWA()"><i class="fab fa-whatsapp"></i> CLIENTES</button>
         <button class="tab-btn" data-target="tab-fidelidade" onclick="switchTab(this)"><i class="fas fa-star"></i> FIDELIDADE</button>
         <button class="tab-btn" data-target="tab-estoque" id="tab-estoque-btn"><i class="fas fa-boxes"></i> ESTOQUE</button>
         <button class="tab-btn" data-target="tab-balanco" id="tab-caixa-btn">CAIXA</button>
@@ -625,6 +644,20 @@
         <div id="fidelidade-conteudo"></div>
     </div>
 
+    <div id="tab-clientes" class="tab-content">
+    <div style="max-width:1400px; margin:0 auto;">
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+            <input id="busca-cliente-wa" class="wa-input" style="flex:1; min-width:200px; margin:0;"
+                   placeholder="🔍 Buscar por nome ou telefone..." oninput="window.renderClientesWA()">
+            <button class="btn-confirm" style="width:auto; padding:10px 18px;" onclick="window.novoPedidoWA()">
+                <i class="fas fa-plus"></i> NOVO PEDIDO
+            </button>
+            <button class="btn-nav" onclick="window.editarClienteWA()"><i class="fas fa-user-plus"></i> NOVO CLIENTE</button>
+            <button class="btn-nav" onclick="window.carregarClientesWA(true)" title="Recarregar lista"><i class="fas fa-sync"></i></button>
+        </div>
+        <div id="lista-clientes-wa"></div>
+    </div>
+</div>
     <!-- ABA ESTOQUE -->
     <div id="tab-estoque" class="tab-content">
         <div style="background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid #2d2d30; margin-bottom: 20px;">
@@ -768,7 +801,53 @@
         </div>
         <button class="btn-confirm" onclick="enviarCozinha()">ENVIAR PARA COZINHA</button>
     </div>
+<div id="wa-overlay">
+    <div class="wa-top">
+        <h2 style="color:var(--gold); font-size:1.1rem;"><i class="fab fa-whatsapp"></i> PEDIDO WHATSAPP</h2>
+        <button onclick="window.fecharPedidoWA()" style="background:none; border:none; color:#fff; font-size:1.8rem; cursor:pointer;">&times;</button>
+    </div>
 
+    <div class="wa-body">
+        <!-- COLUNA 1: cliente + carrinho -->
+        <div class="wa-col">
+            <input id="wa-nome" class="wa-input" placeholder="Nome do cliente">
+            <input id="wa-tel" class="wa-input" type="tel" placeholder="Celular com DDD (ex: 99 99999-9999)">
+            <label style="display:flex; align-items:center; gap:8px; margin:4px 0 10px; font-size:.9rem; cursor:pointer;">
+                <input type="checkbox" id="wa-retirada" onchange="window.aplicarRetiradaWA()"> Retirada no local
+            </label>
+            <input id="wa-end" class="wa-input" placeholder="Endereço (rua, número, ponto de referência)">
+            <input id="wa-bairro" class="wa-input" placeholder="Bairro">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <select id="wa-pgto" class="wa-input" onchange="window.onPgtoWA()">
+                    <option value="PIX">PIX</option>
+                    <option value="Cartão">Cartão</option>
+                    <option value="Dinheiro">Dinheiro</option>
+                </select>
+                <input id="wa-frete" class="wa-input" type="number" step="0.5" min="0" placeholder="Entrega R$" oninput="window.atualizarTotalWA()">
+            </div>
+            <input id="wa-troco" class="wa-input" type="number" step="0.5" min="0" placeholder="Troco para quanto? (R$)" style="display:none;">
+
+            <h4 style="margin:14px 0 8px;">🛒 CARRINHO</h4>
+            <div id="wa-carrinho"></div>
+        </div>
+
+        <!-- COLUNA 2: cardápio -->
+        <div class="wa-col">
+            <input id="wa-busca" class="wa-input" placeholder="🔍 Buscar item (ex: bacon, coca)..." oninput="window.renderCardapioWA(this.value)">
+            <div id="wa-cardapio"></div>
+        </div>
+    </div>
+
+    <div class="wa-foot">
+        <div>
+            <div id="wa-resumo" style="font-size:.75rem; color:#888;"></div>
+            <b id="wa-total" style="font-size:1.4rem; color:var(--gold);">R$ 0.00</b>
+        </div>
+        <button id="wa-btn-salvar" class="btn-confirm" style="width:auto; padding:12px 26px;" onclick="window.salvarPedidoWA()">
+            <i class="fas fa-check"></i> SALVAR PEDIDO
+        </button>
+    </div>
+</div>
     <audio id="audio-bip" preload="auto">
         <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
     </audio>
@@ -783,6 +862,7 @@
             onSnapshot,
             query,
             orderBy,
+            where, 
             doc,
             getDoc,
             updateDoc,
@@ -836,7 +916,7 @@
                 { n: "Burguer Pepperoni", p: 25.00 },
                 { n: "Burguer Cheese Bacon", p: 26.00 },
                 { n: "Burguer Double", p: 32.00 },
-                { n: "Combo Casal", p: 40.00 }
+                { n: "Carne(Funcionários)", p: 10.00 }
             ],
             "🍔 TRADICIONAIS": [
                 { n: "Zap Quente", p: 6.00 },
@@ -2911,7 +2991,366 @@ function renderFidelidadeConteudo() {
     </div>` : ''}`;
 }
 
+// ══════════════════════════════════════════════════════════════
+//  CLIENTES WHATSAPP + PEDIDO MANUAL
+//  Coleção nova no Firestore: "clientes_whatsapp" (id = telefone só com dígitos)
+// ══════════════════════════════════════════════════════════════
+const swalDark = { background: '#161618', color: '#fff' };
+let clientesWA = {};
+let clientesWACarregado = false;
+let carrinhoWA = [];
 
+// Mantenha igual à lista de adicionais que existe dentro de addItemTemp
+const ADICIONAIS_WA = [
+    { n: "Ovo", p: 2.00 }, { n: "Carne Hambúrguer", p: 6.00 }, { n: "Blend Bovino 160g", p: 10.00 },
+    { n: "Bacon", p: 6.00 }, { n: "Salsicha", p: 3.00 }, { n: "Presunto", p: 4.00 },
+    { n: "Bacon Defumado", p: 6.00 }, { n: "Cebola Caramelizada", p: 5.00 }, { n: "Molho Cheddar", p: 5.00 },
+    { n: "Queijo Mussarela", p: 4.00 }, { n: "Queijo Polenguinho", p: 5.00 }, { n: "Calabresa", p: 5.00 },
+    { n: "Filé Gado", p: 10.00 }, { n: "Filé Frango", p: 10.00 }
+];
+
+const escHtml = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const soDigitos = (s) => { let d = String(s || '').replace(/\D/g, ''); if (d.length > 11 && d.startsWith('55')) d = d.slice(2); return d; };
+const fmtTel = (d) => d.length === 11 ? `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`
+                    : d.length === 10 ? `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}` : d;
+const elv = (id) => (document.getElementById(id)?.value ?? '').trim();
+
+// ── LISTA DE CLIENTES (lê o Firestore UMA vez; busca é local, sem custo) ──
+window.carregarClientesWA = async (forcar = false) => {
+    if (clientesWACarregado && !forcar) return window.renderClientesWA();
+    try {
+        const snap = await getDocs(collection(db, 'clientes_whatsapp'));
+        clientesWA = {};
+        snap.forEach(d => {
+            const x = d.data();
+            clientesWA[d.id] = { id: d.id, ...x, _ts: x.ultimoPedidoEm?.toMillis?.() || 0 };
+        });
+        clientesWACarregado = true;
+        window.renderClientesWA();
+    } catch (e) {
+        console.error('Erro ao carregar clientes:', e);
+        Swal.fire({ title: 'Erro', text: 'Não foi possível carregar os clientes.', icon: 'error', ...swalDark });
+    }
+};
+
+window.renderClientesWA = () => {
+    const el = document.getElementById('lista-clientes-wa');
+    if (!el) return;
+    const q = normalizarBusca(elv('busca-cliente-wa'));
+    const qNum = q.replace(/\D/g, '');
+    let lista = Object.values(clientesWA).sort((a, b) => b._ts - a._ts);
+    if (q) lista = lista.filter(c => normalizarBusca(c.nome).includes(q) || (qNum && c.id.includes(qNum)));
+    const total = lista.length;
+    lista = lista.slice(0, 40);
+
+    if (!total) {
+        el.innerHTML = `<div style="text-align:center; padding:50px 20px; color:#666;">
+            <i class="fab fa-whatsapp" style="font-size:2.5rem; margin-bottom:10px; display:block;"></i>
+            ${q ? 'Nenhum cliente encontrado. Use <b>NOVO PEDIDO</b> para cadastrar.' : 'Nenhum cliente salvo ainda. Faça o primeiro pedido em <b>NOVO PEDIDO</b>.'}
+        </div>`;
+        return;
+    }
+
+    el.innerHTML = `
+        <div style="font-size:.75rem; color:#888; margin-bottom:10px;">
+            ${total} cliente(s)${total > 40 ? ' — mostrando os 40 mais recentes, digite para filtrar' : ''}
+        </div>
+        <div class="cli-grid">
+            ${lista.map(c => `
+            <div class="cli-card" onclick="window.novoPedidoWA('${c.id}')">
+                <div style="position:absolute; top:8px; right:8px; display:flex; gap:6px;">
+                    <button onclick="event.stopPropagation(); window.editarClienteWA('${c.id}')" style="background:#2a2a2a; border:none; color:#aaa; width:28px; height:28px; border-radius:6px; cursor:pointer;"><i class="fas fa-pen" style="font-size:.7rem;"></i></button>
+                    <button onclick="event.stopPropagation(); window.excluirClienteWA('${c.id}')" style="background:rgba(239,68,68,.12); border:none; color:#ef4444; width:28px; height:28px; border-radius:6px; cursor:pointer;"><i class="fas fa-trash" style="font-size:.7rem;"></i></button>
+                </div>
+                <b style="color:var(--gold); font-size:1.05rem; padding-right:70px; display:block;">${escHtml(c.nome)}</b>
+                <small style="color:#aaa;"><i class="fas fa-phone"></i> ${fmtTel(c.id)}</small>
+                <div style="font-size:.82rem; margin-top:8px; color:#ddd;">
+                    <i class="fas fa-map-marker-alt" style="color:#888;"></i> ${escHtml(c.endereco || 'Sem endereço')}${c.bairro ? ' — ' + escHtml(c.bairro) : ''}
+                </div>
+                <div style="font-size:.75rem; margin-top:6px; color:#888;">
+                    💳 ${escHtml(c.pagamento || '—')} · ${c.totalPedidos || 0} pedido(s)
+                </div>
+            </div>`).join('')}
+        </div>`;
+};
+
+// ── CADASTRAR / EDITAR / EXCLUIR CLIENTE (sem pedido) ──
+window.editarClienteWA = async (id = null) => {
+    const c = id ? (clientesWA[id] || {}) : {};
+    const opt = (v) => `<option value="${v}" ${c.pagamento === v ? 'selected' : ''}>${v}</option>`;
+    const { value: d } = await Swal.fire({
+        title: id ? 'Editar cliente' : 'Novo cliente',
+        html: `
+            <input id="cw-nome" class="swal2-input" placeholder="Nome" value="${escHtml(c.nome)}">
+            <input id="cw-tel" class="swal2-input" placeholder="Celular com DDD" value="${id ? fmtTel(id) : ''}" ${id ? 'disabled' : ''}>
+            <input id="cw-end" class="swal2-input" placeholder="Endereço" value="${escHtml(c.endereco)}">
+            <input id="cw-bairro" class="swal2-input" placeholder="Bairro" value="${escHtml(c.bairro)}">
+            <select id="cw-pgto" class="swal2-input">${opt('PIX')}${opt('Cartão')}${opt('Dinheiro')}</select>`,
+        showCancelButton: true, confirmButtonText: 'SALVAR', confirmButtonColor: '#22c55e', cancelButtonText: 'Cancelar',
+        ...swalDark,
+        preConfirm: () => {
+            const nome = document.getElementById('cw-nome').value.trim();
+            const tel = id || soDigitos(document.getElementById('cw-tel').value);
+            if (!nome) { Swal.showValidationMessage('Informe o nome'); return false; }
+            if (tel.length < 10) { Swal.showValidationMessage('Celular inválido (use DDD + número)'); return false; }
+            return {
+                tel, nome,
+                endereco: document.getElementById('cw-end').value.trim(),
+                bairro: document.getElementById('cw-bairro').value.trim(),
+                pagamento: document.getElementById('cw-pgto').value
+            };
+        }
+    });
+    if (!d) return;
+    try {
+        const dados = { nome: d.nome, telefone: d.tel, endereco: d.endereco, bairro: d.bairro, pagamento: d.pagamento };
+        await setDoc(doc(db, 'clientes_whatsapp', d.tel), dados, { merge: true });
+        clientesWA[d.tel] = { ...(clientesWA[d.tel] || { _ts: 0 }), id: d.tel, ...dados };
+        window.renderClientesWA();
+    } catch (e) {
+        console.error(e);
+        Swal.fire({ title: 'Erro', text: 'Não foi possível salvar o cliente.', icon: 'error', ...swalDark });
+    }
+};
+
+window.excluirClienteWA = async (id) => {
+    const c = clientesWA[id];
+    const { isConfirmed } = await Swal.fire({
+        title: 'Excluir cliente?',
+        text: `${c?.nome || ''} sai da lista. Os pedidos antigos não são afetados.`,
+        icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444',
+        confirmButtonText: 'Sim, excluir', cancelButtonText: 'Cancelar', ...swalDark
+    });
+    if (!isConfirmed) return;
+    try {
+        await deleteDoc(doc(db, 'clientes_whatsapp', id));
+        delete clientesWA[id];
+        window.renderClientesWA();
+    } catch (e) {
+        console.error(e);
+        Swal.fire({ title: 'Erro', text: 'Não foi possível excluir.', icon: 'error', ...swalDark });
+    }
+};
+
+// ── TELA DO PEDIDO ──
+window.novoPedidoWA = (id = null) => {
+    const c = id ? clientesWA[id] : null;
+    carrinhoWA = [];
+    const set = (k, v) => { document.getElementById(k).value = v ?? ''; };
+    set('wa-nome', c?.nome);
+    set('wa-tel', c ? fmtTel(c.id) : '');
+    set('wa-end', c?.endereco);
+    set('wa-bairro', c?.bairro);
+    set('wa-pgto', c?.pagamento || 'PIX');
+    set('wa-troco', '');
+    set('wa-busca', '');
+    set('wa-frete', localStorage.getItem('wa_frete') ?? '0');
+    document.getElementById('wa-retirada').checked = false;
+    window.aplicarRetiradaWA();
+    window.onPgtoWA();
+    window.renderCardapioWA('');
+    window.renderCarrinhoWA();
+    document.getElementById('wa-overlay').style.display = 'flex';
+};
+
+window.fecharPedidoWA = async () => {
+    if (carrinhoWA.length) {
+        const { isConfirmed } = await Swal.fire({
+            title: 'Descartar este pedido?', text: 'Os itens do carrinho serão perdidos.', icon: 'question',
+            showCancelButton: true, confirmButtonText: 'Descartar', cancelButtonText: 'Continuar editando',
+            confirmButtonColor: '#ef4444', ...swalDark
+        });
+        if (!isConfirmed) return;
+    }
+    document.getElementById('wa-overlay').style.display = 'none';
+};
+
+window.aplicarRetiradaWA = () => {
+    const r = document.getElementById('wa-retirada').checked;
+    ['wa-end', 'wa-bairro', 'wa-frete'].forEach(k => { document.getElementById(k).disabled = r; });
+    window.atualizarTotalWA();
+};
+
+window.onPgtoWA = () => {
+    document.getElementById('wa-troco').style.display = elv('wa-pgto') === 'Dinheiro' ? 'block' : 'none';
+};
+
+function calcTotaisWA() {
+    const retirada = document.getElementById('wa-retirada').checked;
+    const subtotal = carrinhoWA.reduce((a, i) => a + i.p * i.q, 0);
+    const frete = retirada ? 0 : (parseFloat(elv('wa-frete').replace(',', '.')) || 0);
+    return { retirada, subtotal, frete, total: subtotal + frete };
+}
+
+window.atualizarTotalWA = () => {
+    const t = calcTotaisWA();
+    document.getElementById('wa-total').innerText = `R$ ${t.total.toFixed(2)}`;
+    document.getElementById('wa-resumo').innerText = `Itens R$ ${t.subtotal.toFixed(2)} + Entrega R$ ${t.frete.toFixed(2)}`;
+};
+
+// ── CARDÁPIO + CARRINHO ──
+window.renderCardapioWA = (filtro = '') => {
+    const el = document.getElementById('wa-cardapio');
+    if (!el) return;
+    const q = normalizarBusca(filtro);
+    el.innerHTML = Object.keys(cardapio).map(cat => {
+        const itens = cardapio[cat].filter(i => !q || normalizarBusca(i.n).includes(q));
+        if (!itens.length) return '';
+        return `<div style="color:var(--gold); font-weight:800; margin:12px 0 4px; font-size:.8rem;">${cat}</div>` +
+            itens.map(i => `
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding:7px 0;">
+                <span style="font-size:.88rem;">${escHtml(i.n)}<br><small style="color:var(--gold)">R$ ${i.p.toFixed(2)}</small></span>
+                <button data-n="${escHtml(i.n)}" data-p="${i.p}"
+                    onclick="window.addItemWA(this.dataset.n, parseFloat(this.dataset.p))"
+                    style="background:var(--gold); border:none; border-radius:6px; padding:8px 16px; font-weight:800; cursor:pointer;">+</button>
+            </div>`).join('');
+    }).join('') || '<p style="color:#666; padding:20px; text-align:center;">Nenhum item encontrado</p>';
+};
+
+window.alterarQtdAddWA = (i, d) => {
+    const a = window._waAdds[i];
+    a.q = Math.max(0, a.q + d);
+    document.getElementById(`qtd-addwa-${i}`).innerText = a.q;
+};
+
+window.addItemWA = async (nome, preco) => {
+    let p = preco, obs = '';
+
+    // Bebidas com sabor (usa as opções já definidas em estoqueProdutos)
+    const prodSabor = estoqueProdutos.find(x => x.nome === nome && x.opcoes);
+    if (prodSabor) {
+        const { value: sabor } = await Swal.fire({
+            title: nome, input: 'select', inputPlaceholder: 'Escolha o sabor',
+            inputOptions: Object.fromEntries(prodSabor.opcoes.map(o => [o, o])),
+            showCancelButton: true, confirmButtonText: 'ADICIONAR', cancelButtonText: 'Cancelar',
+            inputValidator: (v) => !v && 'Escolha um sabor', ...swalDark
+        });
+        if (!sabor) return;
+        obs = sabor;
+    }
+
+    // Adicionais (mesma regra do pedido da mesa)
+    if (/Burguer|Zap|Porção/.test(nome)) {
+        window._waAdds = ADICIONAIS_WA.map(a => ({ ...a, q: 0 }));
+        const { isConfirmed } = await Swal.fire({
+            title: 'ADICIONAIS',
+            html: `<div class="modal-scroll-area">${ADICIONAIS_WA.map((a, i) => `
+                <div class="linha-add">
+                    <div class="info-add"><span class="nome-add">${a.n}</span><span class="preco-add">R$ ${a.p.toFixed(2)}</span></div>
+                    <div class="controles-add">
+                        <button type="button" class="btn-menor" onclick="alterarQtdAddWA(${i}, -1)">-</button>
+                        <span id="qtd-addwa-${i}" class="qtd-numero">0</span>
+                        <button type="button" class="btn-maior" onclick="alterarQtdAddWA(${i}, 1)">+</button>
+                    </div>
+                </div>`).join('')}</div>`,
+            showCancelButton: true, confirmButtonText: 'CONFIRMAR', cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#22c55e', ...swalDark
+        });
+        if (!isConfirmed) return;
+        const escolhidos = window._waAdds.filter(a => a.q > 0);
+        p += escolhidos.reduce((t, a) => t + a.p * a.q, 0);
+        const desc = escolhidos.map(a => `+${a.q} ${a.n}`).join(', ');
+        obs = [obs, desc].filter(Boolean).join(' | ');
+    }
+
+    const existente = carrinhoWA.find(i => i.n === nome && i.obs === obs && i.p === p);
+    if (existente) existente.q += 1; else carrinhoWA.push({ n: nome, p, q: 1, obs });
+    window.renderCarrinhoWA();
+};
+
+window.qtdItemWA = (idx, d) => {
+    carrinhoWA[idx].q += d;
+    if (carrinhoWA[idx].q <= 0) carrinhoWA.splice(idx, 1);
+    window.renderCarrinhoWA();
+};
+
+window.obsItemWA = (idx, v) => { carrinhoWA[idx].obs = v; };
+
+window.renderCarrinhoWA = () => {
+    const el = document.getElementById('wa-carrinho');
+    if (!el) return;
+    el.innerHTML = carrinhoWA.map((i, idx) => `
+        <div class="item-carrinho">
+            <div style="display:flex; justify-content:space-between; gap:8px;">
+                <b>${escHtml(i.n)}</b>
+                <span style="color:var(--gold); white-space:nowrap;">R$ ${(i.p * i.q).toFixed(2)}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px; margin:8px 0;">
+                <button class="btn-menor" onclick="window.qtdItemWA(${idx}, -1)">-</button>
+                <b>${i.q}</b>
+                <button class="btn-maior" onclick="window.qtdItemWA(${idx}, 1)">+</button>
+            </div>
+            <input class="obs-item-input" placeholder="Obs (sem cebola, bem passado...)" value="${escHtml(i.obs)}"
+                   onchange="window.obsItemWA(${idx}, this.value)">
+        </div>`).join('') || '<p style="color:#666; font-size:.85rem;">Carrinho vazio — toque em + nos itens do cardápio.</p>';
+    window.atualizarTotalWA();
+};
+
+// ── SALVAR PEDIDO (+ cria/atualiza o cliente automaticamente) ──
+window.salvarPedidoWA = async () => {
+    const btn = document.getElementById('wa-btn-salvar');
+    if (btn.disabled) return;
+
+    const nome = elv('wa-nome');
+    const tel = soDigitos(elv('wa-tel'));
+    const endereco = elv('wa-end');
+    const bairro = elv('wa-bairro');
+    const pagamento = elv('wa-pgto');
+    const { retirada, frete, total } = calcTotaisWA();
+    const trocoPara = pagamento === 'Dinheiro' ? (parseFloat(elv('wa-troco').replace(',', '.')) || 0) : 0;
+
+    const erro = !nome ? 'Informe o nome do cliente.'
+        : !carrinhoWA.length ? 'Adicione ao menos um item ao carrinho.'
+        : (!retirada && !endereco) ? 'Informe o endereço (ou marque Retirada no local).'
+        : (trocoPara && trocoPara < total) ? 'O "troco para" é menor que o total do pedido.' : '';
+    if (erro) {
+        Swal.fire({ title: 'Atenção', text: erro, icon: 'warning', ...swalDark });
+        return;
+    }
+
+    btn.disabled = true; // evita pedido duplicado por clique duplo
+    try {
+        await addDoc(collection(db, 'pedidos'), {
+            nome,
+            telefone: tel,
+            endereco: retirada ? 'Retirada' : endereco,
+            bairro: retirada ? '' : bairro,
+            pagamento,
+            pagamentos: [{ metodo: pagamento, valor: total }],
+            trocoPara: trocoPara || 0,
+            itens: carrinhoWA.map(i => ({ n: i.n, p: i.p, q: i.q, obs: i.obs || '' })),
+            frete,
+            total,
+            origem: 'WHATSAPP',
+            data: serverTimestamp()
+        });
+
+        let clienteSalvo = false;
+        if (tel.length >= 10) {
+            const anterior = clientesWA[tel];
+            const dados = { nome, telefone: tel, pagamento, totalPedidos: (anterior?.totalPedidos || 0) + 1 };
+            if (!retirada) { dados.endereco = endereco; dados.bairro = bairro; }
+            await setDoc(doc(db, 'clientes_whatsapp', tel), { ...dados, ultimoPedidoEm: serverTimestamp() }, { merge: true });
+            clientesWA[tel] = { ...(anterior || {}), id: tel, ...dados, _ts: Date.now() };
+            clienteSalvo = true;
+        }
+        if (!retirada) localStorage.setItem('wa_frete', String(frete));
+
+        carrinhoWA = [];
+        document.getElementById('wa-overlay').style.display = 'none';
+        window.renderClientesWA();
+        Swal.fire({
+            title: 'Pedido salvo!',
+            text: clienteSalvo ? 'Já está na aba DELIVERY e o cliente ficou salvo.' : 'Já está na aba DELIVERY (cliente sem telefone, não foi salvo).',
+            icon: 'success', timer: 1500, showConfirmButton: false, ...swalDark
+        });
+    } catch (e) {
+        console.error('Erro ao salvar pedido:', e);
+        Swal.fire({ title: 'Erro', text: 'Não foi possível salvar o pedido. Tente de novo.', icon: 'error', ...swalDark });
+    } finally {
+        btn.disabled = false;
+    }
+};
 // Bloqueios de segurança
   document.addEventListener('keydown', function (e) {
     if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) { e.preventDefault(); }
@@ -2924,7 +3363,5 @@ function renderFidelidadeConteudo() {
     </script>
 </body>
 </html>
-
-
 
 
